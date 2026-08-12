@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent, ChangeEvent } from "react";
+import { useState, FormEvent, ChangeEvent, useEffect, } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -9,6 +9,7 @@ import AuthInput from "@/components/AuthInput";
 import AuthButton from "@/components/AuthButton";
 
 export default function LoginPage() {
+
   const router = useRouter();
 
   const [email, setEmail] = useState("");
@@ -93,10 +94,7 @@ export default function LoginPage() {
         });
 
       if (googleError) {
-        console.error(
-          "GOOGLE LOGIN ERROR:",
-          googleError
-        );
+        console.error("GOOGLE LOGIN ERROR:", googleError);
 
         setError(
           "Could not start Google sign-in. Please try again."
