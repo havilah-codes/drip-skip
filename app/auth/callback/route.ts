@@ -1,47 +1,62 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 export async function GET(request: Request) {
-  const url = new URL(request.url);
+  const { searchParams, origin } =
+    new URL(request.url);
 
-  const code = url.searchParams.get("code");
-  const next = url.searchParams.get("next") || "/feed";
+  const code = searchParams.get("code");
 
-  // OAuth must return a code for this server-side callback.
+  let next =
+    searchParams.get("next") || "/feed";
+
+  // Only allow internal redirects.
+  if (!next.startsWith("/")) {
+    next = "/feed";
+  }
+
   if (!code) {
-    console.error("OAUTH CALLBACK: No authorization code received");
+    console.error(
+      "OAUTH CALLBACK: No authorization code"
+    );
 
     return NextResponse.redirect(
-      new URL("/login?error=oauth_failed", url.origin)
+      new URL(
+        "/login?error=oauth_failed",
+        origin
+      )
     );
   }
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
-  );
+  const supabase =
+    await createServerSupabaseClient();
 
-  // Exchange OAuth code for a Supabase session
   const {
-    data: { session },
-    error: exchangeError,
-  } = await supabase.auth.exchangeCodeForSession(code);
+    data,
+    error,
+  } =
+    await supabase.auth.exchangeCodeForSession(
+      code
+    );
 
-  if (exchangeError || !session?.user) {
+  if (error || !data.user) {
     console.error(
       "OAUTH CODE EXCHANGE ERROR:",
-      exchangeError
+      error
     );
 
     return NextResponse.redirect(
-      new URL("/login?error=oauth_failed", url.origin)
+      new URL(
+        "/login?error=oauth_failed",
+        origin
+      )
     );
   }
 
-  const user = session.user;
+  const user = data.user;
 
   // ==========================================
-  // CHECK FOR EXISTING PROFILE
+  // CHECK PROFILE
   // ==========================================
 
   const {
@@ -61,11 +76,12 @@ export async function GET(request: Request) {
   }
 
   // ==========================================
-  // CREATE PROFILE FOR GOOGLE USER
+  // CREATE PROFILE IF NEEDED
   // ==========================================
 
   if (!existingProfile) {
-    const metadata = user.user_metadata || {};
+    const metadata =
+      user.user_metadata || {};
 
     const displayName =
       metadata.full_name ||
@@ -76,12 +92,17 @@ export async function GET(request: Request) {
       user.email
         ?.split("@")[0]
         ?.toLowerCase()
-        .replace(/[^a-z0-9_.]/g, "")
-        .slice(0, 20) || "user";
+        .replace(
+          /[^a-z0-9_.]/g,
+          ""
+        )
+        .slice(0, 20) ||
+      "user";
 
-    const randomSuffix = Math.random()
-      .toString(36)
-      .substring(2, 7);
+    const randomSuffix =
+      Math.random()
+        .toString(36)
+        .substring(2, 7);
 
     const username =
       `${emailUsername}_${randomSuffix}`;
@@ -98,30 +119,32 @@ export async function GET(request: Request) {
       .insert({
         id: user.id,
         username,
-        display_name: displayName,
-        avatar_url: avatarUrl,
+        display_name:
+          displayName,
+        avatar_url:
+          avatarUrl,
       });
 
     if (profileError) {
       console.error(
-        "GOOGLE PROFILE CREATION ERROR:",
+        "PROFILE CREATION ERROR:",
         profileError
       );
 
       return NextResponse.redirect(
         new URL(
           "/login?error=profile_creation_failed",
-          url.origin
+          origin
         )
       );
     }
   }
 
   // ==========================================
-  // SEND USER TO FEED
+  // SUCCESS
   // ==========================================
 
   return NextResponse.redirect(
-    new URL(next, url.origin)
+    new URL(next, origin)
   );
 }
