@@ -7,7 +7,10 @@ export async function GET(request: Request) {
   const code = url.searchParams.get("code");
   const next = url.searchParams.get("next") || "/feed";
 
+  // OAuth must return a code for this server-side callback.
   if (!code) {
+    console.error("OAUTH CALLBACK: No authorization code received");
+
     return NextResponse.redirect(
       new URL("/login?error=oauth_failed", url.origin)
     );
@@ -18,17 +21,16 @@ export async function GET(request: Request) {
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
   );
 
+  // Exchange OAuth code for a Supabase session
   const {
-    data,
-    error,
-  } = await supabase.auth.exchangeCodeForSession(
-    code
-  );
+    data: { session },
+    error: exchangeError,
+  } = await supabase.auth.exchangeCodeForSession(code);
 
-  if (error || !data.user) {
+  if (exchangeError || !session?.user) {
     console.error(
-      "OAUTH CALLBACK ERROR:",
-      error
+      "OAUTH CODE EXCHANGE ERROR:",
+      exchangeError
     );
 
     return NextResponse.redirect(
@@ -36,7 +38,7 @@ export async function GET(request: Request) {
     );
   }
 
-  const user = data.user;
+  const user = session.user;
 
   // ==========================================
   // CHECK FOR EXISTING PROFILE
@@ -77,10 +79,9 @@ export async function GET(request: Request) {
         .replace(/[^a-z0-9_.]/g, "")
         .slice(0, 20) || "user";
 
-    const randomSuffix =
-      Math.random()
-        .toString(36)
-        .substring(2, 7);
+    const randomSuffix = Math.random()
+      .toString(36)
+      .substring(2, 7);
 
     const username =
       `${emailUsername}_${randomSuffix}`;
