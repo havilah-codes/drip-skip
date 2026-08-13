@@ -2,695 +2,465 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Image from "next/image";
-import { supabase } from "@/lib/supabase";
+import Link from "next/link";
+import { ArrowLeft, UserCheck, UserPlus } from "lucide-react";
+import { onAuthStateChanged, type User } from "firebase/auth";
 
-interface Profile {
+import { firebaseAuth } from "@/lib/firebase";
+import { supabase } from "@/lib/supabase";
+import { syncProfile } from "@/lib/syncProfile";
+import PostCard, { type Post } from "@/components/PostCard";
+
+type Profile = {
   id: string;
   username: string;
-  display_name: string | null;
+  display_name: string;
   avatar_url: string | null;
-}
-
-interface Fit {
-  id: string;
-  user_id: string;
-  image_url: string;
-  caption: string | null;
-  created_at: string;
-}
+  created_at?: string;
+};
 
 export default function PublicProfilePage() {
   const params = useParams();
   const router = useRouter();
 
-  const username = params.username as string;
+  const rawUsername = params.username as string;
+  const username = rawUsername?.toLowerCase();
 
-  const [currentUser, setCurrentUser] =
-    useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
 
-  const [profile, setProfile] =
-    useState<Profile | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [posts, setPosts] = useState<Post[]>([]);
 
-  const [fits, setFits] =
-    useState<Fit[]>([]);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
 
-  const [dripCount, setDripCount] =
-    useState(0);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
 
-  const [followerCount, setFollowerCount] =
-    useState(0);
-
-  const [followingCount, setFollowingCount] =
-    useState(0);
-
-  const [isFollowing, setIsFollowing] =
-    useState(false);
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [followLoading, setFollowLoading] =
-    useState(false);
-
-  const [error, setError] =
-    useState("");
-
-  // ==========================================
-  // LOAD PROFILE
-  // ==========================================
-
+  // 1. Listen for current auth user
   useEffect(() => {
-    if (username) {
-      loadProfile();
-    }
-  }, [username]);
-
-  async function loadProfile() {
-    try {
-      setLoading(true);
-      setError("");
-
-      // ----------------------------------------
-      // CURRENT USER
-      // ----------------------------------------
-
-      const {
-        data: {
-          user,
-        },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        router.replace("/login");
-        return;
-      }
-
+    const unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => {
       setCurrentUser(user);
-
-      // ----------------------------------------
-      // PROFILE
-      // ----------------------------------------
-
-      const {
-        data: profileData,
-        error: profileError,
-      } = await supabase
-        .from("profiles")
-        .select(
-          "id, username, display_name, avatar_url"
-        )
-        .eq("username", username)
-        .maybeSingle();
-
-      if (profileError) {
-        console.error(
-          "PUBLIC PROFILE ERROR:",
-          profileError
-        );
-
-        setError(
-          "Couldn't load this profile."
-        );
-
-        return;
-      }
-
-      if (!profileData) {
-        setError(
-          "This profile doesn't exist."
-        );
-
-        return;
-      }
-
-      setProfile(profileData);
-
-      // ----------------------------------------
-      // FITS
-      // ----------------------------------------
-
-      const {
-        data: fitsData,
-        error: fitsError,
-      } = await supabase
-        .from("fits")
-        .select(
-          "id, user_id, image_url, caption, created_at"
-        )
-        .eq("user_id", profileData.id)
-        .order("created_at", {
-          ascending: false,
-        });
-
-      if (fitsError) {
-        console.error(
-          "PUBLIC FITS ERROR:",
-          fitsError
-        );
-      } else {
-        setFits(fitsData || []);
-      }
-
-      // ----------------------------------------
-      // DRIP COUNT
-      // ----------------------------------------
-
-      if (fitsData && fitsData.length > 0) {
-        const fitIds = fitsData.map(
-          (fit) => fit.id
-        );
-
-        const {
-          data: dripData,
-          error: dripError,
-        } = await supabase
-          .from("votes")
-          .select("fit_id")
-          .in("fit_id", fitIds)
-          .eq("vote", "drip");
-
-        if (dripError) {
-          console.error(
-            "DRIP COUNT ERROR:",
-            dripError
-          );
-        } else {
-          setDripCount(
-            dripData?.length || 0
-          );
+      if (user) {
+        try {
+          const synced = await syncProfile(user);
+          if (synced) {
+            setCurrentProfileId(synced.id);
+          }
+        } catch (e) {
+          console.error("❌ Failed syncing viewer profile:", e);
         }
       }
+    });
 
-      // ----------------------------------------
-      // FOLLOWER COUNT
-      // ----------------------------------------
+    return () => unsubscribe();
+  }, []);
 
-      const {
-        count: followers,
-        error: followersError,
-      } = await supabase
-        .from("follows")
-        .select("*", {
-          count: "exact",
-          head: true,
-        })
-        .eq(
-          "following_id",
-          profileData.id
-        );
+  // 2. Fetch public profile, posts, stats, and follow status
+  useEffect(() => {
+    if (!username) return;
 
-      if (followersError) {
-        console.error(
-          "FOLLOWER COUNT ERROR:",
-          followersError
-        );
-      } else {
-        setFollowerCount(
-          followers || 0
-        );
-      }
+    let isCancelled = false;
 
-      // ----------------------------------------
-      // FOLLOWING COUNT
-      // ----------------------------------------
+    const loadProfile = async () => {
+      setLoading(true);
+      setNotFound(false);
 
-      const {
-        count: following,
-        error: followingError,
-      } = await supabase
-        .from("follows")
-        .select("*", {
-          count: "exact",
-          head: true,
-        })
-        .eq(
-          "follower_id",
-          profileData.id
-        );
+      try {
+        console.log("👤 LOADING PROFILE:", username);
 
-      if (followingError) {
-        console.error(
-          "FOLLOWING COUNT ERROR:",
-          followingError
-        );
-      } else {
-        setFollowingCount(
-          following || 0
-        );
-      }
-
-      // ----------------------------------------
-      // CHECK IF CURRENT USER FOLLOWS THEM
-      // ----------------------------------------
-
-      if (user.id !== profileData.id) {
-        const {
-          data: followData,
-          error: followError,
-        } = await supabase
-          .from("follows")
-          .select("follower_id")
-          .eq(
-            "follower_id",
-            user.id
-          )
-          .eq(
-            "following_id",
-            profileData.id
-          )
+        // Fetch Profile
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select(`id, username, display_name, avatar_url, created_at`)
+          .eq("username", username)
           .maybeSingle();
 
-        if (followError) {
-          console.error(
-            "FOLLOW CHECK ERROR:",
-            followError
-          );
+        if (profileError) {
+          console.error("❌ PROFILE LOAD ERROR:", profileError);
+          throw profileError;
+        }
+
+        if (!profileData) {
+          if (!isCancelled) setNotFound(true);
+          return;
+        }
+
+        if (isCancelled) return;
+        setProfile(profileData);
+
+        const profileId = profileData.id;
+
+        // Run remaining queries concurrently
+        const [
+          postsRes,
+          followersRes,
+          followingRes,
+          checkFollowRes,
+        ] = await Promise.all([
+          // POSTS
+          supabase
+            .from("posts")
+            .select(`
+              id,
+              user_id,
+              text,
+              image_url,
+              video_url,
+              created_at,
+              profiles (
+                id,
+                username,
+                display_name,
+                avatar_url
+              )
+            `)
+            .eq("user_id", profileId)
+            .order("created_at", {
+              ascending: false,
+            }),
+
+          // FOLLOWERS
+          supabase
+            .from("follows")
+            .select("follower_id", {
+              count: "exact",
+              head: true,
+            })
+            .eq("following_id", profileId),
+
+          // FOLLOWING
+          supabase
+            .from("follows")
+            .select("following_id", {
+              count: "exact",
+              head: true,
+            })
+            .eq("follower_id", profileId),
+
+          // FOLLOW STATUS
+          currentProfileId &&
+          currentProfileId !== profileId
+            ? supabase
+                .from("follows")
+                .select("follower_id")
+                .eq(
+                  "follower_id",
+                  currentProfileId
+                )
+                .eq(
+                  "following_id",
+                  profileId
+                )
+                .maybeSingle()
+            : Promise.resolve({
+                data: null,
+                error: null,
+              }),
+        ]);
+
+        if (isCancelled) return;
+
+        if (postsRes.error) {
+          console.error("❌ POSTS LOAD ERROR:", postsRes.error);
         } else {
-          setIsFollowing(
-            !!followData
-          );
+          setPosts((postsRes.data as Post[]) || []);
+        }
+
+        setFollowersCount(followersRes.count || 0);
+        setFollowingCount(followingRes.count || 0);
+        setIsFollowing(!!checkFollowRes.data);
+
+      } catch (error) {
+        console.error("❌ PROFILE PAGE ERROR:", error);
+      } finally {
+        if (!isCancelled) {
+          setLoading(false);
         }
       }
+    };
 
-    } catch (err) {
-      console.error(
-        "PROFILE PAGE ERROR:",
-        err
-      );
+    loadProfile();
 
-      setError(
-        "Something went wrong."
-      );
-    } finally {
-      setLoading(false);
-    }
-  }
+    return () => {
+      isCancelled = true;
+    };
+  }, [username, currentProfileId]);
 
-  // ==========================================
-  // FOLLOW / UNFOLLOW
-  // ==========================================
-
-  async function handleFollow() {
+  // Handle Follow / Unfollow actions
+  const handleFollowToggle = async () => {
     if (
       !currentUser ||
+      !currentProfileId ||
       !profile ||
       followLoading
     ) {
       return;
     }
 
-    if (
-      currentUser.id === profile.id
-    ) {
+    // Never allow following yourself
+    if (currentProfileId === profile.id) {
       return;
     }
 
     setFollowLoading(true);
 
     try {
-      // ======================================
-      // UNFOLLOW
-      // ======================================
+      console.log(
+        isFollowing
+          ? "👋 UNFOLLOWING:"
+          : "➕ FOLLOWING:",
+        profile.username
+      );
 
       if (isFollowing) {
-        const {
-          error: deleteError,
-        } = await supabase
+        const { error } = await supabase
           .from("follows")
           .delete()
-          .eq(
-            "follower_id",
-            currentUser.id
-          )
-          .eq(
-            "following_id",
-            profile.id
-          );
+          .eq("follower_id", currentProfileId)
+          .eq("following_id", profile.id);
 
-        if (deleteError) {
+        if (error) {
           console.error(
-            "UNFOLLOW ERROR:",
-            deleteError
+            "❌ UNFOLLOW ERROR:",
+            error
           );
 
-          return;
+          throw error;
         }
 
         setIsFollowing(false);
 
-        setFollowerCount(
-          (count) =>
-            Math.max(0, count - 1)
+        setFollowersCount((prev) =>
+          Math.max(0, prev - 1)
         );
 
-        return;
-      }
+        console.log("✅ UNFOLLOW SUCCESS");
+      } else {
+        const { error } = await supabase
+          .from("follows")
+          .insert({
+            follower_id: currentProfileId,
+            following_id: profile.id,
+          });
 
-      // ======================================
-      // FOLLOW
-      // ======================================
+        if (error) {
+          console.error(
+            "❌ FOLLOW ERROR:",
+            error
+          );
 
-      const {
-        error: insertError,
-      } = await supabase
-        .from("follows")
-        .insert({
-          follower_id:
-            currentUser.id,
+          throw error;
+        }
 
-          following_id:
-            profile.id,
-        });
+        setIsFollowing(true);
 
-      if (insertError) {
-        console.error(
-          "FOLLOW ERROR:",
-          insertError
+        setFollowersCount(
+          (prev) => prev + 1
         );
 
-        return;
+        console.log("✅ FOLLOW SUCCESS");
       }
-
-      setIsFollowing(true);
-
-      setFollowerCount(
-        (count) => count + 1
+    } catch (error) {
+      console.error(
+        "❌ FOLLOW TOGGLE FAILED:",
+        error
       );
 
+      alert(
+        "Something went wrong. Please try again."
+      );
     } finally {
       setFollowLoading(false);
     }
-  }
+  };
 
   // ==========================================
-  // LOADING
+  // LOADING STATE
   // ==========================================
-
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-black text-white">
-        <p className="animate-pulse text-sm text-zinc-500">
-          Loading profile...
-        </p>
+      <main className="min-h-screen bg-black text-white flex items-center justify-center">
+        <p className="text-sm text-zinc-500 animate-pulse">Loading profile...</p>
       </main>
     );
   }
 
   // ==========================================
-  // ERROR
+  // NOT FOUND STATE
   // ==========================================
-
-  if (error || !profile) {
+  if (notFound || !profile) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center bg-black px-6 text-white">
-
-        <p className="text-center text-sm text-red-400">
-          {error ||
-            "Profile not found."}
-        </p>
-
-        <button
-          onClick={() =>
-            router.push("/feed")
-          }
-          className="mt-5 rounded-xl bg-white px-5 py-3 text-sm font-bold text-black"
-        >
-          Back to Feed
-        </button>
-
-      </main>
-    );
-  }
-
-  const isOwnProfile =
-    currentUser?.id === profile.id;
-
-  // ==========================================
-  // PAGE
-  // ==========================================
-
-  return (
-    <main className="min-h-screen bg-black pb-24 text-white">
-
-      {/* HEADER */}
-
-      <header className="sticky top-0 z-50 border-b border-zinc-900 bg-black/90 backdrop-blur-xl">
-
-        <div className="mx-auto flex max-w-xl items-center justify-between px-5 py-4">
-
+      <main className="min-h-screen bg-black text-white">
+        <div className="max-w-2xl mx-auto px-4 py-6">
           <button
-            onClick={() =>
-              router.back()
-            }
-            className="text-xl transition active:scale-90"
+            type="button"
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors"
           >
-            ←
+            <ArrowLeft size={18} />
+            Back
           </button>
 
-          <h1 className="text-base font-bold">
-            @{profile.username}
-          </h1>
+          <div className="flex flex-col items-center justify-center py-32 text-center">
+            <div className="w-16 h-16 rounded-full bg-zinc-900 flex items-center justify-center mb-5 border border-zinc-800">
+              <span className="text-2xl text-zinc-500">?</span>
+            </div>
 
-          <div className="w-5" />
+            <h1 className="text-xl font-bold">Profile not found</h1>
+            <p className="text-sm text-zinc-500 mt-2">@{username} doesn't exist.</p>
 
+            <Link
+              href="/feed"
+              className="mt-6 px-5 py-2.5 rounded-xl bg-white text-black text-sm font-bold active:scale-95 transition-all"
+            >
+              Back to feed
+            </Link>
+          </div>
         </div>
+      </main>
+    );
+  }
 
+  const isSelf = currentProfileId === profile.id;
+  const avatarSrc = !avatarError && profile.avatar_url ? profile.avatar_url : "/default-avatar.png";
+
+  // ==========================================
+  // MAIN PROFILE VIEW
+  // ==========================================
+  return (
+    <main className="min-h-screen bg-black text-white">
+      {/* TOP HEADER */}
+      <header className="sticky top-0 z-40 border-b border-zinc-900 bg-black/85 backdrop-blur-xl">
+        <div className="max-w-2xl mx-auto px-4 h-14 flex items-center">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="w-9 h-9 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-900 transition-all"
+            aria-label="Go back"
+          >
+            <ArrowLeft size={19} />
+          </button>
+
+          <div className="ml-3 min-w-0">
+            <p className="font-semibold truncate">{profile.display_name}</p>
+            <p className="text-xs text-zinc-500">@{profile.username}</p>
+          </div>
+        </div>
       </header>
 
-      <div className="mx-auto max-w-xl">
+      {/* CONTENT WRAPPER */}
+      <div className="max-w-2xl mx-auto px-4 py-6 pb-28">
 
-        {/* PROFILE HEADER */}
+        {/* PROFILE HEADER CARD */}
+        <section className="rounded-3xl border border-zinc-900 bg-zinc-950 overflow-hidden">
+          {/* COVER GRAPHIC */}
+          <div className="h-28 sm:h-36 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black" />
 
-        <section className="px-5 pb-7 pt-8">
+          {/* PROFILE INFO & ACTIONS */}
+          <div className="px-5 pb-5">
+            <div className="-mt-12 flex items-end justify-between">
+              <img
+                src={avatarSrc}
+                alt={profile.display_name}
+                onError={() => setAvatarError(true)}
+                className="w-24 h-24 rounded-full object-cover border-4 border-black bg-zinc-900"
+              />
 
-          <div className="flex items-center gap-5">
-
-            {/* AVATAR */}
-
-            <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-900 ring-1 ring-zinc-800">
-
-              {profile.avatar_url ? (
-                <img
-                  src={profile.avatar_url}
-                  alt={
-                    profile.username
-                  }
-                  className="h-full w-full object-cover"
-                />
+              {/* ACTION BUTTON */}
+              {isSelf ? (
+                <Link
+                  href="/profile/edit"
+                  className="px-5 py-2.5 rounded-xl border border-zinc-800 text-white text-sm font-bold hover:bg-zinc-900 transition-colors"
+                >
+                  Edit Profile
+                </Link>
               ) : (
-                <span className="text-4xl">
-                  👤
-                </span>
+                <button
+                  type="button"
+                  onClick={handleFollowToggle}
+                  disabled={
+                    followLoading || !currentUser
+                  }
+                  className={`px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50 ${
+                    isFollowing
+                      ? "border border-zinc-800 text-zinc-300 hover:text-rose-400 hover:border-rose-950 hover:bg-rose-950/20"
+                      : "bg-white text-black hover:bg-zinc-200"
+                  }`}
+                >
+                  {followLoading ? (
+                    <span>Loading...</span>
+                  ) : isFollowing ? (
+                    <>
+                      <UserCheck size={16} />
+                      Following
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus size={16} />
+                      Follow
+                    </>
+                  )}
+                </button>
               )}
+            </div>
 
+            <div className="mt-4">
+              <h1 className="text-xl font-bold">{profile.display_name}</h1>
+              <p className="text-sm text-zinc-500">@{profile.username}</p>
             </div>
 
             {/* STATS */}
-
-            <div className="flex flex-1 justify-around text-center">
-
+            <div className="flex items-center gap-6 mt-5">
               <div>
-                <p className="text-xl font-black">
-                  {fits.length}
-                </p>
-
-                <p className="mt-1 text-xs text-zinc-500">
-                  Fits
-                </p>
+                <p className="font-bold">{posts.length}</p>
+                <p className="text-xs text-zinc-500">Posts</p>
               </div>
 
               <div>
-                <p className="text-xl font-black">
-                  {dripCount}
-                </p>
-
-                <p className="mt-1 text-xs text-zinc-500">
-                  Drips
-                </p>
+                <p className="font-bold">{followersCount}</p>
+                <p className="text-xs text-zinc-500">Followers</p>
               </div>
 
+              <div>
+                <p className="font-bold">{followingCount}</p>
+                <p className="text-xs text-zinc-500">Following</p>
+              </div>
             </div>
-
           </div>
-
-          {/* NAME */}
-
-          <div className="mt-5">
-
-            <h2 className="text-lg font-bold">
-              {profile.display_name ||
-                profile.username}
-            </h2>
-
-            <p className="mt-1 text-sm text-zinc-500">
-              @{profile.username}
-            </p>
-
-          </div>
-
-          {/* FOLLOW BUTTON */}
-
-          {!isOwnProfile && (
-            <button
-              onClick={handleFollow}
-              disabled={followLoading}
-              className={`
-                mt-5 w-full rounded-xl
-                py-3 text-sm font-bold
-                transition active:scale-[0.98]
-                ${
-                  isFollowing
-                    ? "border border-zinc-800 bg-zinc-950 text-white"
-                    : "bg-white text-black"
-                }
-              `}
-            >
-              {followLoading
-                ? "Loading..."
-                : isFollowing
-                ? "Following"
-                : "Follow"}
-            </button>
-          )}
-
-          {/* FOLLOW STATS */}
-
-          <div className="mt-5 flex justify-center gap-8 text-center">
-
-            <div>
-              <p className="text-sm font-bold">
-                {followerCount}
-              </p>
-
-              <p className="mt-1 text-xs text-zinc-500">
-                Followers
-              </p>
-            </div>
-
-            <div>
-              <p className="text-sm font-bold">
-                {followingCount}
-              </p>
-
-              <p className="mt-1 text-xs text-zinc-500">
-                Following
-              </p>
-            </div>
-
-          </div>
-
         </section>
 
-        {/* DIVIDER */}
+        {/* POSTS LIST */}
+        <section className="mt-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-bold text-lg">Posts</h2>
+            <span className="text-xs text-zinc-600">{posts.length}</span>
+          </div>
 
-        <div className="border-t border-zinc-900" />
-
-        {/* FITS TAB */}
-
-        <div className="flex items-center justify-center border-b border-zinc-900 py-4">
-
-          <span className="text-xs font-bold uppercase tracking-widest">
-            Fits
-          </span>
-
-        </div>
-
-        {/* FIT GRID */}
-
-        {fits.length === 0 ? (
-
-          <div className="flex min-h-[40vh] flex-col items-center justify-center px-6 text-center">
-
-            <div className="text-5xl">
-              👕
+          {posts.length === 0 ? (
+            <div className="rounded-2xl border border-zinc-900 bg-zinc-950 p-10 text-center">
+              <div className="w-12 h-12 rounded-full bg-zinc-900 flex items-center justify-center mx-auto mb-4 text-zinc-500">
+                ✦
+              </div>
+              <h3 className="font-semibold">No posts yet</h3>
+              <p className="text-sm text-zinc-500 mt-2">
+                @{profile.username} hasn't posted anything yet.
+              </p>
             </div>
-
-            <h3 className="mt-4 text-lg font-bold">
-              No fits yet
-            </h3>
-
-            <p className="mt-2 text-sm text-zinc-500">
-              This person hasn't
-              posted any fits yet.
-            </p>
-
-          </div>
-
-        ) : (
-
-          <div className="grid grid-cols-3 gap-[2px]">
-
-            {fits.map((fit) => (
-
-              <button
-                key={fit.id}
-                onClick={() =>
-                  router.push(
-                    `/feed?fit=${fit.id}`
-                  )
-                }
-                className="group relative aspect-square overflow-hidden bg-zinc-950"
-              >
-
-                <Image
-                  src={fit.image_url}
-                  alt={
-                    fit.caption ||
-                    "Fit"
-                  }
-                  fill
-                  unoptimized
-                  className="object-cover transition duration-300 group-hover:scale-105"
-                />
-
-              </button>
-
-            ))}
-
-          </div>
-
-        )}
+          ) : (
+            <div className="space-y-4">
+              {posts.map((post) => (
+                <PostCard key={post.id} post={post} />
+              ))}
+            </div>
+          )}
+        </section>
 
       </div>
-
-      {/* BOTTOM NAV */}
-
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-zinc-900 bg-black/95 backdrop-blur-xl">
-
-        <div className="mx-auto flex max-w-xl items-center justify-around py-3">
-
-          <button
-            onClick={() =>
-              router.push("/feed")
-            }
-            className="text-xl transition active:scale-90"
-          >
-            🏠
-          </button>
-
-          <button
-            onClick={() =>
-              router.push("/create")
-            }
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-xl font-light text-black transition active:scale-90"
-          >
-            +
-          </button>
-
-          <button
-            onClick={() =>
-              router.push("/profile")
-            }
-            className="text-xl transition active:scale-90"
-          >
-            👤
-          </button>
-
-        </div>
-
-      </nav>
-
     </main>
   );
 }
