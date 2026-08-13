@@ -1,431 +1,1080 @@
 "use client";
 
 import {
+  useEffect,
+  useRef,
   useState,
-  FormEvent,
-  ChangeEvent,
+  type ChangeEvent,
+  type FormEvent,
 } from "react";
-
 import Link from "next/link";
-
+import { getSmartFeed } from "@/lib/smartFeed";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { syncProfile } from "@/lib/syncProfile";
+import BottomNav from "@/components/BottomNav";
+import PostCard, {
+  type Post,
+} from "@/components/PostCard";
 
-import AuthLayout from "@/components/AuthLayout";
-import AuthInput from "@/components/AuthInput";
-import AuthButton from "@/components/AuthButton";
+import {
+  onAuthStateChanged,
+  signOut,
+  type User,
+} from "firebase/auth";
 
-interface FormErrors {
-  username?: string;
-  email?: string;
-  password?: string;
-}
+import { firebaseAuth } from "@/lib/firebase";
 
-export default function SignupPage() {
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
-  const [errors, setErrors] =
-    useState<FormErrors>({});
-
-  const [generalError, setGeneralError] =
-    useState("");
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [googleLoading, setGoogleLoading] =
-    useState(false);
-
-  const [isSubmitted, setIsSubmitted] =
-    useState(false);
+export default function FeedPage() {
+  const router = useRouter();
 
   // ==========================================
-  // VALIDATION
+  // AUTH
   // ==========================================
 
-  const validateForm = (): boolean => {
-    const newErrors: FormErrors = {};
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [loggingOut, setLoggingOut] = useState(false);
 
-    const cleanUsername =
-      username.trim().toLowerCase();
+  // ==========================================
+  // PROFILE
+  // ==========================================
 
-    if (!cleanUsername) {
-      newErrors.username =
-        "Please choose a username.";
-    } else if (cleanUsername.length < 3) {
-      newErrors.username =
-        "Username must be at least 3 characters.";
-    } else if (
-      !/^[a-zA-Z0-9_.]+$/.test(cleanUsername)
-    ) {
-      newErrors.username =
-        "Letters, numbers, underscores, and dots only.";
-    }
+  const [displayName, setDisplayName] =
+    useState("Drip User");
 
-    const emailRegex =
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const [avatar, setAvatar] =
+    useState("/default-avatar.png");
 
-    if (!email.trim()) {
-      newErrors.email =
-        "Email address is required.";
-    } else if (
-      !emailRegex.test(email.trim())
-    ) {
-      newErrors.email =
-        "Please enter a valid email address.";
-    }
+  // ==========================================
+  // POSTS
+  // ==========================================
 
-    if (!password) {
-      newErrors.password =
-        "Password is required.";
-    } else if (password.length < 6) {
-      newErrors.password =
-        "Password must be at least 6 characters.";
-    }
+  const [post, setPost] = useState("");
+  const [posts, setPosts] = useState<any[]>([]);
 
-    setErrors(newErrors);
+  const [posting, setPosting] = useState(false);
+  const [postsLoading, setPostsLoading] = useState(true);
+  const [feedLoading, setFeedLoading] = useState(true);
 
-    return (
-      Object.keys(newErrors).length === 0
+  // ==========================================
+  // MEDIA
+  // ==========================================
+
+  const [selectedImage, setSelectedImage] =
+    useState<File | null>(null);
+
+  const [selectedVideo, setSelectedVideo] =
+    useState<File | null>(null);
+
+  // ==========================================
+  // CAMERA
+  // ==========================================
+
+  const [cameraOpen, setCameraOpen] =
+    useState(false);
+
+  const [cameraStream, setCameraStream] =
+    useState<MediaStream | null>(null);
+
+  const videoRef =
+    useRef<HTMLVideoElement | null>(null);
+
+  // ==========================================
+  // AUTH LISTENER
+  // ==========================================
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(
+      firebaseAuth,
+      async (currentUser) => {
+        console.log(
+          "🔥 AUTH STATE:",
+          currentUser
+        );
+
+        if (!currentUser) {
+          router.replace("/login");
+          return;
+        }
+
+        try {
+          console.log(
+            "🔥 CALLING SYNC PROFILE..."
+          );
+
+          await syncProfile(currentUser);
+
+          console.log(
+            "✅ PROFILE SYNC FINISHED"
+          );
+
+          setUser(currentUser);
+
+          setDisplayName(
+            currentUser.displayName ||
+              currentUser.email?.split("@")[0] ||
+              "Drip User"
+          );
+
+          if (currentUser.photoURL) {
+            setAvatar(currentUser.photoURL);
+          }
+
+          setAuthLoading(false);
+
+        } catch (error) {
+          console.error(
+            "❌ PROFILE SYNC FAILED:",
+            error
+          );
+
+          setAuthLoading(false);
+        }
+      }
     );
-  };
+
+    return () => unsubscribe();
+  }, [router]);
 
   // ==========================================
-  // EMAIL SIGNUP
+  // SMART FEED LOADER
   // ==========================================
 
-  const handleSignup = async (
-    e: FormEvent<HTMLFormElement>
-  ) => {
-    e.preventDefault();
+  useEffect(() => {
+    if (!user) return;
 
-    setGeneralError("");
+    let cancelled = false;
 
-    if (!validateForm()) {
+    const loadSmartFeed = async () => {
+      setFeedLoading(true);
+      setPostsLoading(true);
+
+      try {
+        console.log("🧠 LOADING SMART FEED");
+
+        // Get/create the user's Supabase profile
+        const profile = await syncProfile(user);
+
+        if (!profile?.id) {
+          throw new Error(
+            "Could not find Supabase profile."
+          );
+        }
+
+        console.log(
+          "👤 SMART FEED PROFILE:",
+          profile.id
+        );
+
+        const smartPosts = await getSmartFeed({
+          profileId: profile.id,
+          limit: 50,
+        });
+
+        if (cancelled) return;
+
+        console.log(
+          "🧠 SMART FEED POSTS:",
+          smartPosts
+        );
+
+        setPosts(smartPosts);
+
+      } catch (error) {
+        console.error(
+          "❌ SMART FEED FAILED:",
+          error
+        );
+
+        if (!cancelled) {
+          setPosts([]);
+        }
+
+      } finally {
+        if (!cancelled) {
+          setFeedLoading(false);
+          setPostsLoading(false);
+        }
+      }
+    };
+
+    loadSmartFeed();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  // ==========================================
+  // CONNECT CAMERA STREAM TO VIDEO
+  // ==========================================
+
+  useEffect(() => {
+    if (!videoRef.current || !cameraStream) {
       return;
     }
 
-    setLoading(true);
+    videoRef.current.srcObject =
+      cameraStream;
 
+    videoRef.current
+      .play()
+      .catch(() => {});
+  }, [cameraStream]);
+
+  // ==========================================
+  // CAMERA CLEANUP
+  // ==========================================
+
+  const stopCamera = () => {
+    if (!cameraStream) {
+      return;
+    }
+
+    cameraStream
+      .getTracks()
+      .forEach((track) => track.stop());
+
+    setCameraStream(null);
+  };
+
+  // ==========================================
+  // CLEAN CAMERA WHEN PAGE UNMOUNTS
+  // ==========================================
+
+  useEffect(() => {
+    return () => {
+      if (cameraStream) {
+        cameraStream
+          .getTracks()
+          .forEach((track) => track.stop());
+      }
+    };
+  }, [cameraStream]);
+
+  // ==========================================
+  // OPEN CAMERA
+  // ==========================================
+
+  const openCamera = async () => {
     try {
-      const cleanUsername =
-        username.trim().toLowerCase();
-
-      const cleanEmail =
-        email.trim();
-
-      const {
-        data: authData,
-        error: authError,
-      } =
-        await supabase.auth.signUp({
-          email: cleanEmail,
-          password,
-        });
-
-      if (authError) {
-        if (
-          authError.message
-            ?.toLowerCase()
-            .includes("already registered")
-        ) {
-          setErrors((prev) => ({
-            ...prev,
-            email:
-              "An account with this email already exists.",
-          }));
-        } else {
-          console.error(
-            "SIGNUP ERROR:",
-            authError
-          );
-
-          setGeneralError(
-            "We couldn't create your account right now. Please try again."
-          );
-        }
+      if (
+        !navigator.mediaDevices ||
+        !navigator.mediaDevices.getUserMedia
+      ) {
+        alert(
+          "Your browser does not support camera access."
+        );
 
         return;
       }
 
-      const user = authData?.user;
-
-      if (user) {
-        const {
-          error: profileError,
-        } = await supabase
-          .from("profiles")
-          .insert([
-            {
-              id: user.id,
-              username: cleanUsername,
-              display_name: cleanUsername,
+      const stream =
+        await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: {
+              ideal: "environment",
             },
-          ]);
-
-        if (profileError) {
-          console.error(
-            "PROFILE CREATION ERROR:",
-            profileError
-          );
-
-          if (
-            profileError.code === "23505" ||
-            profileError.message?.includes(
-              "unique constraint"
-            )
-          ) {
-            setErrors((prev) => ({
-              ...prev,
-              username:
-                "That username is already taken.",
-            }));
-
-            return;
-          }
-
-          setGeneralError(
-            "Your account was created, but we couldn't create your profile."
-          );
-
-          return;
-        }
-      }
-
-      setIsSubmitted(true);
-    } catch (error) {
-      console.error(
-        "UNEXPECTED SIGNUP ERROR:",
-        error
-      );
-
-      setGeneralError(
-        "An unexpected error occurred. Please check your connection."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ==========================================
-  // GOOGLE SIGNUP
-  // ==========================================
-
-  const handleGoogleSignup = async () => {
-    setGeneralError("");
-    setGoogleLoading(true);
-
-    try {
-      const { error: googleError } =
-        await supabase.auth.signInWithOAuth({
-          provider: "google",
-          options: {
-            redirectTo: `${window.location.origin}/auth/callback?next=/feed`,
           },
+          audio: false,
         });
 
-      if (googleError) {
-        console.error(
-          "GOOGLE SIGNUP ERROR:",
-          googleError
-        );
-
-        setGeneralError(
-          "Could not start Google sign-up. Please try again."
-        );
-
-        setGoogleLoading(false);
-      }
+      setCameraStream(stream);
+      setCameraOpen(true);
     } catch (error) {
       console.error(
-        "UNEXPECTED GOOGLE SIGNUP ERROR:",
+        "CAMERA ERROR:",
         error
       );
 
-      setGeneralError(
-        "Something went wrong while connecting to Google."
+      alert(
+        "Could not access your camera. Please allow camera permission and try again."
       );
-
-      setGoogleLoading(false);
     }
   };
 
   // ==========================================
-  // EMAIL CONFIRMATION SCREEN
+  // CLOSE CAMERA
   // ==========================================
 
-  if (isSubmitted) {
+  const closeCamera = () => {
+    stopCamera();
+    setCameraOpen(false);
+  };
+
+  // ==========================================
+  // TAKE PHOTO
+  // ==========================================
+
+  const takePhoto = () => {
+    const video = videoRef.current;
+
+    if (!video) {
+      return;
+    }
+
+    if (
+      video.videoWidth === 0 ||
+      video.videoHeight === 0
+    ) {
+      alert(
+        "Camera is not ready yet. Please try again."
+      );
+
+      return;
+    }
+
+    const canvas =
+      document.createElement("canvas");
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const context =
+      canvas.getContext("2d");
+
+    if (!context) {
+      return;
+    }
+
+    context.drawImage(
+      video,
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          return;
+        }
+
+        const file = new File(
+          [blob],
+          `drip-camera-${Date.now()}.jpg`,
+          {
+            type: "image/jpeg",
+          }
+        );
+
+        setSelectedImage(file);
+        closeCamera();
+      },
+      "image/jpeg",
+      0.9
+    );
+  };
+
+  // ==========================================
+  // IMAGE SELECT
+  // ==========================================
+
+  const handleImageSelect = (
+    event: ChangeEvent<HTMLInputElement>
+  ) => {
+    const file =
+      event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    setSelectedImage(file);
+
+    // Allow selecting the same file again later.
+    event.target.value = "";
+  };
+
+  // ==========================================
+  // VIDEO SELECT
+  // ==========================================
+
+  const handleVideoSelect = (
+    event: ChangeEvent<HTMLInputElement>
+  ) => {
+    const file =
+      event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    setSelectedVideo(file);
+
+    event.target.value = "";
+  };
+
+  // ==========================================
+  // CREATE POST
+  // ==========================================
+
+  const handlePost = async (
+    event: FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
+
+    if (
+      !post.trim() &&
+      !selectedImage &&
+      !selectedVideo
+    ) {
+      return;
+    }
+
+    if (!user) {
+      return;
+    }
+
+    setPosting(true);
+
+    try {
+      console.log("🚀 CREATING POST");
+
+      // Get the Supabase profile
+      const profile = await syncProfile(user);
+
+      console.log("👤 SUPABASE PROFILE:", profile);
+
+      if (!profile?.id) {
+        throw new Error(
+          "Could not find Supabase profile."
+        );
+      }
+
+      let imageUrl: string | null = null;
+      let videoUrl: string | null = null;
+
+      // ==========================================
+      // UPLOAD IMAGE
+      // ==========================================
+
+      if (selectedImage) {
+        const fileExtension =
+          selectedImage.name
+            .split(".")
+            .pop() || "jpg";
+
+        const filePath =
+          `${profile.id}/${crypto.randomUUID()}.${fileExtension}`;
+
+        console.log(
+          "📸 UPLOADING IMAGE:",
+          filePath
+        );
+
+        const {
+          error: imageUploadError,
+        } = await supabase.storage
+          .from("post-images")
+          .upload(
+            filePath,
+            selectedImage
+          );
+
+        if (imageUploadError) {
+          throw imageUploadError;
+        }
+
+        const {
+          data: imagePublicData,
+        } = supabase.storage
+          .from("post-images")
+          .getPublicUrl(filePath);
+
+        imageUrl =
+          imagePublicData.publicUrl;
+
+        console.log(
+          "✅ IMAGE URL:",
+          imageUrl
+        );
+      }
+
+      // ==========================================
+      // UPLOAD VIDEO
+      // ==========================================
+
+      if (selectedVideo) {
+        const fileExtension =
+          selectedVideo.name
+            .split(".")
+            .pop() || "mp4";
+
+        const filePath =
+          `${profile.id}/${crypto.randomUUID()}.${fileExtension}`;
+
+        console.log(
+          "🎥 UPLOADING VIDEO:",
+          filePath
+        );
+
+        const {
+          error: videoUploadError,
+        } = await supabase.storage
+          .from("post-videos")
+          .upload(
+            filePath,
+            selectedVideo
+          );
+
+        if (videoUploadError) {
+          throw videoUploadError;
+        }
+
+        const {
+          data: videoPublicData,
+        } = supabase.storage
+          .from("post-videos")
+          .getPublicUrl(filePath);
+
+        videoUrl =
+          videoPublicData.publicUrl;
+
+        console.log(
+          "✅ VIDEO URL:",
+          videoUrl
+        );
+      }
+
+      // ==========================================
+      // SAVE POST
+      // ==========================================
+
+      const {
+        data: newPost,
+        error: postError,
+      } = await supabase
+        .from("posts")
+        .insert({
+          user_id: profile.id,
+          text: post.trim() || null,
+          image_url: imageUrl,
+          video_url: videoUrl,
+        })
+        .select(`
+          id,
+          text,
+          image_url,
+          video_url,
+          created_at,
+          user_id,
+          profiles (
+            id,
+            username,
+            display_name,
+            avatar_url
+          )
+        `)
+        .single();
+
+      if (postError) {
+        console.error(
+          "❌ POST DATABASE ERROR:",
+          postError
+        );
+
+        throw postError;
+      }
+
+      console.log(
+        "📝 NEW POST:",
+        newPost
+      );
+
+      // Put the new post immediately at the top
+      if (newPost) {
+        setPosts((currentPosts) => [
+          newPost,
+          ...currentPosts,
+        ]);
+      }
+
+      // Clear composer
+      setPost("");
+      setSelectedImage(null);
+      setSelectedVideo(null);
+
+      console.log(
+        "✅ POST CREATED SUCCESSFULLY"
+      );
+
+    } catch (error) {
+      console.error(
+        "❌ POST CREATION FAILED:",
+        error
+      );
+
+      alert(
+        "Could not create your post. Check the console for details."
+      );
+    } finally {
+      setPosting(false);
+    }
+  };
+
+  // ==========================================
+  // LOGOUT
+  // ==========================================
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+
+    try {
+      await signOut(firebaseAuth);
+
+      router.replace("/login");
+    } catch (error) {
+      console.error(
+        "LOGOUT ERROR:",
+        error
+      );
+
+      setLoggingOut(false);
+    }
+  };
+
+  // ==========================================
+  // AUTH LOADING
+  // ==========================================
+
+  if (authLoading) {
     return (
-      <AuthLayout tagline="Welcome to the council">
-        <div className="w-full bg-zinc-900/60 border border-zinc-800 rounded-2xl p-6 text-center flex flex-col items-center gap-4 animate-fadeIn">
-
-          <div className="w-14 h-14 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-2xl">
-            ✉️
-          </div>
-
-          <div className="space-y-1">
-            <h2 className="text-xl font-bold text-white">
-              Check your email
-            </h2>
-
-            <p className="text-xs text-zinc-400">
-              We sent a confirmation link to:
-            </p>
-
-            <p className="text-sm font-semibold text-white break-all pt-1">
-              {email}
-            </p>
-          </div>
-
-          <p className="text-xs text-zinc-400 leading-relaxed pt-2">
-            Once you confirm your email, you can
-            enter Drip-or-Skip and judge the fits.
-          </p>
-
-          <Link
-            href="/login"
-            className="w-full h-11 mt-2 rounded-xl bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 text-white font-medium text-sm flex items-center justify-center transition-colors"
-          >
-            Back to login
-          </Link>
-
-        </div>
-      </AuthLayout>
+      <main className="min-h-screen bg-black text-white flex items-center justify-center">
+        <p className="text-sm text-zinc-500">
+          Loading...
+        </p>
+      </main>
     );
   }
 
   // ==========================================
-  // SIGNUP PAGE
+  // NO USER
+  // ==========================================
+
+  if (!user) {
+    return null;
+  }
+
+  // ==========================================
+  // FEED
   // ==========================================
 
   return (
-    <AuthLayout>
-      <div className="w-full flex flex-col gap-6">
+    <main className="min-h-screen bg-black text-white">
 
-        {/* HEADER */}
+      {/* ====================================== */}
+      {/* NAVBAR */}
+      {/* ====================================== */}
 
-        <div className="text-center">
-          <h2 className="text-xl font-bold text-white">
-            Create your account
-          </h2>
+      <header className="sticky top-0 z-50 border-b border-zinc-900 bg-black/90 backdrop-blur">
+        <div className="max-w-5xl mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between">
 
-          <p className="text-xs text-zinc-400 mt-1">
-            Join your squad and start judging the fits.
-          </p>
-        </div>
+          {/* LOGO */}
+          <Link
+            href="/feed"
+            className="text-xl font-black tracking-tight"
+          >
+            Drip or Skip
+          </Link>
 
-        {/* ERROR */}
-
-        {generalError && (
-          <div className="p-3.5 rounded-xl bg-red-950/40 border border-red-800/50 text-red-300 text-xs font-medium text-center">
-            {generalError}
-          </div>
-        )}
-
-        {/* GOOGLE */}
-
-        <button
-          type="button"
-          onClick={handleGoogleSignup}
-          disabled={loading || googleLoading}
-          className="w-full h-11 rounded-xl bg-white text-black font-semibold text-sm flex items-center justify-center gap-3 transition-all hover:bg-zinc-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {googleLoading ? (
-            "Connecting to Google..."
-          ) : (
-            <>
-              <span className="text-lg font-bold">
-                G
-              </span>
-
-              Continue with Google
-            </>
-          )}
-        </button>
-
-        {/* DIVIDER */}
-
-        <div className="flex items-center gap-3">
-          <div className="h-px flex-1 bg-zinc-800" />
-
-          <span className="text-[10px] uppercase tracking-wider text-zinc-600">
-            or
-          </span>
-
-          <div className="h-px flex-1 bg-zinc-800" />
-        </div>
-
-        {/* EMAIL SIGNUP */}
-
-        <form
-          onSubmit={handleSignup}
-          noValidate
-          className="flex flex-col gap-4"
-        >
-          <AuthInput
-            id="username"
-            label="Username"
-            placeholder="e.g. stylegod"
-            value={username}
-            onChange={(
-              e: ChangeEvent<HTMLInputElement>
-            ) => setUsername(e.target.value)}
-            autoComplete="username"
-            error={errors.username}
-          />
-
-          <AuthInput
-            id="email"
-            label="Email"
-            type="email"
-            placeholder="you@domain.com"
-            value={email}
-            onChange={(
-              e: ChangeEvent<HTMLInputElement>
-            ) => setEmail(e.target.value)}
-            autoComplete="email"
-            error={errors.email}
-          />
-
-          <AuthInput
-            id="password"
-            label="Password"
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(
-              e: ChangeEvent<HTMLInputElement>
-            ) => setPassword(e.target.value)}
-            autoComplete="new-password"
-            error={errors.password}
-          />
-
-          <div className="pt-2">
-            <AuthButton
-              loading={loading}
-              loadingText="Creating account..."
-            >
-              Create account
-            </AuthButton>
-          </div>
-        </form>
-
-        {/* LOGIN */}
-
-        <div className="text-center pt-2 border-t border-zinc-900">
-          <p className="text-xs text-zinc-400">
-            Already have an account?{" "}
+          {/* NAVIGATION */}
+          <nav className="hidden sm:flex items-center gap-6">
             <Link
-              href="/login"
-              className="font-semibold text-white hover:underline transition-all"
+              href="/feed"
+              className="text-sm text-white font-medium"
             >
-              Log in
+              Feed
             </Link>
-          </p>
+
+            <Link
+              href="/profile"
+              className="text-sm text-zinc-400 hover:text-white transition-colors font-medium"
+            >
+              Profile
+            </Link>
+          </nav>
+
+          {/* USER */}
+          <div className="flex items-center gap-3">
+            <Link href="/profile">
+              <img
+                src={avatar}
+                alt=""
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full object-cover border border-zinc-800 hover:border-zinc-500 transition-colors"
+              />
+            </Link>
+
+            <div className="hidden sm:block text-right">
+              <p className="text-sm font-semibold">
+                {displayName}
+              </p>
+
+              <p className="text-[11px] text-zinc-500">
+                {user.email}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={loggingOut}
+              className="text-xs text-zinc-400 hover:text-white transition-colors disabled:opacity-50 ml-1"
+            >
+              {loggingOut
+                ? "Logging out..."
+                : "Log out"}
+            </button>
+          </div>
+
         </div>
+      </header>
+
+      {/* ====================================== */}
+      {/* FEED CONTENT */}
+      {/* ====================================== */}
+
+      <div className="max-w-2xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
+
+        {/* WELCOME */}
+
+        <section className="mb-6 sm:mb-8">
+          <h1 className="text-xl sm:text-2xl font-bold">
+            Welcome back,{" "}
+            {displayName.split(" ")[0]}.
+          </h1>
+
+          <p className="text-sm text-zinc-500 mt-1">
+            See what the council is talking about.
+          </p>
+        </section>
+
+        {/* ==================================== */}
+        {/* CREATE POST */}
+        {/* ==================================== */}
+
+        <section className="rounded-2xl border border-zinc-800 bg-zinc-950 p-3 sm:p-4 mb-6">
+
+          <div className="flex gap-3">
+
+            <img
+              src={avatar}
+              alt=""
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover shrink-0"
+            />
+
+            <form
+              onSubmit={handlePost}
+              className="flex-1 min-w-0"
+            >
+
+              <textarea
+                value={post}
+                onChange={(e) =>
+                  setPost(e.target.value)
+                }
+                placeholder="What's on your mind?"
+                rows={3}
+                disabled={posting}
+                className="w-full resize-none bg-transparent outline-none text-sm text-white placeholder:text-zinc-600 disabled:opacity-50"
+              />
+
+              {/* IMAGE PREVIEW */}
+
+              {selectedImage && (
+                <div className="mt-3 relative rounded-xl overflow-hidden border border-zinc-800">
+
+                  <img
+                    src={URL.createObjectURL(
+                      selectedImage
+                    )}
+                    alt="Selected"
+                    className="w-full max-h-80 object-cover"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSelectedImage(null)
+                    }
+                    disabled={posting}
+                    className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/80 text-white flex items-center justify-center text-sm"
+                  >
+                    ×
+                  </button>
+
+                </div>
+              )}
+
+              {/* VIDEO PREVIEW */}
+
+              {selectedVideo && (
+                <div className="mt-3 relative rounded-xl overflow-hidden border border-zinc-800">
+
+                  <video
+                    src={URL.createObjectURL(
+                      selectedVideo
+                    )}
+                    controls
+                    className="w-full max-h-80"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSelectedVideo(null)
+                    }
+                    disabled={posting}
+                    className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/80 text-white flex items-center justify-center text-sm"
+                  >
+                    ×
+                  </button>
+
+                </div>
+              )}
+
+              {/* ACTION BAR */}
+
+              <div className="flex items-center justify-between gap-2 pt-3 mt-2 border-t border-zinc-900">
+
+                <div className="flex items-center gap-1 sm:gap-2">
+
+                  {/* PHOTO */}
+
+                  <label
+                    htmlFor="post-image"
+                    className="flex items-center justify-center gap-2 px-2.5 sm:px-3 py-2 rounded-xl text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 cursor-pointer transition-all"
+                  >
+                    <svg
+                      width="17"
+                      height="17"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect
+                        x="3"
+                        y="3"
+                        width="18"
+                        height="18"
+                        rx="2"
+                      />
+
+                      <circle
+                        cx="8.5"
+                        cy="8.5"
+                        r="1.5"
+                      />
+
+                      <path d="m21 15-5-5L5 21" />
+                    </svg>
+
+                    <span className="hidden sm:inline">
+                      Photo
+                    </span>
+                  </label>
+
+                  <input
+                    id="post-image"
+                    type="file"
+                    accept="image/*"
+                    disabled={posting}
+                    className="hidden"
+                    onChange={handleImageSelect}
+                  />
+
+                  {/* VIDEO */}
+
+                  <label
+                    htmlFor="post-video"
+                    className="flex items-center justify-center gap-2 px-2.5 sm:px-3 py-2 rounded-xl text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 cursor-pointer transition-all"
+                  >
+                    <svg
+                      width="17"
+                      height="17"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect
+                        x="3"
+                        y="5"
+                        width="13"
+                        height="14"
+                        rx="2"
+                      />
+
+                      <path d="m16 10 5-3v10l-5-3z" />
+                    </svg>
+
+                    <span className="hidden sm:inline">
+                      Video
+                    </span>
+                  </label>
+
+                  <input
+                    id="post-video"
+                    type="file"
+                    accept="video/*"
+                    disabled={posting}
+                    className="hidden"
+                    onChange={handleVideoSelect}
+                  />
+
+                  {/* CAMERA */}
+
+                  <button
+                    type="button"
+                    onClick={openCamera}
+                    disabled={posting}
+                    className="flex items-center justify-center gap-2 px-2.5 sm:px-3 py-2 rounded-xl text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 transition-all disabled:opacity-50"
+                  >
+                    <svg
+                      width="17"
+                      height="17"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M14.5 4h-5L7.5 7H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2.5z" />
+
+                      <circle
+                        cx="12"
+                        cy="13"
+                        r="3"
+                      />
+                    </svg>
+
+                    <span className="hidden sm:inline">
+                      Camera
+                    </span>
+                  </button>
+
+                </div>
+
+                {/* POST BUTTON */}
+
+                <button
+                  type="submit"
+                  disabled={
+                    posting ||
+                    (!post.trim() &&
+                      !selectedImage &&
+                      !selectedVideo)
+                  }
+                  className="px-4 sm:px-5 py-2 rounded-xl bg-white text-black text-xs font-bold transition-all hover:bg-zinc-200 disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
+                >
+                  {posting ? "Posting..." : "Post"}
+                </button>
+
+              </div>
+
+            </form>
+          </div>
+        </section>
+
+        {/* ==================================== */}
+        {/* FEED */}
+        {/* ==================================== */}
+
+        <section>
+          {feedLoading ? (
+            <div className="py-10 text-center text-zinc-500">
+              Loading your feed...
+            </div>
+          ) : posts.length === 0 ? (
+            <div className="rounded-2xl border border-zinc-900 bg-zinc-950 p-8 text-center">
+              <h2 className="font-semibold">
+                Your feed is empty
+              </h2>
+
+              <p className="text-sm text-zinc-500 mt-2">
+                Follow some people or create a post
+                to get things moving.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {posts.map((post) => (
+                <PostCard
+                  key={post.id}
+                  post={post}
+                />
+              ))}
+            </div>
+          )}
+        </section>
 
       </div>
-    </AuthLayout>
+
+      {/* ====================================== */}
+      {/* CAMERA MODAL */}
+      {/* ====================================== */}
+
+      {cameraOpen && (
+        <div className="fixed inset-0 z-[100] bg-black flex flex-col">
+
+          {/* CAMERA HEADER */}
+
+          <div className="flex items-center justify-between px-4 py-4 border-b border-zinc-900">
+
+            <h2 className="font-semibold">
+              Camera
+            </h2>
+
+            <button
+              type="button"
+              onClick={closeCamera}
+              className="w-9 h-9 rounded-full bg-zinc-900 flex items-center justify-center text-xl"
+            >
+              ×
+            </button>
+
+          </div>
+
+          {/* CAMERA VIEW */}
+
+          <div className="flex-1 flex items-center justify-center bg-black p-4">
+
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="w-full max-w-2xl max-h-full rounded-2xl object-contain"
+            />
+
+          </div>
+
+          {/* CAMERA CONTROLS */}
+
+          <div className="p-6 flex justify-center border-t border-zinc-900">
+
+            <button
+              type="button"
+              onClick={takePhoto}
+              className="w-16 h-16 rounded-full bg-white border-4 border-zinc-400 shadow-lg active:scale-95 transition-transform"
+              aria-label="Take photo"
+            />
+
+          </div>
+
+        </div>
+      )}
+
+      <BottomNav/>
+
+    </main>
   );
 }

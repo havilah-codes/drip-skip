@@ -1,98 +1,43 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
+import { ArrowLeft, Camera, Loader2 } from "lucide-react";
+
+import {
+  onAuthStateChanged,
+  type User,
+} from "firebase/auth";
+
+import { firebaseAuth } from "@/lib/firebase";
 import { supabase } from "@/lib/supabase";
+import { syncProfile } from "@/lib/syncProfile";
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
-
-function compressAvatar(file: File): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    const image = document.createElement("img");
-    const objectUrl = URL.createObjectURL(file);
-
-    image.onload = () => {
-      URL.revokeObjectURL(objectUrl);
-
-      const maxSize = 800;
-
-      let width = image.naturalWidth;
-      let height = image.naturalHeight;
-
-      if (width > maxSize || height > maxSize) {
-        const scale = Math.min(
-          maxSize / width,
-          maxSize / height
-        );
-
-        width = Math.round(width * scale);
-        height = Math.round(height * scale);
-      }
-
-      const canvas = document.createElement("canvas");
-
-      canvas.width = width;
-      canvas.height = height;
-
-      const context = canvas.getContext("2d");
-
-      if (!context) {
-        reject(new Error("Could not create canvas."));
-        return;
-      }
-
-      context.drawImage(
-        image,
-        0,
-        0,
-        width,
-        height
-      );
-
-      canvas.toBlob(
-        (blob) => {
-          if (!blob) {
-            reject(
-              new Error("Could not compress image.")
-            );
-            return;
-          }
-
-          resolve(blob);
-        },
-        "image/jpeg",
-        0.85
-      );
-    };
-
-    image.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
-      reject(
-        new Error("Could not load image.")
-      );
-    };
-
-    image.src = objectUrl;
-  });
-}
-
-export default function ProfilePage() {
+export default function EditProfilePage() {
   const router = useRouter();
 
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] =
+    useState<User | null>(null);
 
-  const [username, setUsername] = useState("");
-  const [displayName, setDisplayName] = useState("");
+  const [profileId, setProfileId] =
+    useState<string | null>(null);
 
-  const [selectedFile, setSelectedFile] =
+  const [displayName, setDisplayName] =
+    useState("");
+
+  const [username, setUsername] =
+    useState("");
+
+  const [avatarUrl, setAvatarUrl] =
+    useState("/default-avatar.png");
+
+  const [selectedAvatar, setSelectedAvatar] =
     useState<File | null>(null);
-
-  const [previewUrl, setPreviewUrl] =
-    useState("");
-
-  const [existingAvatar, setExistingAvatar] =
-    useState("");
 
   const [loading, setLoading] =
     useState(true);
@@ -103,195 +48,193 @@ export default function ProfilePage() {
   const [error, setError] =
     useState("");
 
+  // ==========================================
+  // LOAD PROFILE
+  // ==========================================
+
   useEffect(() => {
-    loadProfile();
+    const unsubscribe =
+      onAuthStateChanged(
+        firebaseAuth,
+        async (currentUser) => {
+          if (!currentUser) {
+            router.replace("/login");
+            return;
+          }
 
-    return () => {
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
-    };
-  }, []);
+          try {
+            setUser(currentUser);
 
-  async function loadProfile() {
-    try {
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
+            const profile =
+              await syncProfile(
+                currentUser
+              );
 
-      if (userError || !user) {
-        router.replace("/login");
-        return;
-      }
+            if (!profile) {
+              throw new Error(
+                "Could not load your profile."
+              );
+            }
 
-      setUser(user);
+            setProfileId(profile.id);
 
-      const {
-        data: profile,
-        error: profileError,
-      } = await supabase
-        .from("profiles")
-        .select(
-          "username, display_name, avatar_url"
-        )
-        .eq("id", user.id)
-        .maybeSingle();
+            setDisplayName(
+              profile.display_name || ""
+            );
 
-      if (profileError) {
-        console.error(
-          "PROFILE LOAD ERROR:",
-          profileError
-        );
+            setUsername(
+              profile.username || ""
+            );
 
-        setError(
-          "Couldn't load your profile."
-        );
+            setAvatarUrl(
+              profile.avatar_url ||
+                "/default-avatar.png"
+            );
+          } catch (err) {
+            console.error(
+              "❌ EDIT PROFILE LOAD ERROR:",
+              err
+            );
 
-        return;
-      }
-
-      if (profile) {
-        setUsername(profile.username || "");
-        setDisplayName(
-          profile.display_name || ""
-        );
-        setExistingAvatar(
-          profile.avatar_url || ""
-        );
-      }
-    } catch (err) {
-      console.error(
-        "PROFILE LOAD ERROR:",
-        err
+            setError(
+              "Could not load your profile."
+            );
+          } finally {
+            setLoading(false);
+          }
+        }
       );
 
-      setError(
-        "Something went wrong."
-      );
-    } finally {
-      setLoading(false);
-    }
-  }
+    return () => unsubscribe();
+  }, [router]);
 
-  function handleFileChange(
-    e: ChangeEvent<HTMLInputElement>
-  ) {
-    setError("");
+  // ==========================================
+  // AVATAR SELECT
+  // ==========================================
 
-    const file = e.target.files?.[0];
+  const handleAvatarSelect = (
+    event: ChangeEvent<HTMLInputElement>
+  ) => {
+    const file =
+      event.target.files?.[0];
 
-    if (!file) return;
-
-    const allowedTypes = [
-      "image/jpeg",
-      "image/png",
-      "image/webp",
-    ];
-
-    if (!allowedTypes.includes(file.type)) {
-      setError(
-        "Please choose a JPG, PNG, or WEBP image."
-      );
-
-      e.target.value = "";
+    if (!file) {
       return;
     }
 
-    if (file.size > MAX_FILE_SIZE) {
+    // Basic size protection
+    if (file.size > 5 * 1024 * 1024) {
       setError(
-        "Your profile picture must be under 5 MB."
+        "Profile pictures must be smaller than 5MB."
       );
 
-      e.target.value = "";
+      event.target.value = "";
       return;
     }
 
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
+    setError("");
+    setSelectedAvatar(file);
+
+    event.target.value = "";
+  };
+
+  // ==========================================
+  // SAVE PROFILE
+  // ==========================================
+
+  const handleSave = async (
+    event: FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
+
+    if (!user || !profileId) {
+      return;
     }
 
-    const newPreview =
-      URL.createObjectURL(file);
-
-    setSelectedFile(file);
-    setPreviewUrl(newPreview);
-  }
-
-  async function handleSubmit(
-    e: FormEvent
-  ) {
-    e.preventDefault();
-
-    if (!user || saving) return;
-
     setError("");
+
+    const cleanDisplayName =
+      displayName.trim();
+
+    const cleanUsername =
+      username
+        .trim()
+        .toLowerCase();
+
+    // ==========================================
+    // VALIDATION
+    // ==========================================
+
+    if (!cleanDisplayName) {
+      setError(
+        "Display name cannot be empty."
+      );
+
+      return;
+    }
+
+    if (!cleanUsername) {
+      setError(
+        "Username cannot be empty."
+      );
+
+      return;
+    }
+
+    if (
+      !/^[a-z0-9_.]{3,30}$/.test(
+        cleanUsername
+      )
+    ) {
+      setError(
+        "Username must be 3–30 characters and can only contain letters, numbers, _ and ."
+      );
+
+      return;
+    }
+
     setSaving(true);
 
     try {
-      let avatarUrl = existingAvatar;
+      let newAvatarUrl =
+        avatarUrl ===
+        "/default-avatar.png"
+          ? null
+          : avatarUrl;
 
-      // ----------------------------------------
+      // ==========================================
       // UPLOAD NEW AVATAR
-      // ----------------------------------------
+      // ==========================================
 
-      if (selectedFile) {
-        console.log(
-          "PROFILE: COMPRESSING AVATAR"
-        );
-
-        const compressedAvatar =
-          await compressAvatar(selectedFile);
-
-        const timestamp = Date.now();
-
-        const randomString =
-          Math.random()
-            .toString(36)
-            .substring(2, 9);
+      if (selectedAvatar) {
+        const extension =
+          selectedAvatar.name
+            .split(".")
+            .pop() || "jpg";
 
         const filePath =
-          `${user.id}/${timestamp}-${randomString}.jpg`;
+          `${profileId}/${crypto.randomUUID()}.${extension}`;
 
         console.log(
-          "PROFILE: UPLOADING AVATAR",
+          "📸 UPLOADING AVATAR:",
           filePath
         );
 
         const {
-          data: uploadData,
           error: uploadError,
         } = await supabase.storage
           .from("avatars")
           .upload(
             filePath,
-            compressedAvatar,
+            selectedAvatar,
             {
-              cacheControl: "3600",
               upsert: false,
-              contentType: "image/jpeg",
             }
           );
 
         if (uploadError) {
-          console.error(
-            "AVATAR UPLOAD ERROR:",
-            uploadError.message
-          );
-
-          throw new Error(
-            "Could not upload profile picture."
-          );
+          throw uploadError;
         }
-
-        console.log(
-          "PROFILE: AVATAR UPLOADED",
-          uploadData.path
-        );
-
-        // --------------------------------------
-        // GET PUBLIC URL
-        // --------------------------------------
 
         const {
           data: publicUrlData,
@@ -299,252 +242,289 @@ export default function ProfilePage() {
           .from("avatars")
           .getPublicUrl(filePath);
 
-        avatarUrl =
+        newAvatarUrl =
           publicUrlData.publicUrl;
 
-        if (!avatarUrl) {
-          throw new Error(
-            "Could not generate avatar URL."
-          );
-        }
+        console.log(
+          "✅ NEW AVATAR:",
+          newAvatarUrl
+        );
       }
 
-      // ----------------------------------------
+      // ==========================================
       // UPDATE PROFILE
-      // ----------------------------------------
-
-      console.log(
-        "PROFILE: UPDATING PROFILE"
-      );
+      // ==========================================
 
       const {
-        error: profileError,
+        data: updatedProfile,
+        error: updateError,
       } = await supabase
         .from("profiles")
         .update({
-          username:
-            username.trim(),
           display_name:
-            displayName.trim() || null,
+            cleanDisplayName,
+          username:
+            cleanUsername,
           avatar_url:
-            avatarUrl || null,
+            newAvatarUrl,
         })
-        .eq("id", user.id);
+        .eq(
+          "id",
+          profileId
+        )
+        .select()
+        .single();
 
-      if (profileError) {
-        console.error(
-          "PROFILE UPDATE ERROR:",
-          {
-            message: profileError.message,
-            details: profileError.details,
-            hint: profileError.hint,
-            code: profileError.code,
-          }
-        );
-
-        throw new Error(
-          "Could not update your profile."
-        );
+      if (updateError) {
+        throw updateError;
       }
 
       console.log(
-        "PROFILE: SUCCESS"
+        "✅ PROFILE UPDATED:",
+        updatedProfile
       );
 
-      router.push("/feed");
-      router.refresh();
+      // ==========================================
+      // GO BACK TO PROFILE
+      // ==========================================
 
-    } catch (err) {
+      router.replace(
+        `/profile/${updatedProfile.username}`
+      );
+
+      router.refresh();
+    } catch (err: any) {
       console.error(
-        "PROFILE SAVE ERROR:",
+        "❌ PROFILE UPDATE ERROR:",
         err
       );
 
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Something went wrong."
-      );
-
+      if (
+        err?.code === "23505"
+      ) {
+        setError(
+          "That username is already taken."
+        );
+      } else {
+        setError(
+          err?.message ||
+            "Could not update your profile."
+        );
+      }
+    } finally {
       setSaving(false);
     }
-  }
+  };
+
+  // ==========================================
+  // PREVIEW
+  // ==========================================
+
+  const previewAvatar =
+    selectedAvatar
+      ? URL.createObjectURL(
+          selectedAvatar
+        )
+      : avatarUrl;
+
+  // ==========================================
+  // LOADING
+  // ==========================================
 
   if (loading) {
     return (
       <main className="min-h-screen bg-black text-white flex items-center justify-center">
-        <p className="text-sm text-zinc-500">
-          Loading profile...
-        </p>
+        <Loader2
+          size={24}
+          className="animate-spin text-zinc-500"
+        />
       </main>
     );
   }
 
-  const displayedAvatar =
-    previewUrl || existingAvatar;
-
   return (
     <main className="min-h-screen bg-black text-white">
 
-        
+      {/* ====================================== */}
+      {/* HEADER */}
+      {/* ====================================== */}
 
-      <div className="mx-auto max-w-md px-6 py-10">
+      <header className="sticky top-0 z-40 border-b border-zinc-900 bg-black/85 backdrop-blur-xl">
 
-        <button
+        <div className="max-w-2xl mx-auto px-4 h-14 flex items-center">
+
+          <button
+            type="button"
             onClick={() =>
-              router.push("/feed")
+              router.back()
             }
-            className="text-xl"
+            className="w-9 h-9 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-900 transition-all"
           >
-            ← Back
-        </button>
+            <ArrowLeft size={19} />
+          </button>
 
-        {/* HEADER */}
-
-        <div className="mb-10 text-center">
-
-          <h1 className="text-3xl font-black">
-            Your Profile
+          <h1 className="ml-3 font-semibold">
+            Edit Profile
           </h1>
-
-          <p className="mt-2 text-sm text-zinc-500">
-            Show everyone who's behind the drip.
-          </p>
 
         </div>
 
+      </header>
+
+      {/* ====================================== */}
+      {/* CONTENT */}
+      {/* ====================================== */}
+
+      <div className="max-w-2xl mx-auto px-4 py-8 pb-28">
+
         <form
-          onSubmit={handleSubmit}
-          className="space-y-7"
+          onSubmit={handleSave}
+          className="space-y-8"
         >
 
+          {/* ==================================== */}
           {/* AVATAR */}
+          {/* ==================================== */}
 
-          <div className="flex justify-center">
+          <section className="flex flex-col items-center">
 
-            <label className="group relative cursor-pointer">
+            <div className="relative">
 
-              <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-full bg-zinc-900 ring-2 ring-zinc-800">
-
-                {displayedAvatar ? (
-                  <Image
-                    src={displayedAvatar}
-                    alt="Profile picture"
-                    width={128}
-                    height={128}
-                    unoptimized
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <span className="text-5xl">
-                    👤
-                  </span>
-                )}
-
-              </div>
-
-              <div className="absolute bottom-1 right-1 flex h-9 w-9 items-center justify-center rounded-full bg-white text-lg text-black shadow-lg">
-                +
-              </div>
-
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={handleFileChange}
-                className="hidden"
+              <img
+                src={previewAvatar}
+                alt="Profile"
+                className="w-28 h-28 rounded-full object-cover border-4 border-zinc-900 bg-zinc-950"
               />
 
-            </label>
+              <label
+                htmlFor="avatar"
+                className="absolute bottom-0 right-0 w-10 h-10 rounded-full bg-white text-black flex items-center justify-center cursor-pointer shadow-xl hover:bg-zinc-200 transition-colors"
+              >
+                <Camera size={18} />
 
-          </div>
+                <input
+                  id="avatar"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={
+                    handleAvatarSelect
+                  }
+                />
+              </label>
 
-          <p className="text-center text-xs text-zinc-500">
-            Tap your photo to change it
-          </p>
+            </div>
 
-          {/* USERNAME */}
+            <p className="text-xs text-zinc-500 mt-3">
+              Change profile photo
+            </p>
 
-          <div>
+          </section>
 
-            <label
-              htmlFor="username"
-              className="mb-2 block text-sm font-semibold"
-            >
-              Username
-            </label>
+          {/* ==================================== */}
+          {/* FORM */}
+          {/* ==================================== */}
 
-            <div className="flex items-center rounded-2xl border border-zinc-800 bg-zinc-950 px-4">
-              <span className="text-zinc-500">
-                @
-              </span>
+          <section className="space-y-5">
+
+            {/* DISPLAY NAME */}
+
+            <div>
+              <label
+                htmlFor="display-name"
+                className="block text-sm font-medium mb-2"
+              >
+                Display name
+              </label>
 
               <input
-                id="username"
-                value={username}
-                onChange={(e) =>
-                  setUsername(
-                    e.target.value
-                      .toLowerCase()
-                      .replace(
-                        /[^a-z0-9_]/g,
-                        ""
-                      )
+                id="display-name"
+                value={displayName}
+                onChange={(event) =>
+                  setDisplayName(
+                    event.target.value
                   )
                 }
-                maxLength={30}
-                required
-                className="w-full bg-transparent px-2 py-4 outline-none"
-                placeholder="username"
+                maxLength={50}
+                className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm outline-none focus:border-zinc-500 transition-colors"
+                placeholder="Your name"
               />
             </div>
 
-          </div>
+            {/* USERNAME */}
 
-          {/* DISPLAY NAME */}
+            <div>
+              <label
+                htmlFor="username"
+                className="block text-sm font-medium mb-2"
+              >
+                Username
+              </label>
 
-          <div>
+              <div className="relative">
 
-            <label
-              htmlFor="displayName"
-              className="mb-2 block text-sm font-semibold"
-            >
-              Display name
-            </label>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600">
+                  @
+                </span>
 
-            <input
-              id="displayName"
-              value={displayName}
-              onChange={(e) =>
-                setDisplayName(e.target.value)
-              }
-              maxLength={50}
-              className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-4 outline-none focus:border-zinc-500"
-              placeholder="Your name"
-            />
+                <input
+                  id="username"
+                  value={username}
+                  onChange={(event) =>
+                    setUsername(
+                      event.target.value
+                        .toLowerCase()
+                        .replace(
+                          /[^a-z0-9_.]/g,
+                          ""
+                        )
+                    )
+                  }
+                  maxLength={30}
+                  className="w-full rounded-xl border border-zinc-800 bg-zinc-950 pl-9 pr-4 py-3 text-sm outline-none focus:border-zinc-500 transition-colors"
+                  placeholder="username"
+                />
 
-          </div>
+              </div>
 
+              <p className="text-xs text-zinc-600 mt-2">
+                3–30 characters · letters,
+                numbers, _ and .
+              </p>
+            </div>
+
+          </section>
+
+          {/* ==================================== */}
           {/* ERROR */}
+          {/* ==================================== */}
 
           {error && (
-            <div className="rounded-2xl bg-red-950/50 px-4 py-3 text-sm text-red-400">
+            <div className="rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
               {error}
             </div>
           )}
 
+          {/* ==================================== */}
           {/* SAVE */}
+          {/* ==================================== */}
 
           <button
             type="submit"
-            disabled={
-              saving ||
-              !username.trim()
-            }
-            className="w-full rounded-2xl bg-white px-5 py-4 font-bold text-black transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+            disabled={saving}
+            className="w-full rounded-xl bg-white text-black py-3.5 text-sm font-bold hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
-            {saving
-              ? "Saving..."
-              : "Save Profile"}
+            {saving ? (
+              <span className="flex items-center justify-center gap-2">
+                <Loader2
+                  size={17}
+                  className="animate-spin"
+                />
+                Saving...
+              </span>
+            ) : (
+              "Save changes"
+            )}
           </button>
 
         </form>

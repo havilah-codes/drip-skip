@@ -1,489 +1,251 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
+import { ArrowLeft, Settings, Grid3X3 } from "lucide-react";
+import BottomNav from "@/components/BottomNav";
+
+import { onAuthStateChanged, type User } from "firebase/auth";
+import { firebaseAuth } from "@/lib/firebase";
 import { supabase } from "@/lib/supabase";
+import { syncProfile } from "@/lib/syncProfile";
+import PostCard, { type Post } from "@/components/PostCard";
 
-interface Profile {
+type Profile = {
   id: string;
+  firebase_uid: string;
   username: string;
-  display_name: string | null;
+  display_name: string;
   avatar_url: string | null;
-}
-
-interface Fit {
-  id: string;
-  user_id: string;
-  image_url: string;
-  caption: string | null;
-  created_at: string;
-}
+};
 
 export default function ProfilePage() {
   const router = useRouter();
 
-  const [user, setUser] = useState<any>(null);
-  const [profile, setProfile] =
-    useState<Profile | null>(null);
-
-  const [fits, setFits] = useState<Fit[]>([]);
-
-  const [dripCount, setDripCount] =
-    useState(0);
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [error, setError] =
-    useState("");
-
-  // ==========================================
-  // LOAD PROFILE
-  // ==========================================
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [totalDrips, setTotalDrips] = useState(0);
+  const [totalSkips, setTotalSkips] = useState(0);
+  const [avatarError, setAvatarError] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadProfile();
-  }, []);
+    let isMounted = true;
 
-  async function loadProfile() {
-    try {
-      setLoading(true);
-      setError("");
-
-      // ----------------------------------------
-      // GET USER
-      // ----------------------------------------
-
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-
-      if (userError || !user) {
-        router.replace("/login");
-        return;
-      }
-
-      setUser(user);
-
-      // ----------------------------------------
-      // GET PROFILE
-      // ----------------------------------------
-
-      const {
-        data: profileData,
-        error: profileError,
-      } = await supabase
-        .from("profiles")
-        .select(
-          "id, username, display_name, avatar_url"
-        )
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (profileError) {
-        console.error(
-          "PROFILE LOAD ERROR:",
-          profileError
-        );
-
-        setError(
-          "Couldn't load your profile."
-        );
-
-        return;
-      }
-
-      if (!profileData) {
-        setError(
-          "Profile not found."
-        );
-
-        return;
-      }
-
-      setProfile(profileData);
-
-      // ----------------------------------------
-      // GET USER'S FITS
-      // ----------------------------------------
-
-      const {
-        data: fitsData,
-        error: fitsError,
-      } = await supabase
-        .from("fits")
-        .select(
-          "id, user_id, image_url, caption, created_at"
-        )
-        .eq("user_id", user.id)
-        .order("created_at", {
-          ascending: false,
-        });
-
-      if (fitsError) {
-        console.error(
-          "FITS LOAD ERROR:",
-          fitsError
-        );
-      } else {
-        setFits(fitsData || []);
-      }
-
-      // ----------------------------------------
-      // GET TOTAL DRIPS
-      // ----------------------------------------
-
-      if (fitsData && fitsData.length > 0) {
-        const fitIds = fitsData.map(
-          (fit) => fit.id
-        );
-
-        const {
-          data: voteData,
-          error: voteError,
-        } = await supabase
-          .from("votes")
-          .select("fit_id, vote")
-          .in("fit_id", fitIds)
-          .eq("vote", "drip");
-
-        if (voteError) {
-          console.error(
-            "DRIP COUNT ERROR:",
-            voteError
-          );
-        } else {
-          setDripCount(
-            voteData?.length || 0
-          );
+    const unsubscribe = onAuthStateChanged(
+      firebaseAuth,
+      async (currentUser) => {
+        if (!currentUser) {
+          router.replace("/login");
+          return;
         }
-      } else {
-        setDripCount(0);
+
+        try {
+          setUser(currentUser);
+
+          // Make sure the Supabase profile exists
+          const syncedProfile = await syncProfile(currentUser);
+
+          if (!isMounted) return;
+          setProfile(syncedProfile);
+
+          if (!syncedProfile?.id) {
+            setLoading(false);
+            return;
+          }
+
+          // Load user's posts
+          const { data: postsData, error: postsError } = await supabase
+            .from("posts")
+            .select(
+              `
+              id,
+              user_id,
+              text,
+              image_url,
+              video_url,
+              created_at,
+              profiles (
+                id,
+                username,
+                display_name,
+                avatar_url
+              )
+            `
+            )
+            .eq("user_id", syncedProfile.id)
+            .order("created_at", { ascending: false });
+
+          if (postsError) {
+            console.error("❌ PROFILE POSTS ERROR:", postsError);
+            if (isMounted) setLoading(false);
+            return;
+          }
+
+          const userPosts = (postsData || []) as Post[];
+
+          if (!isMounted) return;
+          setPosts(userPosts);
+
+          // Load total aggregated votes for user's posts
+          if (userPosts.length > 0) {
+            const postIds = userPosts.map((p) => p.id);
+
+            const { data: votesData, error: votesError } = await supabase
+              .from("votes")
+              .select("vote")
+              .in("fit_id", postIds);
+
+            if (!votesError && votesData && isMounted) {
+              let drips = 0;
+              let skips = 0;
+
+              votesData.forEach((v) => {
+                if (v.vote === "drip") drips++;
+                if (v.vote === "skip") skips++;
+              });
+
+              setTotalDrips(drips);
+              setTotalSkips(skips);
+            }
+          }
+        } catch (error) {
+          console.error("❌ PROFILE LOAD FAILED:", error);
+        } finally {
+          if (isMounted) {
+            setLoading(false);
+          }
+        }
       }
+    );
 
-    } catch (err) {
-      console.error(
-        "PROFILE ERROR:",
-        err
-      );
-
-      setError(
-        "Something went wrong."
-      );
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // ==========================================
-  // LOGOUT
-  // ==========================================
-
-  async function handleSignOut() {
-    await supabase.auth.signOut();
-
-    router.replace("/login");
-  }
-
-  // ==========================================
-  // LOADING
-  // ==========================================
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
+  }, [router]);
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-black text-white">
-        <p className="animate-pulse text-sm text-zinc-500">
-          Loading profile...
-        </p>
+      <main className="min-h-screen bg-black text-white flex items-center justify-center">
+        <p className="text-sm text-zinc-500">Loading profile...</p>
       </main>
     );
   }
 
-  // ==========================================
-  // ERROR
-  // ==========================================
-
-  if (error || !profile) {
-    return (
-      <main className="flex min-h-screen flex-col items-center justify-center bg-black px-6 text-white">
-        <p className="text-sm text-red-400">
-          {error || "Profile not found."}
-        </p>
-
-        <button
-          onClick={() => router.push("/feed")}
-          className="mt-5 rounded-xl bg-white px-5 py-3 text-sm font-bold text-black"
-        >
-          Back to Feed
-        </button>
-      </main>
-    );
+  if (!user || !profile) {
+    return null;
   }
 
-  // ==========================================
-  // PROFILE
-  // ==========================================
+  const avatarSrc =
+    !avatarError && profile.avatar_url
+      ? profile.avatar_url
+      : "/default-avatar.png";
 
   return (
-    <main className="min-h-screen bg-black pb-24 text-white">
-
-      {/* ======================================
-          HEADER
-      ====================================== */}
-
-      <header className="sticky top-0 z-50 border-b border-zinc-900 bg-black/90 backdrop-blur-xl">
-
-        <div className="mx-auto flex max-w-xl items-center justify-between px-5 py-4">
-
+    <main className="min-h-screen bg-black text-white pb-24">
+      {/* HEADER */}
+      <header className="sticky top-0 z-40 border-b border-zinc-900 bg-black/80 backdrop-blur-xl">
+        <div className="max-w-2xl mx-auto h-14 px-4 flex items-center justify-between">
           <button
-            onClick={() =>
-              router.push("/feed")
-            }
-            className="text-xl transition active:scale-90"
+            type="button"
+            onClick={() => router.back()}
+            className="w-9 h-9 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors"
+            aria-label="Go back"
           >
-            ←
+            <ArrowLeft size={20} />
           </button>
 
-          <h1 className="text-base font-bold">
-            Profile
-          </h1>
+          <h1 className="font-semibold">Profile</h1>
 
-          <button
-            onClick={handleSignOut}
-            className="text-xs font-semibold text-zinc-500 transition hover:text-white"
+          <Link
+            href="/settings"
+            className="w-9 h-9 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors"
+            aria-label="Settings"
           >
-            Sign out
-          </button>
-
+            <Settings size={19} />
+          </Link>
         </div>
-
       </header>
 
-      <div className="mx-auto max-w-xl">
+      {/* PROFILE INFO */}
+      <section className="max-w-2xl mx-auto px-4 pt-8">
+        <div className="flex items-center gap-5">
+          <img
+            src={avatarSrc}
+            alt={profile.display_name}
+            onError={() => setAvatarError(true)}
+            className="w-24 h-24 rounded-full object-cover border border-zinc-800"
+          />
 
-        {/* ====================================
-            PROFILE HEADER
-        ==================================== */}
-
-        <section className="px-5 pb-7 pt-8">
-
-          <div className="flex items-center gap-5">
-
-            {/* AVATAR */}
-
-            <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-900 ring-1 ring-zinc-800">
-
-              {profile.avatar_url ? (
-                <img
-                  src={profile.avatar_url}
-                  alt={
-                    profile.username
-                  }
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <span className="text-4xl">
-                  👤
-                </span>
-              )}
-
-            </div>
-
-            {/* STATS */}
-
-            <div className="flex flex-1 justify-around text-center">
-
-              <div>
-                <p className="text-xl font-black">
-                  {fits.length}
-                </p>
-
-                <p className="mt-1 text-xs text-zinc-500">
-                  Fits
-                </p>
-              </div>
-
-              <div>
-                <p className="text-xl font-black">
-                  {dripCount}
-                </p>
-
-                <p className="mt-1 text-xs text-zinc-500">
-                  Drips
-                </p>
-              </div>
-
-            </div>
-
-          </div>
-
-          {/* NAME */}
-
-          <div className="mt-5">
-
-            <h2 className="text-lg font-bold">
-              {profile.display_name ||
-                profile.username}
+          <div className="min-w-0">
+            <h2 className="text-xl font-bold truncate">
+              {profile.display_name}
             </h2>
-
-            <p className="mt-1 text-sm text-zinc-500">
-              @{profile.username}
-            </p>
-
+            <p className="text-sm text-zinc-500 mt-1">@{profile.username}</p>
           </div>
-
-          {/* EDIT BUTTON */}
-
-          <button
-            onClick={() =>
-              router.push(
-                "/profile/edit"
-              )
-            }
-            className="mt-5 w-full rounded-xl border border-zinc-800 bg-zinc-950 py-3 text-sm font-bold transition hover:bg-zinc-900 active:scale-[0.98]"
-          >
-            Edit Profile
-          </button>
-
-        </section>
-
-        {/* ====================================
-            DIVIDER
-        ==================================== */}
-
-        <div className="border-t border-zinc-900" />
-
-        {/* ====================================
-            FITS HEADER
-        ==================================== */}
-
-        <div className="flex items-center justify-center border-b border-zinc-900 py-4">
-
-          <span className="text-xs font-bold uppercase tracking-widest text-white">
-            Fits
-          </span>
-
         </div>
 
-        {/* ====================================
-            FIT GRID
-        ==================================== */}
+        {/* STATS */}
+        <div className="grid grid-cols-3 gap-2 mt-7">
+          <div className="rounded-2xl bg-zinc-950 border border-zinc-900 p-4 text-center">
+            <p className="text-lg font-bold">{posts.length}</p>
+            <p className="text-xs text-zinc-500 mt-1">Posts</p>
+          </div>
 
-        {fits.length === 0 ? (
+          <div className="rounded-2xl bg-zinc-950 border border-zinc-900 p-4 text-center">
+            <p className="text-lg font-bold text-cyan-400">{totalDrips}</p>
+            <p className="text-xs text-zinc-500 mt-1">Drips</p>
+          </div>
 
-          <div className="flex min-h-[40vh] flex-col items-center justify-center px-6 text-center">
+          <div className="rounded-2xl bg-zinc-950 border border-zinc-900 p-4 text-center">
+            <p className="text-lg font-bold text-rose-400">{totalSkips}</p>
+            <p className="text-xs text-zinc-500 mt-1">Skips</p>
+          </div>
+        </div>
 
-            <div className="text-5xl">
-              👕
-            </div>
+        {/* EDIT PROFILE */}
+        <Link
+          href="/profile/edit"
+          className="mt-5 w-full h-11 rounded-xl border border-zinc-800 flex items-center justify-center text-sm font-semibold hover:bg-zinc-900 transition-colors"
+        >
+          Edit Profile
+        </Link>
+      </section>
 
-            <h3 className="mt-4 text-lg font-bold">
-              No fits yet
-            </h3>
+      {/* POSTS LIST */}
+      <section className="max-w-2xl mx-auto px-4 mt-10">
+        <div className="flex items-center gap-2 mb-4">
+          <Grid3X3 size={17} />
+          <h2 className="font-semibold">Posts</h2>
+        </div>
 
-            <p className="mt-2 text-sm text-zinc-500">
-              Post your first fit and
-              let the world decide.
+        {posts.length === 0 ? (
+          <div className="rounded-2xl border border-zinc-900 bg-zinc-950 p-10 text-center">
+            <p className="font-semibold">No posts yet.</p>
+            <p className="text-sm text-zinc-500 mt-2">
+              Share something with the council.
             </p>
 
-            <button
-              onClick={() =>
-                router.push("/create")
-              }
-              className="mt-5 rounded-xl bg-white px-5 py-3 text-sm font-bold text-black"
+            <Link
+              href="/feed"
+              className="inline-flex mt-5 px-5 py-2.5 rounded-xl bg-white text-black text-sm font-bold active:scale-95 transition-all"
             >
-              Post a Fit
-            </button>
-
+              Create a post
+            </Link>
           </div>
-
         ) : (
-
-          <div className="grid grid-cols-3 gap-[2px]">
-
-            {fits.map((fit) => (
-
-              <button
-                key={fit.id}
-                onClick={() =>
-                  router.push(
-                    `/feed?fit=${fit.id}`
-                  )
-                }
-                className="group relative aspect-square overflow-hidden bg-zinc-950"
-              >
-
-                <Image
-                  src={fit.image_url}
-                  alt={
-                    fit.caption ||
-                    "Fit"
-                  }
-                  fill
-                  unoptimized
-                  className="object-cover transition duration-300 group-hover:scale-105"
-                />
-
-                {/* HOVER OVERLAY */}
-
-                <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition group-hover:bg-black/30 group-hover:opacity-100">
-
-                  <span className="text-sm font-bold text-white">
-                    View
-                  </span>
-
-                </div>
-
-              </button>
-
+          <div className="space-y-4">
+            {posts.map((post) => (
+              <PostCard key={post.id} post={post} />
             ))}
-
           </div>
-
         )}
+      </section>
 
-      </div>
-
-      {/* ======================================
-          BOTTOM NAV
-      ====================================== */}
-
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-zinc-900 bg-black/95 backdrop-blur-xl">
-
-        <div className="mx-auto flex max-w-xl items-center justify-around py-3">
-
-          <button
-            onClick={() =>
-              router.push("/feed")
-            }
-            className="text-xl transition active:scale-90"
-          >
-            🏠
-          </button>
-
-          <button
-            onClick={() =>
-              router.push("/create")
-            }
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-xl font-light text-black transition active:scale-90"
-          >
-            +
-          </button>
-
-          <button
-            onClick={() =>
-              router.push("/profile")
-            }
-            className="text-xl transition active:scale-90"
-          >
-            👤
-          </button>
-
-        </div>
-
-      </nav>
+        <BottomNav/>
 
     </main>
   );
