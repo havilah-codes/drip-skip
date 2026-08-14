@@ -168,7 +168,7 @@ export default function FeedPage() {
   }, [user]);
 
   // ==========================================
-  // CONNECT CAMERA STREAM TO VIDEO & DETECT ZOOM
+  // CONNECT CAMERA STREAM & ENHANCE TRACKS
   // ==========================================
 
   useEffect(() => {
@@ -179,17 +179,25 @@ export default function FeedPage() {
     videoRef.current.srcObject = cameraStream;
     videoRef.current.play().catch(() => {});
 
-    // Check hardware zoom limits if supported by browser/device
     const track = cameraStream.getVideoTracks()[0];
     if (track && "getCapabilities" in track) {
       const capabilities = (track as any).getCapabilities();
+      
+      // Hardware zoom limits detection
       if (capabilities.zoom) {
         setMaxZoom(capabilities.zoom.max || 3);
+      }
+
+      // Continuous Autofocus
+      if ("focusMode" in capabilities && capabilities.focusMode?.includes("continuous")) {
+        track.applyConstraints({
+          advanced: [{ focusMode: "continuous" } as any],
+        }).catch(() => {});
       }
     }
   }, [cameraStream]);
 
-  // Handle Zoom change (hardware track constraints or fallback CSS transform)
+  // Handle Zoom change
   const applyZoom = (newZoom: number) => {
     setZoomLevel(newZoom);
 
@@ -237,7 +245,7 @@ export default function FeedPage() {
   }, [cameraStream]);
 
   // ==========================================
-  // START & FLIP CAMERA
+  // START HIGH-QUALITY CAMERA STREAM
   // ==========================================
 
   const startCamera = async (mode: "environment" | "user") => {
@@ -251,14 +259,26 @@ export default function FeedPage() {
         cameraStream.getTracks().forEach((track) => track.stop());
       }
 
+      // High-resolution camera constraint configurations
+      const highQualityVideoConstraints: MediaTrackConstraints = {
+        facingMode: mode,
+        width: { ideal: 3840, min: 1920 },
+        height: { ideal: 2160, min: 1080 },
+        frameRate: { ideal: 60, min: 30 },
+      };
+
       let stream: MediaStream;
 
       try {
         stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { exact: mode } },
-          audio: true,
+          video: highQualityVideoConstraints,
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+          },
         });
       } catch {
+        // Fallback constraint set if max specs fail
         stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: mode },
           audio: true,
@@ -291,7 +311,7 @@ export default function FeedPage() {
   };
 
   // ==========================================
-  // TAKE PHOTO
+  // HIGH-RESOLUTION SNAPSHOT PHOTO
   // ==========================================
 
   const takePhoto = () => {
@@ -306,17 +326,21 @@ export default function FeedPage() {
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
-    const context = canvas.getContext("2d");
+    const context = canvas.getContext("2d", { alpha: false });
     if (!context) return;
+
+    // Smoother canvas downscaling rendering
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = "high";
 
     if (facingMode === "user") {
       context.translate(canvas.width, 0);
       context.scale(-1, 1);
     }
 
-    // Render snapshot
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
+    // Uncompressed JPEG snapshot export
     canvas.toBlob(
       (blob) => {
         if (!blob) return;
@@ -330,25 +354,30 @@ export default function FeedPage() {
         closeCamera();
       },
       "image/jpeg",
-      0.92
+      0.98
     );
   };
 
   // ==========================================
-  // RECORD VIDEO
+  // HIGH-BITRATE VIDEO RECORDING
   // ==========================================
 
   const startRecording = () => {
     if (!cameraStream) return;
 
     recordedChunksRef.current = [];
-    const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9")
-      ? "video/webm;codecs=vp9"
-      : MediaRecorder.isTypeSupported("video/mp4")
+    const mimeType = MediaRecorder.isTypeSupported("video/mp4")
       ? "video/mp4"
+      : MediaRecorder.isTypeSupported("video/webm;codecs=vp9")
+      ? "video/webm;codecs=vp9"
       : "video/webm";
 
-    const mediaRecorder = new MediaRecorder(cameraStream, { mimeType });
+    // High bitrate allocation (8 Mbps) for zero blockiness
+    const mediaRecorder = new MediaRecorder(cameraStream, {
+      mimeType,
+      videoBitsPerSecond: 8000000,
+      audioBitsPerSecond: 128000,
+    });
 
     mediaRecorder.ondataavailable = (event) => {
       if (event.data && event.data.size > 0) {
@@ -369,7 +398,7 @@ export default function FeedPage() {
     };
 
     mediaRecorderRef.current = mediaRecorder;
-    mediaRecorder.start();
+    mediaRecorder.start(1000);
 
     setIsRecording(true);
     setRecordingTime(0);
@@ -437,7 +466,6 @@ export default function FeedPage() {
       let imageUrl: string | null = null;
       let videoUrl: string | null = null;
 
-      // Upload Image
       if (selectedImage) {
         const fileExtension = selectedImage.name.split(".").pop() || "jpg";
         const filePath = `${profile.id}/${crypto.randomUUID()}.${fileExtension}`;
@@ -455,7 +483,6 @@ export default function FeedPage() {
         imageUrl = imagePublicData.publicUrl;
       }
 
-      // Upload Video
       if (selectedVideo) {
         const fileExtension = selectedVideo.name.split(".").pop() || "mp4";
         const filePath = `${profile.id}/${crypto.randomUUID()}.${fileExtension}`;
@@ -473,7 +500,6 @@ export default function FeedPage() {
         videoUrl = videoPublicData.publicUrl;
       }
 
-      // Save Post
       const { data: newPost, error: postError } = await supabase
         .from("posts")
         .insert({
@@ -750,10 +776,7 @@ export default function FeedPage() {
         </section>
       </div>
 
-      {/* ====================================== */}
-      {/* FEATURE-COMPLETE CAMERA MODAL */}
-      {/* ====================================== */}
-
+      {/* CAMERA MODAL */}
       {cameraOpen && (
         <div
           className={`fixed inset-0 z-[100] flex flex-col transition-colors duration-200 ${
@@ -777,7 +800,6 @@ export default function FeedPage() {
             </div>
 
             <div className="flex items-center gap-2">
-              {/* SCREEN LIGHTING TOGGLE */}
               <button
                 type="button"
                 onClick={() => setScreenLight(!screenLight)}
@@ -791,7 +813,6 @@ export default function FeedPage() {
                 <span>{screenLight ? "Light On" : "Light"}</span>
               </button>
 
-              {/* ASPECT RATIO TOGGLE */}
               <button
                 type="button"
                 onClick={() => {
@@ -808,7 +829,6 @@ export default function FeedPage() {
                 {aspectRatio.toUpperCase()}
               </button>
 
-              {/* CLOSE BUTTON */}
               <button
                 type="button"
                 onClick={closeCamera}
@@ -869,7 +889,6 @@ export default function FeedPage() {
               screenLight ? "border-zinc-200 bg-white" : "border-zinc-900 bg-black"
             }`}
           >
-            {/* FLIP CAMERA */}
             <button
               type="button"
               onClick={flipCamera}
@@ -889,7 +908,6 @@ export default function FeedPage() {
               </svg>
             </button>
 
-            {/* SNAPSHOT PHOTO BUTTON */}
             <button
               type="button"
               onClick={takePhoto}
@@ -902,7 +920,6 @@ export default function FeedPage() {
               aria-label="Take photo"
             />
 
-            {/* VIDEO RECORDING BUTTON */}
             <button
               type="button"
               onClick={isRecording ? stopRecording : startRecording}
