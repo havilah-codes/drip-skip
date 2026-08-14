@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { MessageCircle } from 'lucide-react';
+import CommentDrawer from '@/components/CommentDrawer';
 import Link from "next/link";
 import {
   MoreHorizontal,
@@ -30,15 +32,17 @@ export type Post = {
   video_url: string | null;
   created_at: string;
   profiles: Profile | Profile[] | null;
+  comment_count?: number;
 };
 
 type PostCardProps = {
   post: Post;
+  currentProfileId?: string | null;
 };
 
 type VoteType = "drip" | "skip";
 
-export default function PostCard({ post }: PostCardProps) {
+export default function PostCard({ post, currentProfileId: propCurrentProfileId }: PostCardProps) {
   const [imageError, setImageError] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
   const [dripCount, setDripCount] = useState(0);
@@ -46,6 +50,9 @@ export default function PostCard({ post }: PostCardProps) {
   const [userVote, setUserVote] = useState<VoteType | null>(null);
   const [voting, setVoting] = useState(false);
   const [timeAgo, setTimeAgo] = useState<string>("");
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [commentCount, setCommentCount] = useState<number>(post.comment_count || 0);
+  const [currentProfileId, setCurrentProfileId] = useState<string | null>(propCurrentProfileId || null);
 
   // ==========================================
   // PROFILE & TIME
@@ -71,7 +78,7 @@ export default function PostCard({ post }: PostCardProps) {
   }, [post.created_at]);
 
   // ==========================================
-  // LOAD VOTES
+  // LOAD VOTES & PROFILE ID
   // ==========================================
 
   useEffect(() => {
@@ -96,12 +103,13 @@ export default function PostCard({ post }: PostCardProps) {
 
         let drip = 0;
         let skip = 0;
-        let currentSupabaseUserId: string | null = null;
+        let resolvedProfileId: string | null = propCurrentProfileId || null;
 
         if (firebaseUser) {
           try {
             const userProfile = await syncProfile(firebaseUser);
-            currentSupabaseUserId = userProfile?.id || null;
+            resolvedProfileId = userProfile?.id || null;
+            if (isMounted) setCurrentProfileId(resolvedProfileId);
           } catch (error) {
             console.error("PROFILE SYNC ERROR:", error);
           }
@@ -112,8 +120,8 @@ export default function PostCard({ post }: PostCardProps) {
           if (vote.vote === "skip") skip++;
 
           if (
-            currentSupabaseUserId &&
-            vote.user_id === currentSupabaseUserId
+            resolvedProfileId &&
+            vote.user_id === resolvedProfileId
           ) {
             setUserVote(vote.vote as VoteType);
           }
@@ -135,7 +143,7 @@ export default function PostCard({ post }: PostCardProps) {
       isMounted = false;
       unsubscribe();
     };
-  }, [post.id]);
+  }, [post.id, propCurrentProfileId]);
 
   // ==========================================
   // VOTE HANDLER
@@ -378,7 +386,18 @@ export default function PostCard({ post }: PostCardProps) {
       {/* ====================================== */}
       {/* SECONDARY ACTIONS */}
       {/* ====================================== */}
-      <div className="flex items-center justify-end px-3 py-2">
+      <div className="flex items-center justify-between px-3 py-2 border-t border-zinc-900/50 mt-3">
+        <button
+          type="button"
+          onClick={() => setCommentsOpen(true)}
+          className="flex items-center gap-2 px-3 py-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-900 active:scale-95 transition-all"
+        >
+          <MessageCircle size={17} />
+          <span className="text-xs font-medium">
+            {commentCount > 0 ? `${commentCount} ${commentCount === 1 ? 'Comment' : 'Comments'}` : 'Comment'}
+          </span>
+        </button>
+
         <button
           type="button"
           onClick={handleShare}
@@ -389,6 +408,15 @@ export default function PostCard({ post }: PostCardProps) {
           <span className="text-xs font-medium">Share</span>
         </button>
       </div>
+
+      <CommentDrawer
+        postId={post.id}
+        currentProfileId={currentProfileId}
+        isOpen={commentsOpen}
+        onClose={() => setCommentsOpen(false)}
+        onCommentAdded={() => setCommentCount((prev: number) => prev + 1)}
+      />
+
     </article>
   );
 }

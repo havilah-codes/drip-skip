@@ -60,14 +60,27 @@ export default function FeedPage() {
   const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
 
   // ==========================================
-  // CAMERA
+  // CAMERA & RECORDING
   // ==========================================
 
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
 
+  // CAMERA ENHANCEMENTS (Lighting, Zoom, Aspect Ratio)
+  const [screenLight, setScreenLight] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState<number>(1);
+  const [maxZoom, setMaxZoom] = useState<number>(3);
+  const [aspectRatio, setAspectRatio] = useState<"full" | "1:1" | "9:16">("full");
+
+  // Video Recording State
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordedChunksRef = useRef<Blob[]>([]);
+  const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // ==========================================
   // AUTH LISTENER
@@ -77,18 +90,13 @@ export default function FeedPage() {
     const unsubscribe = onAuthStateChanged(
       firebaseAuth,
       async (currentUser) => {
-        console.log("🔥 AUTH STATE:", currentUser);
-
         if (!currentUser) {
           router.replace("/login");
           return;
         }
 
         try {
-          console.log("🔥 CALLING SYNC PROFILE...");
           await syncProfile(currentUser);
-          console.log("✅ PROFILE SYNC FINISHED");
-
           setUser(currentUser);
 
           setDisplayName(
@@ -126,15 +134,11 @@ export default function FeedPage() {
       setPostsLoading(true);
 
       try {
-        console.log("🧠 LOADING SMART FEED");
-
         const profile = await syncProfile(user);
 
         if (!profile?.id) {
           throw new Error("Could not find Supabase profile.");
         }
-
-        console.log("👤 SMART FEED PROFILE:", profile.id);
 
         const smartPosts = await getSmartFeed({
           profileId: profile.id,
@@ -142,12 +146,9 @@ export default function FeedPage() {
         });
 
         if (cancelled) return;
-
-        console.log("🧠 SMART FEED POSTS:", smartPosts);
         setPosts(smartPosts);
       } catch (error) {
         console.error("❌ SMART FEED FAILED:", error);
-
         if (!cancelled) {
           setPosts([]);
         }
@@ -167,7 +168,7 @@ export default function FeedPage() {
   }, [user]);
 
   // ==========================================
-  // CONNECT CAMERA STREAM TO VIDEO
+  // CONNECT CAMERA STREAM TO VIDEO & DETECT ZOOM
   // ==========================================
 
   useEffect(() => {
@@ -177,25 +178,60 @@ export default function FeedPage() {
 
     videoRef.current.srcObject = cameraStream;
     videoRef.current.play().catch(() => {});
+
+    // Check hardware zoom limits if supported by browser/device
+    const track = cameraStream.getVideoTracks()[0];
+    if (track && "getCapabilities" in track) {
+      const capabilities = (track as any).getCapabilities();
+      if (capabilities.zoom) {
+        setMaxZoom(capabilities.zoom.max || 3);
+      }
+    }
   }, [cameraStream]);
+
+  // Handle Zoom change (hardware track constraints or fallback CSS transform)
+  const applyZoom = (newZoom: number) => {
+    setZoomLevel(newZoom);
+
+    if (!cameraStream) return;
+    const track = cameraStream.getVideoTracks()[0];
+
+    if (track && "applyConstraints" in track) {
+      const capabilities = "getCapabilities" in track ? (track as any).getCapabilities() : {};
+      if (capabilities.zoom) {
+        (track as any).applyConstraints({
+          advanced: [{ zoom: newZoom }],
+        }).catch(() => {});
+      }
+    }
+  };
 
   // ==========================================
   // CAMERA CLEANUP
   // ==========================================
 
   const stopCamera = () => {
-    if (!cameraStream) {
-      return;
+    if (cameraStream) {
+      cameraStream.getTracks().forEach((track) => track.stop());
+      setCameraStream(null);
     }
-
-    cameraStream.getTracks().forEach((track) => track.stop());
-    setCameraStream(null);
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
+    setIsRecording(false);
+    setRecordingTime(0);
+    setZoomLevel(1);
+    setScreenLight(false);
   };
 
   useEffect(() => {
     return () => {
       if (cameraStream) {
         cameraStream.getTracks().forEach((track) => track.stop());
+      }
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
       }
     };
   }, [cameraStream]);
@@ -211,7 +247,6 @@ export default function FeedPage() {
         return;
       }
 
-      // Stop existing tracks before requesting new hardware access
       if (cameraStream) {
         cameraStream.getTracks().forEach((track) => track.stop());
       }
@@ -221,21 +256,21 @@ export default function FeedPage() {
       try {
         stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: { exact: mode } },
-          audio: false,
+          audio: true,
         });
       } catch {
-        // Fallback to ideal if exact fails on mobile browsers
         stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: mode },
-          audio: false,
+          audio: true,
         });
       }
 
       setCameraStream(stream);
+      setZoomLevel(1);
       setCameraOpen(true);
     } catch (error) {
       console.error("CAMERA ERROR:", error);
-      alert("Could not access your camera. Please allow camera permissions and try again.");
+      alert("Could not access camera/microphone. Please enable permissions and try again.");
     }
   };
 
@@ -244,6 +279,7 @@ export default function FeedPage() {
   };
 
   const flipCamera = () => {
+    if (isRecording) return;
     const nextMode = facingMode === "environment" ? "user" : "environment";
     setFacingMode(nextMode);
     startCamera(nextMode);
@@ -261,11 +297,7 @@ export default function FeedPage() {
   const takePhoto = () => {
     const video = videoRef.current;
 
-    if (!video) {
-      return;
-    }
-
-    if (video.videoWidth === 0 || video.videoHeight === 0) {
+    if (!video || video.videoWidth === 0 || video.videoHeight === 0) {
       alert("Camera is not ready yet. Please try again.");
       return;
     }
@@ -275,35 +307,93 @@ export default function FeedPage() {
     canvas.height = video.videoHeight;
 
     const context = canvas.getContext("2d");
+    if (!context) return;
 
-    if (!context) {
-      return;
-    }
-
-    // Mirror image on canvas if taking photo with front-facing camera
     if (facingMode === "user") {
       context.translate(canvas.width, 0);
       context.scale(-1, 1);
     }
 
+    // Render snapshot
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
     canvas.toBlob(
       (blob) => {
-        if (!blob) {
-          return;
-        }
+        if (!blob) return;
 
         const file = new File([blob], `drip-camera-${Date.now()}.jpg`, {
           type: "image/jpeg",
         });
 
         setSelectedImage(file);
+        setSelectedVideo(null);
         closeCamera();
       },
       "image/jpeg",
-      0.9
+      0.92
     );
+  };
+
+  // ==========================================
+  // RECORD VIDEO
+  // ==========================================
+
+  const startRecording = () => {
+    if (!cameraStream) return;
+
+    recordedChunksRef.current = [];
+    const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9")
+      ? "video/webm;codecs=vp9"
+      : MediaRecorder.isTypeSupported("video/mp4")
+      ? "video/mp4"
+      : "video/webm";
+
+    const mediaRecorder = new MediaRecorder(cameraStream, { mimeType });
+
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data && event.data.size > 0) {
+        recordedChunksRef.current.push(event.data);
+      }
+    };
+
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(recordedChunksRef.current, { type: mimeType });
+      const extension = mimeType.includes("mp4") ? "mp4" : "webm";
+      const file = new File([blob], `drip-video-${Date.now()}.${extension}`, {
+        type: mimeType,
+      });
+
+      setSelectedVideo(file);
+      setSelectedImage(null);
+      closeCamera();
+    };
+
+    mediaRecorderRef.current = mediaRecorder;
+    mediaRecorder.start();
+
+    setIsRecording(true);
+    setRecordingTime(0);
+
+    timerIntervalRef.current = setInterval(() => {
+      setRecordingTime((prev) => prev + 1);
+    }, 1000);
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
+      setIsRecording(false);
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
   };
 
   // ==========================================
@@ -315,6 +405,7 @@ export default function FeedPage() {
     if (!file) return;
 
     setSelectedImage(file);
+    setSelectedVideo(null);
     event.target.value = "";
   };
 
@@ -323,6 +414,7 @@ export default function FeedPage() {
     if (!file) return;
 
     setSelectedVideo(file);
+    setSelectedImage(null);
     event.target.value = "";
   };
 
@@ -333,25 +425,14 @@ export default function FeedPage() {
   const handlePost = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!post.trim() && !selectedImage && !selectedVideo) {
-      return;
-    }
-
-    if (!user) {
-      return;
-    }
+    if (!post.trim() && !selectedImage && !selectedVideo) return;
+    if (!user) return;
 
     setPosting(true);
 
     try {
-      console.log("🚀 CREATING POST");
-
       const profile = await syncProfile(user);
-      console.log("👤 SUPABASE PROFILE:", profile);
-
-      if (!profile?.id) {
-        throw new Error("Could not find Supabase profile.");
-      }
+      if (!profile?.id) throw new Error("Could not find Supabase profile.");
 
       let imageUrl: string | null = null;
       let videoUrl: string | null = null;
@@ -360,8 +441,6 @@ export default function FeedPage() {
       if (selectedImage) {
         const fileExtension = selectedImage.name.split(".").pop() || "jpg";
         const filePath = `${profile.id}/${crypto.randomUUID()}.${fileExtension}`;
-
-        console.log("📸 UPLOADING IMAGE:", filePath);
 
         const { error: imageUploadError } = await supabase.storage
           .from("post-images")
@@ -374,15 +453,12 @@ export default function FeedPage() {
           .getPublicUrl(filePath);
 
         imageUrl = imagePublicData.publicUrl;
-        console.log("✅ IMAGE URL:", imageUrl);
       }
 
       // Upload Video
       if (selectedVideo) {
         const fileExtension = selectedVideo.name.split(".").pop() || "mp4";
         const filePath = `${profile.id}/${crypto.randomUUID()}.${fileExtension}`;
-
-        console.log("🎥 UPLOADING VIDEO:", filePath);
 
         const { error: videoUploadError } = await supabase.storage
           .from("post-videos")
@@ -395,7 +471,6 @@ export default function FeedPage() {
           .getPublicUrl(filePath);
 
         videoUrl = videoPublicData.publicUrl;
-        console.log("✅ VIDEO URL:", videoUrl);
       }
 
       // Save Post
@@ -423,26 +498,18 @@ export default function FeedPage() {
         `)
         .single();
 
-      if (postError) {
-        console.error("❌ POST DATABASE ERROR:", postError);
-        throw postError;
-      }
-
-      console.log("📝 NEW POST:", newPost);
+      if (postError) throw postError;
 
       if (newPost) {
         setPosts((currentPosts) => [newPost, ...currentPosts]);
       }
 
-      // Clear composer
       setPost("");
       setSelectedImage(null);
       setSelectedVideo(null);
-
-      console.log("✅ POST CREATED SUCCESSFULLY");
     } catch (error) {
       console.error("❌ POST CREATION FAILED:", error);
-      alert("Could not create your post. Check the console for details.");
+      alert("Could not create your post. Check console for details.");
     } finally {
       setPosting(false);
     }
@@ -464,10 +531,6 @@ export default function FeedPage() {
     }
   };
 
-  // ==========================================
-  // AUTH LOADING & NO USER STATES
-  // ==========================================
-
   if (authLoading) {
     return (
       <main className="min-h-screen bg-black text-white flex items-center justify-center">
@@ -476,17 +539,10 @@ export default function FeedPage() {
     );
   }
 
-  if (!user) {
-    return null;
-  }
-
-  // ==========================================
-  // FEED UI
-  // ==========================================
+  if (!user) return null;
 
   return (
     <main className="min-h-screen bg-black text-white pb-20">
-
       {/* NAVBAR */}
       <header className="sticky top-0 z-50 border-b border-zinc-900 bg-black/90 backdrop-blur">
         <div className="max-w-5xl mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between">
@@ -603,22 +659,11 @@ export default function FeedPage() {
               {/* ACTION BAR */}
               <div className="flex items-center justify-between gap-2 pt-3 mt-2 border-t border-zinc-900">
                 <div className="flex items-center gap-1 sm:gap-2">
-                  
-                  {/* PHOTO ATTACHMENT */}
                   <label
                     htmlFor="post-image"
                     className="flex items-center justify-center gap-2 px-2.5 sm:px-3 py-2 rounded-xl text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 cursor-pointer transition-all"
                   >
-                    <svg
-                      width="17"
-                      height="17"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="3" y="3" width="18" height="18" rx="2" />
                       <circle cx="8.5" cy="8.5" r="1.5" />
                       <path d="m21 15-5-5L5 21" />
@@ -634,21 +679,11 @@ export default function FeedPage() {
                     onChange={handleImageSelect}
                   />
 
-                  {/* VIDEO ATTACHMENT */}
                   <label
                     htmlFor="post-video"
                     className="flex items-center justify-center gap-2 px-2.5 sm:px-3 py-2 rounded-xl text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 cursor-pointer transition-all"
                   >
-                    <svg
-                      width="17"
-                      height="17"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="3" y="5" width="13" height="14" rx="2" />
                       <path d="m16 10 5-3v10l-5-3z" />
                     </svg>
@@ -663,23 +698,13 @@ export default function FeedPage() {
                     onChange={handleVideoSelect}
                   />
 
-                  {/* LIVE CAMERA */}
                   <button
                     type="button"
                     onClick={openCamera}
                     disabled={posting}
                     className="flex items-center justify-center gap-2 px-2.5 sm:px-3 py-2 rounded-xl text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 transition-all disabled:opacity-50"
                   >
-                    <svg
-                      width="17"
-                      height="17"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M14.5 4h-5L7.5 7H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2.5z" />
                       <circle cx="12" cy="13" r="3" />
                     </svg>
@@ -687,7 +712,6 @@ export default function FeedPage() {
                   </button>
                 </div>
 
-                {/* SUBMIT BUTTON */}
                 <button
                   type="submit"
                   disabled={
@@ -727,72 +751,173 @@ export default function FeedPage() {
       </div>
 
       {/* ====================================== */}
-      {/* CAMERA MODAL */}
+      {/* FEATURE-COMPLETE CAMERA MODAL */}
       {/* ====================================== */}
 
       {cameraOpen && (
-        <div className="fixed inset-0 z-[100] bg-black flex flex-col">
+        <div
+          className={`fixed inset-0 z-[100] flex flex-col transition-colors duration-200 ${
+            screenLight ? "bg-white text-black" : "bg-black text-white"
+          }`}
+        >
           {/* CAMERA HEADER */}
-          <div className="flex items-center justify-between px-4 py-4 border-b border-zinc-900">
-            <h2 className="font-semibold text-sm">Camera</h2>
-            <button
-              type="button"
-              onClick={closeCamera}
-              className="w-9 h-9 rounded-full bg-zinc-900 flex items-center justify-center text-xl text-zinc-400 hover:text-white"
-            >
-              ×
-            </button>
+          <div
+            className={`flex items-center justify-between px-4 py-3 border-b ${
+              screenLight ? "border-zinc-200 bg-white" : "border-zinc-900 bg-black"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <h2 className="font-semibold text-sm">Camera</h2>
+              {isRecording && (
+                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/20 text-red-500 text-xs font-mono font-medium">
+                  <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                  {formatTime(recordingTime)}
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* SCREEN LIGHTING TOGGLE */}
+              <button
+                type="button"
+                onClick={() => setScreenLight(!screenLight)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                  screenLight
+                    ? "bg-amber-400 text-black shadow-md shadow-amber-300/30"
+                    : "bg-zinc-900 text-zinc-400 hover:text-white"
+                }`}
+              >
+                <span>💡</span>
+                <span>{screenLight ? "Light On" : "Light"}</span>
+              </button>
+
+              {/* ASPECT RATIO TOGGLE */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (aspectRatio === "full") setAspectRatio("1:1");
+                  else if (aspectRatio === "1:1") setAspectRatio("9:16");
+                  else setAspectRatio("full");
+                }}
+                className={`px-2.5 py-1.5 rounded-full text-xs font-mono font-semibold transition-all ${
+                  screenLight
+                    ? "bg-zinc-200 text-zinc-900"
+                    : "bg-zinc-900 text-zinc-300 hover:text-white"
+                }`}
+              >
+                {aspectRatio.toUpperCase()}
+              </button>
+
+              {/* CLOSE BUTTON */}
+              <button
+                type="button"
+                onClick={closeCamera}
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-xl ${
+                  screenLight
+                    ? "bg-zinc-200 text-black hover:bg-zinc-300"
+                    : "bg-zinc-900 text-zinc-400 hover:text-white"
+                }`}
+              >
+                ×
+              </button>
+            </div>
           </div>
 
-          {/* CAMERA VIEW */}
-          <div className="flex-1 flex items-center justify-center bg-black p-4 relative overflow-hidden">
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className={`w-full max-w-2xl max-h-full rounded-2xl object-cover ${
-                facingMode === "user" ? "scale-x-[-1]" : ""
+          {/* CAMERA PREVIEW CONTAINER */}
+          <div className="flex-1 flex flex-col items-center justify-center relative overflow-hidden p-2">
+            <div
+              className={`relative overflow-hidden rounded-2xl flex items-center justify-center transition-all ${
+                aspectRatio === "1:1"
+                  ? "aspect-square w-full max-w-md"
+                  : aspectRatio === "9:16"
+                  ? "aspect-[9/16] h-full max-h-[70vh]"
+                  : "w-full h-full max-w-2xl"
               }`}
-            />
+            >
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                style={{ transform: `scale(${zoomLevel}) ${facingMode === "user" ? "scaleX(-1)" : ""}` }}
+                className="w-full h-full object-cover transition-transform duration-100 ease-out"
+              />
+            </div>
+
+            {/* ZOOM TOGGLES OVERLAY */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full z-10 border border-white/10">
+              {[1, 1.5, 2, 3].map((z) => (
+                <button
+                  key={z}
+                  type="button"
+                  onClick={() => applyZoom(z)}
+                  className={`w-7 h-7 rounded-full text-[11px] font-bold font-mono transition-all ${
+                    zoomLevel === z
+                      ? "bg-white text-black scale-110"
+                      : "text-zinc-300 hover:text-white hover:bg-white/10"
+                  }`}
+                >
+                  {z}x
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* CAMERA CONTROLS */}
-          <div className="p-6 flex items-center justify-around border-t border-zinc-900 bg-black">
-            {/* Spacer for symmetry */}
-            <div className="w-12 h-12" />
-
-            {/* SHUTTER */}
-            <button
-              type="button"
-              onClick={takePhoto}
-              className="w-16 h-16 rounded-full bg-white border-4 border-zinc-400 shadow-lg active:scale-95 transition-transform"
-              aria-label="Take photo"
-            />
-
-            {/* FAMILIAR FLIP CAMERA BUTTON */}
+          {/* CAMERA CONTROLS BAR */}
+          <div
+            className={`p-6 flex items-center justify-around border-t transition-colors ${
+              screenLight ? "border-zinc-200 bg-white" : "border-zinc-900 bg-black"
+            }`}
+          >
+            {/* FLIP CAMERA */}
             <button
               type="button"
               onClick={flipCamera}
-              className="w-12 h-12 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-white active:scale-90 transition-all"
+              disabled={isRecording}
+              className={`w-12 h-12 rounded-full border flex items-center justify-center transition-all active:scale-90 disabled:opacity-40 ${
+                screenLight
+                  ? "bg-zinc-100 border-zinc-300 text-black"
+                  : "bg-zinc-900 border-zinc-800 text-white"
+              }`}
               aria-label="Flip camera"
             >
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                {/* Standard native camera-swap icon */}
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M11 19H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5" />
                 <path d="M13 5h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-5" />
                 <polyline points="16 2 20 5 16 8" />
                 <polyline points="8 22 4 19 8 16" />
               </svg>
+            </button>
+
+            {/* SNAPSHOT PHOTO BUTTON */}
+            <button
+              type="button"
+              onClick={takePhoto}
+              disabled={isRecording}
+              className={`w-16 h-16 rounded-full border-4 shadow-lg active:scale-95 transition-transform disabled:opacity-40 ${
+                screenLight
+                  ? "bg-black border-zinc-300"
+                  : "bg-white border-zinc-400"
+              }`}
+              aria-label="Take photo"
+            />
+
+            {/* VIDEO RECORDING BUTTON */}
+            <button
+              type="button"
+              onClick={isRecording ? stopRecording : startRecording}
+              className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all ${
+                isRecording
+                  ? "border-red-500 bg-red-500/20 text-red-500 scale-105"
+                  : "border-red-600 bg-red-600 text-white"
+              }`}
+              aria-label={isRecording ? "Stop recording" : "Record video"}
+            >
+              <div
+                className={`transition-all ${
+                  isRecording ? "w-4 h-4 bg-red-500 rounded-sm" : "w-5 h-5 bg-white rounded-full"
+                }`}
+              />
             </button>
           </div>
         </div>
