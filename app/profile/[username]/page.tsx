@@ -26,7 +26,6 @@ export default function PublicProfilePage() {
 
   const rawUsername = params.username as string;
   const username = rawUsername?.toLowerCase();
-  
 
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
@@ -39,6 +38,7 @@ export default function PublicProfilePage() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [messageLoading, setMessageLoading] = useState(false);
+
 
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -312,7 +312,6 @@ export default function PublicProfilePage() {
     }
   };
 
-
   // ==========================================
   // LOADING STATE
   // ==========================================
@@ -451,7 +450,6 @@ export default function PublicProfilePage() {
                   </div>
               )}
             </div>
-
             <div className="mt-4">
               <h1 className="text-xl font-bold">{profile.display_name}</h1>
               <p className="text-sm text-zinc-500">@{profile.username}</p>

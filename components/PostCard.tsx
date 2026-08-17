@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MessageCircle } from 'lucide-react';
-import CommentDrawer from '@/components/CommentDrawer';
 import Link from "next/link";
 import {
+  MessageCircle,
   MoreHorizontal,
   Flame,
   SkipForward,
@@ -13,6 +12,7 @@ import {
 } from "lucide-react";
 import { onAuthStateChanged } from "firebase/auth";
 
+import CommentDrawer from "@/components/CommentDrawer";
 import { supabase } from "@/lib/supabase";
 import { syncProfile } from "@/lib/syncProfile";
 import { firebaseAuth } from "@/lib/firebase";
@@ -42,7 +42,10 @@ type PostCardProps = {
 
 type VoteType = "drip" | "skip";
 
-export default function PostCard({ post, currentProfileId: propCurrentProfileId }: PostCardProps) {
+export default function PostCard({
+  post,
+  currentProfileId: propCurrentProfileId,
+}: PostCardProps) {
   const [imageError, setImageError] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
   const [dripCount, setDripCount] = useState(0);
@@ -51,12 +54,12 @@ export default function PostCard({ post, currentProfileId: propCurrentProfileId 
   const [voting, setVoting] = useState(false);
   const [timeAgo, setTimeAgo] = useState<string>("");
   const [commentsOpen, setCommentsOpen] = useState(false);
-  const [commentCount, setCommentCount] = useState<number>(post.comment_count || 0);
-  const [currentProfileId, setCurrentProfileId] = useState<string | null>(propCurrentProfileId || null);
-
-  // ==========================================
-  // PROFILE & TIME
-  // ==========================================
+  const [commentCount, setCommentCount] = useState<number>(
+    post.comment_count || 0
+  );
+  const [currentProfileId, setCurrentProfileId] = useState<string | null>(
+    propCurrentProfileId || null
+  );
 
   const profile = Array.isArray(post.profiles)
     ? post.profiles[0]
@@ -64,7 +67,6 @@ export default function PostCard({ post, currentProfileId: propCurrentProfileId 
 
   const displayName =
     profile?.display_name || profile?.username || "Drip User";
-
   const username = profile?.username || "user";
 
   const avatar =
@@ -72,14 +74,9 @@ export default function PostCard({ post, currentProfileId: propCurrentProfileId 
       ? profile.avatar_url
       : "/default-avatar.png";
 
-  // Defer timeAgo to client side to prevent Next.js hydration mismatches
   useEffect(() => {
     setTimeAgo(getTimeAgo(post.created_at));
   }, [post.created_at]);
-
-  // ==========================================
-  // LOAD VOTES & PROFILE ID
-  // ==========================================
 
   useEffect(() => {
     setImageError(false);
@@ -119,10 +116,7 @@ export default function PostCard({ post, currentProfileId: propCurrentProfileId 
           if (vote.vote === "drip") drip++;
           if (vote.vote === "skip") skip++;
 
-          if (
-            resolvedProfileId &&
-            vote.user_id === resolvedProfileId
-          ) {
+          if (resolvedProfileId && vote.user_id === resolvedProfileId) {
             setUserVote(vote.vote as VoteType);
           }
         });
@@ -134,7 +128,6 @@ export default function PostCard({ post, currentProfileId: propCurrentProfileId 
       }
     };
 
-    // Listen to Firebase Auth state initialization
     const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
       loadVotes(user);
     });
@@ -144,10 +137,6 @@ export default function PostCard({ post, currentProfileId: propCurrentProfileId 
       unsubscribe();
     };
   }, [post.id, propCurrentProfileId]);
-
-  // ==========================================
-  // VOTE HANDLER
-  // ==========================================
 
   const handleVote = async (voteType: VoteType) => {
     if (voting || userVote) return;
@@ -168,7 +157,6 @@ export default function PostCard({ post, currentProfileId: propCurrentProfileId 
         throw new Error("Could not find your profile.");
       }
 
-      // Optimistic update
       setUserVote(voteType);
       if (voteType === "drip") setDripCount((prev) => prev + 1);
       if (voteType === "skip") setSkipCount((prev) => prev + 1);
@@ -180,13 +168,11 @@ export default function PostCard({ post, currentProfileId: propCurrentProfileId 
       });
 
       if (error) {
-        // Handle duplicate vote
         if (error.code === "23505") {
           console.log("⚠️ USER ALREADY VOTED");
           return;
         }
 
-        // Revert Optimistic state if error occurs
         setUserVote(null);
         if (voteType === "drip") setDripCount((prev) => Math.max(0, prev - 1));
         if (voteType === "skip") setSkipCount((prev) => Math.max(0, prev - 1));
@@ -200,10 +186,6 @@ export default function PostCard({ post, currentProfileId: propCurrentProfileId 
       setVoting(false);
     }
   };
-
-  // ==========================================
-  // SHARE HANDLER
-  // ==========================================
 
   const handleShare = async () => {
     const url = `${window.location.origin}/post/${post.id}`;
@@ -220,33 +202,27 @@ export default function PostCard({ post, currentProfileId: propCurrentProfileId 
         alert("Post link copied!");
       }
     } catch {
-      // User cancelled share
+      // User cancelled
     }
   };
 
   return (
     <article className="rounded-2xl border border-zinc-900 bg-zinc-950 overflow-hidden">
-      {/* ====================================== */}
-      {/* HEADER */}
-      {/* ====================================== */}
       <div className="flex items-center gap-3 p-4">
         <Link href={`/profile/${username}`}>
           <img
             src={avatar}
             alt={displayName}
+            onError={() => setAvatarError(true)}
             className="w-10 h-10 rounded-full object-cover border border-zinc-800 shrink-0"
           />
         </Link>
 
         <div className="min-w-0 flex-1">
-          <Link
-            href={`/profile/${username}`}
-            className="block group"
-          >
+          <Link href={`/profile/${username}`} className="block group">
             <p className="font-semibold text-sm truncate group-hover:underline">
               {displayName}
             </p>
-
             <p className="text-xs text-zinc-500 truncate">
               @{username} · {timeAgo}
             </p>
@@ -262,9 +238,6 @@ export default function PostCard({ post, currentProfileId: propCurrentProfileId 
         </button>
       </div>
 
-      {/* ====================================== */}
-      {/* TEXT */}
-      {/* ====================================== */}
       {post.text && (
         <div className="px-4 pb-4">
           <p className="text-sm sm:text-[15px] leading-6 text-zinc-100 whitespace-pre-wrap break-words">
@@ -273,9 +246,6 @@ export default function PostCard({ post, currentProfileId: propCurrentProfileId 
         </div>
       )}
 
-      {/* ====================================== */}
-      {/* IMAGE */}
-      {/* ====================================== */}
       {post.image_url && !imageError && (
         <div className="bg-black">
           <img
@@ -287,9 +257,6 @@ export default function PostCard({ post, currentProfileId: propCurrentProfileId 
         </div>
       )}
 
-      {/* ====================================== */}
-      {/* VIDEO */}
-      {/* ====================================== */}
       {post.video_url && (
         <div className="bg-black">
           <video
@@ -302,12 +269,8 @@ export default function PostCard({ post, currentProfileId: propCurrentProfileId 
         </div>
       )}
 
-      {/* ====================================== */}
-      {/* MAIN VOTING AREA */}
-      {/* ====================================== */}
       <div className="px-3 pt-3">
         <div className="grid grid-cols-2 gap-2">
-          {/* DRIP BUTTON */}
           <button
             type="button"
             onClick={() => handleVote("drip")}
@@ -344,7 +307,6 @@ export default function PostCard({ post, currentProfileId: propCurrentProfileId 
             )}
           </button>
 
-          {/* SKIP BUTTON */}
           <button
             type="button"
             onClick={() => handleVote("skip")}
@@ -383,18 +345,17 @@ export default function PostCard({ post, currentProfileId: propCurrentProfileId 
         </div>
       </div>
 
-      {/* ====================================== */}
-      {/* SECONDARY ACTIONS */}
-      {/* ====================================== */}
       <div className="flex items-center justify-between px-3 py-2 border-t border-zinc-900/50 mt-3">
         <button
           type="button"
           onClick={() => setCommentsOpen(true)}
-          className="flex items-center gap-2 px-3 py-1 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-900 active:scale-95 transition-all"
+          className="flex items-center gap-2 px-3 py-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-900 active:scale-95 transition-all"
         >
           <MessageCircle size={17} />
           <span className="text-xs font-medium">
-            {commentCount > 0 ? `${commentCount} ${commentCount === 1 ? 'Comment' : 'Comments'}` : 'Comment'}
+            {commentCount > 0
+              ? `${commentCount} ${commentCount === 1 ? "Comment" : "Comments"}`
+              : "Comment"}
           </span>
         </button>
 
@@ -416,14 +377,9 @@ export default function PostCard({ post, currentProfileId: propCurrentProfileId 
         onClose={() => setCommentsOpen(false)}
         onCommentAdded={() => setCommentCount((prev: number) => prev + 1)}
       />
-
     </article>
   );
 }
-
-/* ========================================== */
-/* TIME HELPER (SAFE) */
-/* ========================================== */
 
 function getTimeAgo(dateString: string) {
   const date = new Date(dateString);
