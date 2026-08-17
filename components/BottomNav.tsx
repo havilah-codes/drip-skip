@@ -8,6 +8,7 @@ import {
   Plus,
   Bell,
   User,
+  MessageCircle as Comment,
 } from "lucide-react";
 
 export default function BottomNav() {
@@ -16,20 +17,21 @@ export default function BottomNav() {
   const navItems = [
     {
       label: " ",
-      href: "/feed",
-      icon: Home,
+      href: "/explore",
+      icon : Search,
     },
     {
       label: " ",
-      href: "/explore",
-      icon: Search,
+      href: "/messages",
+      icon: Comment,
+      // special: true,
     },
-    // {
-    //   label: " ",
-    //   href: "/post",
-    //   icon: Plus,
-    //   special: true,
-    // },
+    {
+      label: " ",
+      href: "/feed",
+      icon: Home,
+      special: true,
+    },
     {
       label: " ",
       href: "/activity",
@@ -92,53 +94,53 @@ export default function BottomNav() {
           /*
            * APPLE-STYLE ELEVATED CENTER ACTION BUTTON
            */
-          // if (item.special) {
-          //   return (
-          //     <Link
-          //       key={item.href}
-          //       href={item.href}
-          //       aria-label={item.label}
-          //       className="
-          //         relative
-          //         -translate-y-0.5
-          //         flex
-          //         items-center
-          //         justify-center
-          //         group
-          //         outline-none
-          //       "
-          //     >
-          //       <div
-          //         className="
-          //           w-12
-          //           h-12
+          if (item.special) {
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-label={item.label}
+                className="
+                  relative
+                  -translate-y-0.5
+                  flex
+                  items-center
+                  justify-center
+                  group
+                  outline-none
+                "
+              >
+                <div
+                  className="
+                    w-20
+                    h-12
 
-          //           rounded-full
+                    rounded-full
 
-          //           bg-white
-          //           text-black
+                    bg-white
+                    text-black
 
-          //           flex
-          //           items-center
-          //           justify-center
+                    flex
+                    items-center
+                    justify-center
 
 
-          //           transition-all
-          //           duration-200
-          //           ease-out
+                    transition-all
+                    duration-200
+                    ease-out
 
-          //           group-hover:scale-50
-          //           group-active:scale-95
-          //         "
-          //       >
-          //         <Icon
-          //           size={22}
-          //           strokeWidth={2.5}
-          //         />
-          //       </div>
-          //     </Link>
-          //   );
-          // }
+                    group-hover:w-12
+                    group-active:scale-95
+                  "
+                >
+                  <Icon
+                    size={22}
+                    strokeWidth={2.5}
+                  />
+                </div>
+              </Link>
+            );
+          }
 
           /*
            * APPLE-STYLE TAB BAR ITEMS

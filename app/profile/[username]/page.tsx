@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, UserCheck, UserPlus } from "lucide-react";
 import { onAuthStateChanged, type User } from "firebase/auth";
+import { getOrCreateChat } from "@/lib/chat";
 
 import { firebaseAuth } from "@/lib/firebase";
 import { supabase } from "@/lib/supabase";
@@ -25,6 +26,7 @@ export default function PublicProfilePage() {
 
   const rawUsername = params.username as string;
   const username = rawUsername?.toLowerCase();
+  
 
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
@@ -36,6 +38,7 @@ export default function PublicProfilePage() {
   const [followingCount, setFollowingCount] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
+  const [messageLoading, setMessageLoading] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -279,6 +282,37 @@ export default function PublicProfilePage() {
     }
   };
 
+  const handleMessage = async () => {
+  if (
+    !currentProfileId ||
+    !profile ||
+    messageLoading
+  ) {
+    return;
+  }
+
+  setMessageLoading(true);
+
+  try {
+    const chatId = await getOrCreateChat(
+      currentProfileId,
+      profile.id
+    );
+
+    router.push(`/messages/${chatId}`);
+  } catch (error) {
+    console.error(
+      "❌ START CHAT ERROR:",
+      error
+    );
+
+    alert("Could not start chat.");
+    } finally {
+      setMessageLoading(false);
+    }
+  };
+
+
   // ==========================================
   // LOADING STATE
   // ==========================================
@@ -380,32 +414,41 @@ export default function PublicProfilePage() {
                   Edit Profile
                 </Link>
               ) : (
-                <button
-                  type="button"
-                  onClick={handleFollowToggle}
-                  disabled={
-                    followLoading || !currentUser
-                  }
-                  className={`px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50 ${
-                    isFollowing
-                      ? "border border-zinc-800 text-zinc-300 hover:text-rose-400 hover:border-rose-950 hover:bg-rose-950/20"
-                      : "bg-white text-black hover:bg-zinc-200"
-                  }`}
-                >
-                  {followLoading ? (
-                    <span>Loading...</span>
-                  ) : isFollowing ? (
-                    <>
-                      <UserCheck size={16} />
-                      Following
-                    </>
-                  ) : (
-                    <>
-                      <UserPlus size={16} />
-                      Follow
-                    </>
-                  )}
-                </button>
+                <div className="flex items-center gap-2">
+                    {/* MESSAGE */}
+                    <button
+                      type="button"
+                      onClick={handleMessage}
+                      disabled={messageLoading || !currentUser}
+                      className="px-5 py-2.5 rounded-xl border border-zinc-800 text-white text-sm font-bold hover:bg-zinc-900 active:scale-95 transition-all disabled:opacity-50"
+                    >
+                      {messageLoading ? "Opening..." : "Message"}
+                    </button>
+
+                    {/* FOLLOW */}
+                    <button
+                      type="button"
+                      onClick={handleFollowToggle}
+                      disabled={followLoading || !currentUser}
+                      className={`px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 active:scale-95 transition-all disabled:opacity-50 ${
+                        isFollowing
+                          ? "border border-zinc-800 text-zinc-300 hover:text-rose-400 hover:border-rose-950 hover:bg-rose-950/20"
+                          : "bg-white text-black hover:bg-zinc-200"
+                      }`}
+                    >
+                      {isFollowing ? (
+                        <>
+                          <UserCheck size={16} />
+                          Following
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus size={16} />
+                          Follow
+                        </>
+                      )}
+                    </button>
+                  </div>
               )}
             </div>
 
