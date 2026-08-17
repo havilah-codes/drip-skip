@@ -390,7 +390,7 @@ export default function PostCard({ post, currentProfileId: propCurrentProfileId 
         <button
           type="button"
           onClick={() => setCommentsOpen(true)}
-          className="flex items-center gap-2 px-3 py-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-900 active:scale-95 transition-all"
+          className="flex items-center gap-2 px-3 py-1 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-900 active:scale-95 transition-all"
         >
           <MessageCircle size={17} />
           <span className="text-xs font-medium">
