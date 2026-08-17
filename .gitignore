@@ -43,3 +43,8 @@ serviceAccountKey*.json
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Firebase Admin credentials
+*-firebase-admin.json
+firebase-service-account.json
+drip-skip-firebase-admin.json
