@@ -534,6 +534,9 @@ export default function ChatPage() {
         socket.id
       );
 
+      // Update socket state so the send button enables properly
+      setSocketOnline(true);
+
       // Rejoin the chat room after EVERY connection.
       socket.emit("join_chat", chatId);
 
