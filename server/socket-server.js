@@ -4,7 +4,7 @@ const { Server } = require("socket.io");
 const { adminAuth } = require("./firebase-admin");
 const { supabaseAdmin } = require("./supabase-admin");
 
-const PORT = process.env.SOCKET_PORT || 3001;
+const PORT = process.env.PORT || 3001;
 
 const httpServer = http.createServer();
 
@@ -635,6 +635,7 @@ io.on("connection", (socket) => {
 
 httpServer.listen(
   PORT,
+  "0.0.0.0",
   () => {
     console.log(
       `🚀 Socket.IO server running on port ${PORT}`
