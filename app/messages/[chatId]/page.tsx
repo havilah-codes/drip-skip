@@ -1080,172 +1080,176 @@ export default function ChatPage() {
 
   return (
     <main className="h-screen bg-black text-white flex flex-col overflow-hidden">
-    {/* HEADER */}
+      {/* HEADER */}
 
-    <header className="shrink-0 z-40 border-b border-zinc-900 bg-black/85 backdrop-blur-xl">
-      <div className="max-w-2xl mx-auto px-4 h-16 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => router.push("/messages")}
-          className="w-9 h-9 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-900 transition-all"
-          aria-label="Back to chats"
-        >
-          <ArrowLeft size={19} />
-        </button>
+      <header className="shrink-0 z-40 border-b border-zinc-900 bg-black/85 backdrop-blur-xl">
+        <div className="max-w-2xl mx-auto px-4 h-16 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => router.push("/messages")}
+            className="w-9 h-9 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-900 transition-all"
+            aria-label="Back to chats"
+          >
+            <ArrowLeft size={19} />
+          </button>
 
-        {otherProfile && (
-          <>
-            <img
-              src={avatar}
-              alt={otherProfile.display_name}
-              className="w-10 h-10 rounded-full object-cover border border-zinc-800"
-            />
-
-            <div className="min-w-0">
-              <p className="font-semibold text-sm truncate">
-                {otherProfile.display_name}
-              </p>
-
-              <p className="text-xs text-zinc-500 truncate">
-                @{otherProfile.username}
-              </p>
-            </div>
-          </>
-        )}
-
-        <div className="ml-auto">
-          <span
-            className={`w-2 h-2 rounded-full inline-block ${
-              socketOnline ? "bg-green-500" : "bg-zinc-600"
-            }`}
-          />
-        </div>
-      </div>
-    </header>
-
-    {/* MESSAGES */}
-
-    <div className="flex-1 overflow-y-auto">
-      <div className="max-w-2xl mx-auto px-4 py-6">
-        {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-32 text-center">
-            <img
-              src={avatar}
-              alt={otherProfile?.display_name || "User"}
-              className="w-16 h-16 rounded-full object-cover border border-zinc-800 mb-4"
-            />
-
-            <h2 className="font-bold">Start the conversation</h2>
-
-            <p className="text-sm text-zinc-500 mt-2">
-              Send {otherProfile?.display_name || "them"} a message.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {messages.map((message) => {
-              const isMine = message.sender_id === currentProfileId;
-
-              return (
-                <div
-                  key={message.id}
-                  className={`flex ${
-                    isMine ? "justify-end" : "justify-start"
-                  }`}
-                >
-                  <div
-                    className={`max-w-[78%] sm:max-w-[65%] ${
-                      isMine ? "items-end" : "items-start"
-                    } flex flex-col`}
-                  >
-                    <div
-                      className={`px-4 py-2.5 rounded-2xl text-sm leading-5 whitespace-pre-wrap break-words ${
-                        isMine
-                          ? "bg-white text-black rounded-br-md"
-                          : "bg-zinc-900 text-zinc-100 rounded-bl-md"
-                      }`}
-                    >
-                      {message.text}
-                    </div>
-
-                    <span className="text-[10px] text-zinc-600 mt-1 px-1">
-                      {formatTime(message.created_at)}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-
-            <div ref={messagesEndRef} />
-          </div>
-        )}
-      </div>
-    </div>
-
-    {/* COMPOSER WRAPPER WITH ELEVATED TYPING INDICATOR */}
-
-    <div className="shrink-0 relative border-t border-zinc-900 bg-black/90 backdrop-blur-xl pb-safe">
-      {/* TYPING INDICATOR - Floating above the chat composer */}
-      {isOtherUserTyping && otherProfile && (
-        <div className="absolute -top-12 left-0 right-0 z-30 pointer-events-none flex justify-start max-w-2xl mx-auto px-4">
-          <div className="pointer-events-auto inline-flex items-center gap-2.5 bg-zinc-900/95 backdrop-blur-xl border border-zinc-800/90 pl-2 pr-3.5 py-1 rounded-full shadow-[0_8px_25px_rgba(0,0,0,0.7)] animate-in fade-in slide-in-from-bottom-2 duration-200">
-            {/* Bitmoji / Avatar Peeking Container */}
-            <div className="relative w-7 h-7 flex-shrink-0 flex items-center justify-center">
-              <div className="absolute inset-0 rounded-full bg-yellow-400/20 blur-xs" />
+          {otherProfile && (
+            <>
               <img
                 src={avatar}
-                alt="Bitmoji"
-                className="relative w-7 h-7 rounded-full object-cover border border-yellow-400/80 shadow-xs transform -scale-x-100"
+                alt={otherProfile.display_name}
+                className="w-10 h-10 rounded-full object-cover border border-zinc-800"
               />
+
+              <div className="min-w-0">
+                <p className="font-semibold text-sm truncate">
+                  {otherProfile.display_name}
+                </p>
+
+                <p className="text-xs text-zinc-500 truncate">
+                  @{otherProfile.username}
+                </p>
+              </div>
+            </>
+          )}
+
+          <div className="ml-auto">
+            <span
+              className={`w-2 h-2 rounded-full inline-block ${
+                socketOnline ? "bg-green-500" : "bg-zinc-600"
+              }`}
+            />
+          </div>
+        </div>
+      </header>
+
+      {/* MESSAGES */}
+
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-2xl mx-auto px-4 py-6">
+          {messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-32 text-center">
+              <img
+                src={avatar}
+                alt={otherProfile?.display_name || "User"}
+                className="w-16 h-16 rounded-full object-cover border border-zinc-800 mb-4"
+              />
+
+              <h2 className="font-bold">Start the conversation</h2>
+
+              <p className="text-sm text-zinc-500 mt-2">
+                Send {otherProfile?.display_name || "them"} a message.
+              </p>
             </div>
+          ) : (
+            <div className="space-y-3">
+              {messages.map((message) => {
+                const isMine = message.sender_id === currentProfileId;
 
-            {/* Text & Dynamic Glowing Dots */}
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-medium tracking-wide text-zinc-300">
-                {otherProfile.display_name.split(" ")[0]} is typing
-              </span>
+                return (
+                  <div
+                    key={message.id}
+                    className={`flex ${
+                      isMine ? "justify-end" : "justify-start"
+                    }`}
+                  >
+                    <div
+                      className={`max-w-[78%] sm:max-w-[65%] ${
+                        isMine ? "items-end" : "items-start"
+                      } flex flex-col`}
+                    >
+                      <div
+                        className={`px-4 py-2.5 rounded-2xl text-sm leading-5 whitespace-pre-wrap break-words ${
+                          isMine
+                            ? "bg-white text-black rounded-br-md"
+                            : "bg-zinc-900 text-zinc-100 rounded-bl-md"
+                        }`}
+                      >
+                        {message.text}
+                      </div>
 
-              <div className="flex items-center gap-1 bg-zinc-800/90 px-1.5 py-0.5 rounded-full border border-zinc-700/60">
-                <span className="w-1 h-1 rounded-full bg-yellow-400 shadow-[0_0_6px_rgba(250,204,21,0.9)] animate-bounce" />
-                <span
-                  className="w-1 h-1 rounded-full bg-yellow-400 shadow-[0_0_6px_rgba(250,204,21,0.9)] animate-bounce"
-                  style={{ animationDelay: "150ms" }}
+                      <span className="text-[10px] text-zinc-600 mt-1 px-1">
+                        {formatTime(message.created_at)}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+
+              <div ref={messagesEndRef} />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* COMPOSER WRAPPER WITH ELEVATED TYPING INDICATOR */}
+
+      <div className="shrink-0 relative border-t border-zinc-900 bg-black/90 backdrop-blur-xl pb-safe">
+        {/* TYPING INDICATOR - Floating above the chat composer */}
+        {isOtherUserTyping && otherProfile && (
+          <div className="absolute -top-12 left-0 right-0 z-30 pointer-events-none flex justify-start max-w-2xl mx-auto px-4">
+            <div className="pointer-events-auto inline-flex items-center gap-2.5 bg-zinc-900/95 backdrop-blur-xl border border-zinc-800/90 pl-2 pr-3.5 py-1 rounded-full shadow-[0_8px_25px_rgba(0,0,0,0.7)] animate-in fade-in slide-in-from-bottom-2 duration-200">
+              {/* Bitmoji / Avatar Peeking Container */}
+              <div className="relative w-7 h-7 flex-shrink-0 flex items-center justify-center">
+                <div className="absolute inset-0 rounded-full bg-yellow-400/20 blur-xs" />
+                <img
+                  src={avatar}
+                  alt="Bitmoji"
+                  className="relative w-7 h-7 rounded-full object-cover border border-yellow-400/80 shadow-xs transform -scale-x-100"
                 />
-                <span
-                  className="w-1 h-1 rounded-full bg-yellow-400 shadow-[0_0_6px_rgba(250,204,21,0.9)] animate-bounce"
-                  style={{ animationDelay: "300ms" }}
-                />
+              </div>
+
+              {/* Text & Dynamic Glowing Dots */}
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-medium tracking-wide text-zinc-300">
+                  {otherProfile.display_name.split(" ")[0]} is typing
+                </span>
+
+                <div className="flex items-center gap-1 bg-zinc-800/90 px-1.5 py-0.5 rounded-full border border-zinc-700/60">
+                  <span className="w-1 h-1 rounded-full bg-yellow-400 shadow-[0_0_6px_rgba(250,204,21,0.9)] animate-bounce" />
+                  <span
+                    className="w-1 h-1 rounded-full bg-yellow-400 shadow-[0_0_6px_rgba(250,204,21,0.9)] animate-bounce"
+                    style={{ animationDelay: "150ms" }}
+                  />
+                  <span
+                    className="w-1 h-1 rounded-full bg-yellow-400 shadow-[0_0_6px_rgba(250,204,21,0.9)] animate-bounce"
+                    style={{ animationDelay: "300ms" }}
+                  />
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* INPUT FORM */}
-      <form onSubmit={handleSendMessage} className="max-w-2xl mx-auto p-3">
-        <div className="flex items-end gap-2 rounded-2xl border border-zinc-800 bg-zinc-950 p-2 focus-within:border-zinc-700 transition-colors">
-          <textarea
-            ref={textareaRef}
-            value={messageText}
-            onChange={handleTextareaInput}
-            onKeyDown={handleKeyDown}
-            placeholder="Message..."
-            rows={1}
-            maxLength={2000}
-            className="flex-1 max-h-32 resize-none bg-transparent px-2 py-2 text-sm text-white placeholder:text-zinc-600 outline-none"
-          />
+        {/* INPUT FORM */}
+        <form onSubmit={handleSendMessage} className="max-w-2xl mx-auto p-3">
+          <div className="flex items-end gap-2 rounded-2xl border border-zinc-800 bg-zinc-950 p-2 focus-within:border-zinc-700 transition-colors">
+            <textarea
+              ref={textareaRef}
+              value={messageText}
+              onChange={handleTextareaInput}
+              onKeyDown={handleKeyDown}
+              placeholder="Message..."
+              rows={1}
+              maxLength={2000}
+              className="flex-1 max-h-32 resize-none bg-transparent px-2 py-2 text-sm text-white placeholder:text-zinc-600 outline-none"
+            />
 
-          <button
-            type="submit"
-            disabled={!messageText.trim() || sending || !socketOnline}
-            className="w-10 h-10 shrink-0 rounded-xl bg-white text-black flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition-all"
-            aria-label="Send message"
-          >
-            <Send size={17} />
-          </button>
-        </div>
-      </form>
-    </div>
-  </main>
+            <button
+              type="submit"
+              disabled={!messageText.trim() || sending || !socketOnline}
+              className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center transition-all duration-200 active:scale-95 disabled:cursor-not-allowed ${
+                messageText.trim() && socketOnline && !sending
+                  ? "bg-white text-black opacity-100 shadow-sm"
+                  : "bg-zinc-800 text-zinc-500 opacity-60"
+              }`}
+              aria-label="Send message"
+            >
+              <Send size={17} />
+            </button>
+          </div>
+        </form>
+      </div>
+    </main>
   );
 }
