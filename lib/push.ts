@@ -24,26 +24,37 @@ function urlBase64ToUint8Array(base64String: string) {
 function saveSubscriptionToServer(sub: PushSubscriptionJSON) {
   if (!sub.endpoint || !sub.keys) return;
 
-  socket.emit(
-    "save_push_subscription",
-    {
-      endpoint: sub.endpoint,
-      keys: {
-        p256dh: sub.keys.p256dh,
-        auth: sub.keys.auth,
-      },
+  const payload = {
+    endpoint: sub.endpoint,
+    keys: {
+      p256dh: sub.keys.p256dh,
+      auth: sub.keys.auth,
     },
-    (res: { ok?: boolean; error?: string }) => {
-      if (res?.ok) {
-        console.log("📱 Push subscription saved");
-      } else {
-        console.warn(
-          "⚠️ Push subscription save failed:",
-          res?.error
-        );
-      }
+  };
+
+  const handler = (res: { ok?: boolean; error?: string }) => {
+    if (res?.ok) {
+      console.log("📱 Push subscription saved");
+    } else {
+      console.warn(
+        "⚠️ Push subscription save failed:",
+        res?.error
+      );
     }
-  );
+  };
+
+  if (socket.connected) {
+    socket.emit("save_push_subscription", payload, handler);
+    return;
+  }
+
+  // Socket not connected yet — save once it connects.
+  const onConnect = () => {
+    socket.off("connect", onConnect);
+    socket.emit("save_push_subscription", payload, handler);
+  };
+
+  socket.on("connect", onConnect);
 }
 
 export type PushPermissionResult = "granted" | "denied" | "default" | "unsupported";
