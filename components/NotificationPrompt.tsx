@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Bell, X } from "lucide-react";
+import { connectSocket, socket } from "@/lib/socket";
 import {
   subscribeToPush,
   type PushPermissionResult,
@@ -48,6 +49,12 @@ export default function NotificationPrompt() {
     setSubscribing(true);
 
     try {
+      // Ensure socket is connected before saving
+      // the subscription.
+      if (!socket.connected) {
+        await connectSocket();
+      }
+
       const result: PushPermissionResult =
         await subscribeToPush();
 
