@@ -8,6 +8,7 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
+import NotificationPrompt from "@/components/NotificationPrompt";
 import {
   ArrowLeft,
   Search,
@@ -758,6 +759,10 @@ export default function MessagesPage() {
             className="w-full h-12 pl-11 pr-4 rounded-2xl border border-zinc-900 bg-zinc-950 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-zinc-700 transition-colors"
           />
         </div>
+
+        {/* PUSH NOTIFICATION PROMPT */}
+
+        <NotificationPrompt />
 
         {/* EMPTY STATE */}
 

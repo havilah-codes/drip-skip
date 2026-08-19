@@ -3,6 +3,7 @@ const { Server } = require("socket.io");
 
 const { adminAuth } = require("./firebase-admin");
 const { supabaseAdmin } = require("./supabase-admin");
+const { sendPushToProfile } = require("./push");
 
 const PORT = process.env.PORT || 3001;
 
@@ -109,6 +110,16 @@ async function isChatParticipant(
   return Boolean(data);
 }
 
+async function getProfileDisplayName(id) {
+  const { data } = await supabaseAdmin
+    .from("profiles")
+    .select("display_name")
+    .eq("id", id)
+    .maybeSingle();
+
+  return data?.display_name || null;
+}
+
 async function getChatParticipantIds(chatId) {
   const { data, error } =
     await supabaseAdmin
@@ -145,6 +156,17 @@ io.on("connection", (socket) => {
   socket.join(
     `user:${profileId}:chats`
   );
+
+  // ====================================================
+  // HELPERS
+  // ====================================================
+
+  function isProfileOnline(id) {
+    const room = io.sockets.adapter.rooms.get(
+      `user:${id}:chats`
+    );
+    return room ? room.size > 0 : false;
+  }
 
   // ====================================================
   // JOIN CHAT
@@ -592,6 +614,23 @@ io.on("connection", (socket) => {
           }
         );
 
+        // ================================================
+        // PUSH NOTIFICATIONS FOR OFFLINE RECIPIENTS
+        // ================================================
+
+        const senderName = await getProfileDisplayName(profileId);
+
+        for (const participantId of participantIds) {
+          if (participantId === profileId) continue;
+          if (isProfileOnline(participantId)) continue;
+
+          sendPushToProfile(participantId, {
+            title: senderName || "New message",
+            body: text.length > 120 ? text.slice(0, 120) + "…" : text,
+            data: { chat_id: chatId },
+          }).catch(() => {});
+        }
+
         reply({
           ok: true,
           message: newMessage,
@@ -609,6 +648,59 @@ io.on("connection", (socket) => {
           error:
             "Could not send message",
         });
+      }
+    }
+  );
+
+  // ====================================================
+  // DISCONNECT
+  // ====================================================
+
+  // ====================================================
+  // SAVE PUSH SUBSCRIPTION
+  // ====================================================
+
+  socket.on(
+    "save_push_subscription",
+    async (subscription, callback) => {
+      const reply =
+        typeof callback === "function"
+          ? callback
+          : () => {};
+
+      try {
+        if (!socket.user?.uid) {
+          reply({ ok: false, error: "Auth required" });
+          return;
+        }
+
+        const { endpoint, keys } = subscription || {};
+
+        if (!endpoint || !keys?.p256dh || !keys?.auth) {
+          reply({ ok: false, error: "Invalid subscription" });
+          return;
+        }
+
+        const { error } = await supabaseAdmin
+          .from("push_subscriptions")
+          .upsert(
+            {
+              profile_id: profileId,
+              endpoint,
+              p256dh: keys.p256dh,
+              auth: keys.auth,
+            },
+            { onConflict: "endpoint" }
+          );
+
+        if (error) throw error;
+
+        console.log("📱 PUSH SUBSCRIPTION SAVED for", profileId);
+
+        reply({ ok: true });
+      } catch (err) {
+        console.error("❌ SAVE PUSH SUBSCRIPTION ERROR:", err.message);
+        reply({ ok: false, error: "Could not save subscription" });
       }
     }
   );

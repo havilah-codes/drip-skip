@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
+import { onAuthStateChanged } from "firebase/auth";
+import { firebaseAuth } from "@/lib/firebase";
+import { resubscribeIfGranted } from "@/lib/push";
 
 export default function ServiceWorker() {
   useEffect(() => {
@@ -22,6 +25,22 @@ export default function ServiceWorker() {
           });
       });
     }
+  }, []);
+
+  // Re-send existing subscription to the server on
+  // auth. Does NOT request permission — the
+  // NotificationPrompt banner handles that.
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(
+      firebaseAuth,
+      (user) => {
+        if (user) {
+          resubscribeIfGranted();
+        }
+      }
+    );
+
+    return () => unsubscribe();
   }, []);
 
   return null;
