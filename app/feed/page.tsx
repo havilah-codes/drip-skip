@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { syncProfile } from "@/lib/syncProfile";
 import BottomNav from "@/components/BottomNav";
+import NotificationPrompt from "@/components/NotificationPrompt";
 import PostCard from "@/components/PostCard";
 
 import {
@@ -624,6 +625,10 @@ export default function FeedPage() {
             See what the council is talking about.
           </p>
         </section>
+
+        {/* NOTIFICATION PROMPT */}
+
+        <NotificationPrompt />
 
         {/* CREATE POST COMPOSER */}
         <section className="rounded-2xl border border-zinc-800 bg-zinc-950 p-3 sm:p-4 mb-6">
