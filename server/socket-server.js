@@ -622,13 +622,19 @@ io.on("connection", (socket) => {
 
         for (const participantId of participantIds) {
           if (participantId === profileId) continue;
-          if (isProfileOnline(participantId)) continue;
+
+          const online = isProfileOnline(participantId);
+          console.log(`📱 PUSH CHECK: profile ${participantId} online=${online}`);
+
+          if (online) continue;
 
           sendPushToProfile(participantId, {
             title: senderName || "New message",
             body: text.length > 120 ? text.slice(0, 120) + "…" : text,
             data: { chat_id: chatId },
-          }).catch(() => {});
+          }).catch((err) => {
+            console.error(`❌ PUSH SEND FAILED for profile ${participantId}:`, err.message || err);
+          });
         }
 
         reply({
@@ -693,9 +699,12 @@ io.on("connection", (socket) => {
             { onConflict: "endpoint" }
           );
 
-        if (error) throw error;
+        if (error) {
+          console.error("❌ PUSH SUBSCRIPTION SAVE ERROR:", error.message, error.code);
+          throw error;
+        }
 
-        console.log("📱 PUSH SUBSCRIPTION SAVED for", profileId);
+        console.log("📱 PUSH SUBSCRIPTION SAVED for profile", profileId, "endpoint", endpoint.slice(0, 40) + "...");
 
         reply({ ok: true });
       } catch (err) {

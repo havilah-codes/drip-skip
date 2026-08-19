@@ -27,6 +27,7 @@ if (!vapidPublicKey || !vapidPrivateKey) {
  */
 async function sendPushToProfile(profileId, payload) {
   if (!vapidPublicKey || !vapidPrivateKey) {
+    console.warn("⚠️ PUSH SKIPPED: VAPID keys not configured");
     return;
   }
 
@@ -45,8 +46,11 @@ async function sendPushToProfile(profileId, payload) {
   }
 
   if (!subscriptions || subscriptions.length === 0) {
+    console.log("ℹ️ PUSH: No subscriptions for profile", profileId);
     return;
   }
+
+  console.log(`📱 PUSH: Sending to ${subscriptions.length} subscription(s) for profile ${profileId}`);
 
   const deadIds = [];
 
