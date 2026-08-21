@@ -893,11 +893,21 @@ export default function ChatPage() {
       }
 
       if (!socket.connected) {
-        alert(
-          "You are currently offline. Please wait for the connection to return."
-        );
+        try {
+          await connectSocket();
+        } catch {
+          alert(
+            "Could not connect to the chat server. Please try again."
+          );
+          return;
+        }
 
-        return;
+        if (!socket.connected) {
+          alert(
+            "Could not connect to the chat server. Please try again."
+          );
+          return;
+        }
       }
 
       setSending(true);
@@ -1106,11 +1116,7 @@ export default function ChatPage() {
                     alt={otherProfile.display_name}
                     className="w-10 h-10 rounded-full object-cover ring-2 ring-zinc-800"
                   />
-                  <span
-                    className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-zinc-950 ${
-                      socketOnline ? "bg-emerald-500" : "bg-zinc-600"
-                    }`}
-                  />
+
                 </div>
 
                 <div className="min-w-0">
@@ -1118,7 +1124,7 @@ export default function ChatPage() {
                     {otherProfile.display_name}
                   </p>
                   <p className="text-xs text-zinc-400 truncate">
-                    {socketOnline ? "Active now" : `@${otherProfile.username}`}
+                    @{otherProfile.username}
                   </p>
                 </div>
               </div>
@@ -1238,9 +1244,9 @@ export default function ChatPage() {
 
             <button
               type="submit"
-              disabled={!messageText.trim() || sending || !socketOnline}
+              disabled={!messageText.trim() || sending}
               className={`w-9 h-9 shrink-0 rounded-xl flex items-center justify-center transition-all duration-200 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${
-                messageText.trim() && socketOnline && !sending
+                messageText.trim() && !sending
                   ? "bg-white text-black font-semibold shadow-md"
                   : "bg-zinc-800 text-zinc-500"
               }`}
