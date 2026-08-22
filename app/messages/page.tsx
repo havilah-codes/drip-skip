@@ -305,184 +305,30 @@ export default function MessagesPage() {
   );
 
   // ======================================================
-  // SOCKET.IO CHAT LIST REALTIME
+  // REFRESH CHATS WHEN PAGE BECOMES VISIBLE
   // ======================================================
 
   useEffect(() => {
-    if (!currentProfileId) {
-      return;
-    }
+    if (!currentProfileId) return;
 
-    const handleConnect = async () => {
-      console.log(
-        "🟢 CHAT LIST SOCKET CONNECTED:",
-        socket.id
-      );
-
-      try {
-        // Re-sync the complete list after reconnect.
-        // This guarantees chats missed while offline
-        // are restored from Supabase.
-        await loadChats();
-      } catch (error) {
-        console.error(
-          "❌ CHAT LIST RECONNECT SYNC ERROR:",
-          error
-        );
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        loadChats();
       }
     };
 
-    const handleDisconnect = (
-      reason: string
-    ) => {
-      console.warn(
-        "🔴 CHAT LIST SOCKET DISCONNECTED:",
-        reason
-      );
-    };
-
-    const handleConnectError =
-      async (error: Error) => {
-        console.error(
-          "❌ CHAT LIST SOCKET ERROR:",
-          error.message
-        );
-
-        try {
-          await refreshSocketToken();
-        } catch (refreshError) {
-          console.error(
-            "❌ CHAT LIST TOKEN REFRESH FAILED:",
-            refreshError instanceof Error
-              ? refreshError.message
-              : "Unknown error"
-          );
-        }
-      };
-
-    const handleChatListUpdated = (
-      payload: {
-        chat_id: string;
-        message: {
-          id: string;
-          chat_id: string;
-          sender_id: string;
-          text: string;
-          created_at: string;
-        };
-        updated_at: string;
-      }
-    ) => {
-      if (!payload?.chat_id) {
-        return;
-      }
-
-      setChats((current) => {
-        const existingIndex =
-          current.findIndex(
-            (chat) =>
-              chat.id ===
-              payload.chat_id
-          );
-
-        // We don't have this chat locally.
-        // Reload from Supabase so we get the
-        // participant profile and unread count.
-        if (existingIndex === -1) {
-          loadChats();
-          return current;
-        }
-
-        const existing =
-          current[existingIndex];
-
-        const isOwnMessage =
-          payload.message?.sender_id ===
-          currentProfileId;
-
-        const updatedChat = {
-          ...existing,
-
-          updated_at:
-            payload.updated_at,
-
-          unread_count:
-            isOwnMessage
-              ? existing.unread_count
-              : existing.unread_count + 1,
-        };
-
-        return [
-          updatedChat,
-          ...current.filter(
-            (_, index) =>
-              index !==
-              existingIndex
-          ),
-        ];
-      });
-    };
-
-    socket.on(
-      "connect",
-      handleConnect
+    document.addEventListener(
+      "visibilitychange",
+      handleVisibilityChange
     );
-
-    socket.on(
-      "disconnect",
-      handleDisconnect
-    );
-
-    socket.on(
-      "connect_error",
-      handleConnectError
-    );
-
-    socket.on(
-      "chat_list_updated",
-      handleChatListUpdated
-    );
-
-    if (socket.connected) {
-      handleConnect();
-    } else {
-      connectSocket().catch(
-        (error) => {
-          console.error(
-            "❌ CHAT LIST SOCKET CONNECT ERROR:",
-            error instanceof Error
-              ? error.message
-              : "Unknown error"
-          );
-        }
-      );
-    }
 
     return () => {
-      socket.off(
-        "connect",
-        handleConnect
-      );
-
-      socket.off(
-        "disconnect",
-        handleDisconnect
-      );
-
-      socket.off(
-        "connect_error",
-        handleConnectError
-      );
-
-      socket.off(
-        "chat_list_updated",
-        handleChatListUpdated
+      document.removeEventListener(
+        "visibilitychange",
+        handleVisibilityChange
       );
     };
-  }, [
-    currentProfileId,
-    loadChats,
-  ]);
+  }, [currentProfileId, loadChats]);
 
   // Initial load
   useEffect(() => {
