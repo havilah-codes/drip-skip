@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import VideoPlayer from "@/components/VideoPlayer";
+import HashtagText from "@/components/HashtagText";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -174,7 +175,7 @@ export default async function PublicPostPage({
         {/* TEXT */}
         {post.text && (
           <p className="text-[15px] leading-7 text-zinc-100 whitespace-pre-wrap break-words mb-5">
-            {post.text}
+            <HashtagText text={post.text} />
           </p>
         )}
 

@@ -10,6 +10,8 @@ import { syncProfile } from "@/lib/syncProfile";
 import UserCard from "@/components/UserCard";
 import BottomNav from "@/components/BottomNav";
 import LoadingScreen from "@/components/LoadingScreen";
+import Link from "next/link";
+import { Hash } from "lucide-react";
 
 type Profile = {
   id: string;
@@ -33,6 +35,10 @@ export default function ExplorePage() {
   const [searching, setSearching] = useState(false);
   const [followLoading, setFollowLoading] =
     useState<string | null>(null);
+
+  const [trending, setTrending] = useState<
+    { id: string; name: string; post_count: number }[]
+  >([]);
 
   // ==========================================
   // AUTH
@@ -278,6 +284,27 @@ export default function ExplorePage() {
   // PAGE
   // ==========================================
 
+  // ==========================================
+  // LOAD TRENDING HASHTAGS
+  // ==========================================
+
+  useEffect(() => {
+    const loadTrending = async () => {
+      try {
+        const { data } = await supabase
+          .rpc("get_trending_hashtags", { limit_count: 10 });
+
+        if (data) {
+          setTrending(data);
+        }
+      } catch (error) {
+        console.error("TRENDING LOAD ERROR:", error);
+      }
+    };
+
+    loadTrending();
+  }, []);
+
   return (
     <main className="min-h-screen bg-black text-white pb-28">
       <div className="max-w-2xl mx-auto px-4 py-6">
@@ -334,6 +361,32 @@ export default function ExplorePage() {
             "
           />
         </div>
+
+        {/* TRENDING HASHTAGS (when no search) */}
+        {!search.trim() && trending.length > 0 && (
+          <div className="mb-6">
+            <h2 className="font-semibold mb-3">
+              Trending Now
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {trending.map((tag) => (
+                <Link
+                  key={tag.id}
+                  href={`/hashtag/${tag.name}`}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-800 bg-zinc-950 hover:bg-zinc-900 hover:border-zinc-700 transition-colors"
+                >
+                  <Hash size={14} className="text-cyan-400" />
+                  <span className="text-sm font-medium">
+                    {tag.name}
+                  </span>
+                  <span className="text-[10px] text-zinc-600">
+                    {tag.post_count}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* RESULTS HEADER */}
 

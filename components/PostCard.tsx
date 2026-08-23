@@ -16,6 +16,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import CommentDrawer from "@/components/CommentDrawer";
 import ShareSheet from "@/components/ShareSheet";
 import VideoPlayer from "@/components/VideoPlayer";
+import HashtagText from "@/components/HashtagText";
 import { supabase } from "@/lib/supabase";
 import { syncProfile } from "@/lib/syncProfile";
 import { firebaseAuth } from "@/lib/firebase";
@@ -298,7 +299,7 @@ export default function PostCard({
       {post.text && (
         <div className="px-4 pb-4">
           <p className="text-sm sm:text-[15px] leading-6 text-zinc-100 whitespace-pre-wrap break-words">
-            {post.text}
+            <HashtagText text={post.text} />
           </p>
         </div>
       )}

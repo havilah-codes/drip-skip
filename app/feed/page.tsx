@@ -24,6 +24,7 @@ import {
 } from "firebase/auth";
 
 import { firebaseAuth } from "@/lib/firebase";
+import { linkHashtagsToPost } from "@/lib/hashtags";
 
 export default function FeedPage() {
   const router = useRouter();
@@ -530,6 +531,11 @@ export default function FeedPage() {
 
       if (newPost) {
         setPosts((currentPosts) => [newPost, ...currentPosts]);
+
+        // Extract and store hashtags
+        linkHashtagsToPost(newPost.id, post.trim()).catch((err) =>
+          console.error("❌ HASHTAG LINKING FAILED:", err)
+        );
       }
 
       setPost("");
