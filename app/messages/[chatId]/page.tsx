@@ -13,9 +13,10 @@ import { useParams, useRouter } from "next/navigation";
 
 // import { ArrowLeft, Send } from "lucide-react";
 
-import { ArrowLeft, Send, Image as ImageIcon, Smile, MoreVertical } from "lucide-react";
+import { ArrowLeft, Send, Image as ImageIcon, Smile, MoreVertical, Share2 } from "lucide-react";
 
 import SharedPostCard, { extractPostIdFromUrl } from "@/components/SharedPostCard";
+import PostPicker from "@/components/PostPicker";
 
 import {
   onAuthStateChanged,
@@ -128,6 +129,8 @@ export default function ChatPage() {
     otherUserOnline,
     setOtherUserOnline,
   ] = useState(false);
+
+  const [postPickerOpen, setPostPickerOpen] = useState(false);
 
   const typingTimeoutRef =
     useRef<ReturnType<
@@ -1115,6 +1118,53 @@ export default function ChatPage() {
     };
 
   // ======================================================
+  // SEND POST FROM PICKER
+  // ======================================================
+
+  const handleSendPost = async (post: { id: string; text: string | null }) => {
+    if (sending || !currentProfileId || !chatId) return;
+
+    const postUrl = `${window.location.origin}/post/${post.id}`;
+
+    if (!socket.connected) {
+      try {
+        await connectSocket();
+      } catch {
+        alert("Could not connect to the chat server.");
+        return;
+      }
+    }
+
+    setSending(true);
+    try {
+      await new Promise<void>((resolve, reject) => {
+        socket.timeout(10000).emit(
+          "send_message",
+          { chat_id: chatId, text: postUrl },
+          (error: Error | null, result?: { ok: boolean; error?: string; message?: Message }) => {
+            if (error || !result?.ok) {
+              reject(new Error(result?.error || error?.message || "Failed"));
+              return;
+            }
+            if (result.message) {
+              setMessages((prev) => deduplicateMessages([...prev, result.message!]));
+            }
+            resolve();
+          }
+        );
+      });
+
+      await markChatAsRead();
+      setPostPickerOpen(false);
+    } catch (error) {
+      console.error("❌ SEND POST ERROR:", error);
+      alert("Could not send the post. Please try again.");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  // ======================================================
   // ENTER TO SEND
   // ======================================================
 
@@ -1176,6 +1226,7 @@ export default function ChatPage() {
   // ======================================================
 
   return (
+    <>
     <main className="h-screen w-full bg-zinc-950 text-white flex flex-col overflow-hidden select-none">
       {/* HEADER */}
       <div className="shrink-0 z-40 border-b border-zinc-800/60 bg-zinc-950/80 backdrop-blur-2xl">
@@ -1323,6 +1374,15 @@ export default function ChatPage() {
               <ImageIcon size={18} />
             </button>
 
+            <button
+              type="button"
+              onClick={() => setPostPickerOpen(true)}
+              className="p-2 text-zinc-400 hover:text-white transition-colors shrink-0"
+              aria-label="Share a post"
+            >
+              <Share2 size={18} />
+            </button>
+
             <textarea
               ref={textareaRef}
               value={messageText}
@@ -1349,5 +1409,13 @@ export default function ChatPage() {
         </form>
       </div>
     </main>
+
+    <PostPicker
+      currentProfileId={currentProfileId}
+      isOpen={postPickerOpen}
+      onClose={() => setPostPickerOpen(false)}
+      onSendPost={handleSendPost}
+    />
+  </>
   );
 }
