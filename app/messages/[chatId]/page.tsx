@@ -15,6 +15,8 @@ import { useParams, useRouter } from "next/navigation";
 
 import { ArrowLeft, Send, Image as ImageIcon, Smile, MoreVertical } from "lucide-react";
 
+import SharedPostCard, { extractPostIdFromUrl } from "@/components/SharedPostCard";
+
 import {
   onAuthStateChanged,
   type User,
@@ -121,6 +123,11 @@ export default function ChatPage() {
 
   const [socketOnline, setSocketOnline] =
     useState(socket.connected);
+
+  const [
+    otherUserOnline,
+    setOtherUserOnline,
+  ] = useState(false);
 
   const typingTimeoutRef =
     useRef<ReturnType<
@@ -551,6 +558,17 @@ export default function ChatPage() {
       await syncMissedMessages();
 
       await markChatAsRead();
+
+      // Query other user's online status
+      if (otherProfile?.id) {
+        socket.emit(
+          "get_online_status",
+          { profile_id: otherProfile.id },
+          (response: { online: boolean }) => {
+            setOtherUserOnline(response?.online || false);
+          }
+        );
+      }
     };
 
     const handleDisconnect = (
@@ -653,6 +671,32 @@ export default function ChatPage() {
       }
     };
 
+    const handleUserOnline = (
+      payload: {
+        profile_id: string;
+        chat_id: string;
+      }
+    ) => {
+      if (
+        payload.chat_id === chatId
+      ) {
+        setOtherUserOnline(true);
+      }
+    };
+
+    const handleUserOffline = (
+      payload: {
+        profile_id: string;
+        chat_id: string;
+      }
+    ) => {
+      if (
+        payload.chat_id === chatId
+      ) {
+        setOtherUserOnline(false);
+      }
+    };
+
     socket.on(
       "connect",
       handleConnect
@@ -683,6 +727,16 @@ export default function ChatPage() {
       handleUserStoppedTyping
     );
 
+    socket.on(
+      "user_online",
+      handleUserOnline
+    );
+
+    socket.on(
+      "user_offline",
+      handleUserOffline
+    );
+
     if (socket.connected) {
       handleConnect();
     } else {
@@ -696,6 +750,23 @@ export default function ChatPage() {
           );
         }
       );
+    }
+
+    // Query online status on connect
+    const queryOnlineStatus = () => {
+      if (otherProfile?.id) {
+        socket.emit(
+          "get_online_status",
+          { profile_id: otherProfile.id },
+          (response: { online: boolean }) => {
+            setOtherUserOnline(response?.online || false);
+          }
+        );
+      }
+    };
+
+    if (socket.connected) {
+      queryOnlineStatus();
     }
 
     return () => {
@@ -739,6 +810,16 @@ export default function ChatPage() {
         handleUserStoppedTyping
       );
 
+      socket.off(
+        "user_online",
+        handleUserOnline
+      );
+
+      socket.off(
+        "user_offline",
+        handleUserOffline
+      );
+
       if (
         typingTimeoutRef.current
       ) {
@@ -758,6 +839,7 @@ export default function ChatPage() {
     currentProfileId,
     syncMissedMessages,
     markChatAsRead,
+    otherProfile?.id,
   ]);
 
   // ======================================================
@@ -1116,7 +1198,13 @@ export default function ChatPage() {
                     alt={otherProfile.display_name}
                     className="w-10 h-10 rounded-full object-cover ring-2 ring-zinc-800"
                   />
-
+                  <span
+                    className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-zinc-950 transition-colors duration-300 ${
+                      otherUserOnline
+                        ? "bg-green-500"
+                        : "bg-zinc-600"
+                    }`}
+                  />
                 </div>
 
                 <div className="min-w-0">
@@ -1174,15 +1262,19 @@ export default function ChatPage() {
                         isMine ? "items-end" : "items-start"
                       }`}
                     >
-                      <div
-                        className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed break-words break-all [overflow-wrap:anywhere] whitespace-pre-wrap shadow-xs ${
-                          isMine
-                            ? "bg-gradient-to-tr from-white to-zinc-200 text-black font-medium rounded-br-xs"
-                            : "bg-zinc-900 border border-zinc-800/80 text-zinc-100 rounded-bl-xs"
-                        }`}
-                      >
-                        {message.text}
-                      </div>
+                      {extractPostIdFromUrl(message.text) ? (
+                        <SharedPostCard postId={extractPostIdFromUrl(message.text)!} />
+                      ) : (
+                        <div
+                          className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed break-words break-all [overflow-wrap:anywhere] whitespace-pre-wrap shadow-xs ${
+                            isMine
+                              ? "bg-gradient-to-tr from-white to-zinc-200 text-black font-medium rounded-br-xs"
+                              : "bg-zinc-900 border border-zinc-800/80 text-zinc-100 rounded-bl-xs"
+                          }`}
+                        >
+                          {message.text}
+                        </div>
+                      )}
 
                       <span className="text-[10px] font-medium text-zinc-500 mt-1.5 px-1 tracking-tight">
                         {formatTime(message.created_at)}
@@ -1202,7 +1294,7 @@ export default function ChatPage() {
       <div className="shrink-0 relative border-t border-zinc-800/60 bg-zinc-950/80 backdrop-blur-2xl pb-safe">
         {/* TYPING INDICATOR */}
         {isOtherUserTyping && otherProfile && (
-          <div className="absolute -top-10 left-0 right-0 pointer-events-none flex justify-start max-w-2xl mx-auto px-4">
+          <div className="absolute -top-10 left-0 right-0 z-20 pointer-events-none flex justify-start max-w-2xl mx-auto px-4">
             <div className="pointer-events-auto inline-flex items-center gap-2 bg-zinc-900/90 border border-zinc-800 px-3 py-1 rounded-full shadow-lg">
               <img
                 src={avatar}

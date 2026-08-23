@@ -9,10 +9,12 @@ import {
   SkipForward,
   Share2,
   Check,
+  Repeat2,
 } from "lucide-react";
 import { onAuthStateChanged } from "firebase/auth";
 
 import CommentDrawer from "@/components/CommentDrawer";
+import ShareSheet from "@/components/ShareSheet";
 import { supabase } from "@/lib/supabase";
 import { syncProfile } from "@/lib/syncProfile";
 import { firebaseAuth } from "@/lib/firebase";
@@ -60,6 +62,9 @@ export default function PostCard({
   const [currentProfileId, setCurrentProfileId] = useState<string | null>(
     propCurrentProfileId || null
   );
+  const [shareOpen, setShareOpen] = useState(false);
+  const [repostCount, setRepostCount] = useState(0);
+  const [userReposted, setUserReposted] = useState(false);
 
   const profile = Array.isArray(post.profiles)
     ? post.profiles[0]
@@ -123,6 +128,21 @@ export default function PostCard({
 
         setDripCount(drip);
         setSkipCount(skip);
+
+        // Load repost count and user repost status
+        const { data: repostsData } = await supabase
+          .from("reposts")
+          .select("user_id")
+          .eq("post_id", post.id);
+
+        if (repostsData) {
+          setRepostCount(repostsData.length);
+          if (resolvedProfileId) {
+            setUserReposted(
+              repostsData.some((r) => r.user_id === resolvedProfileId)
+            );
+          }
+        }
       } catch (error) {
         console.error("❌ UNEXPECTED VOTE LOAD ERROR:", error);
       }
@@ -137,6 +157,51 @@ export default function PostCard({
       unsubscribe();
     };
   }, [post.id, propCurrentProfileId]);
+
+  const handleRepost = async () => {
+    const firebaseUser = firebaseAuth.currentUser;
+    if (!firebaseUser) {
+      alert("Please log in to repost.");
+      return;
+    }
+
+    const repostProfileId = currentProfileId;
+    if (!repostProfileId) return;
+
+    try {
+      if (userReposted) {
+        // Undo repost
+        setUserReposted(false);
+        setRepostCount((prev) => Math.max(0, prev - 1));
+        const { error } = await supabase
+          .from("reposts")
+          .delete()
+          .eq("post_id", post.id)
+          .eq("user_id", repostProfileId);
+        if (error) throw error;
+      } else {
+        // Repost
+        setUserReposted(true);
+        setRepostCount((prev) => prev + 1);
+        const { error } = await supabase.from("reposts").insert({
+          post_id: post.id,
+          user_id: repostProfileId,
+        });
+        if (error) {
+          if (error.code === "23505") {
+            // Already reposted (unique constraint)
+            return;
+          }
+          throw error;
+        }
+      }
+    } catch (error) {
+      console.error("❌ REPOST FAILED:", error);
+      // Revert optimistic update
+      setUserReposted(!userReposted);
+      setRepostCount((prev) => (userReposted ? prev + 1 : Math.max(0, prev - 1)));
+    }
+  };
 
   const handleVote = async (voteType: VoteType) => {
     if (voting || userVote) return;
@@ -187,24 +252,7 @@ export default function PostCard({
     }
   };
 
-  const handleShare = async () => {
-    const url = `${window.location.origin}/post/${post.id}`;
 
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: "Drip or Skip",
-          text: post.text || "Check out this post on Drip or Skip.",
-          url,
-        });
-      } else {
-        await navigator.clipboard.writeText(url);
-        alert("Post link copied!");
-      }
-    } catch {
-      // User cancelled
-    }
-  };
 
   return (
     <article className="rounded-2xl border border-zinc-900 bg-zinc-950 overflow-hidden">
@@ -361,7 +409,23 @@ export default function PostCard({
 
         <button
           type="button"
-          onClick={handleShare}
+          onClick={handleRepost}
+          className={`flex items-center gap-2 px-3 py-2 rounded-xl active:scale-95 transition-all ${
+            userReposted
+              ? "text-green-400 hover:text-green-300 hover:bg-green-400/10"
+              : "text-zinc-500 hover:text-white hover:bg-zinc-900"
+          }`}
+          aria-label="Repost"
+        >
+          <Repeat2 size={17} className={userReposted ? "fill-green-400" : ""} />
+          <span className="text-xs font-medium">
+            {repostCount > 0 ? repostCount : "Repost"}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setShareOpen(true)}
           className="flex items-center gap-2 px-3 py-2 rounded-xl text-zinc-500 hover:text-white hover:bg-zinc-900 active:scale-95 transition-all"
           aria-label="Share"
         >
@@ -376,6 +440,14 @@ export default function PostCard({
         isOpen={commentsOpen}
         onClose={() => setCommentsOpen(false)}
         onCommentAdded={() => setCommentCount((prev: number) => prev + 1)}
+      />
+
+      <ShareSheet
+        postId={post.id}
+        postText={post.text}
+        currentProfileId={currentProfileId}
+        isOpen={shareOpen}
+        onClose={() => setShareOpen(false)}
       />
     </article>
   );

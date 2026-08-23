@@ -118,14 +118,11 @@ async function getProfileDisplayName(id) {
     .maybeSingle();
 
   return data?.display_name || null;
-}
-
-async function getChatParticipantIds(chatId) {
-  const { data, error } =
-    await supabaseAdmin
-      .from("chat_participants")
-      .select("user_id")
-      .eq("chat_id", chatId);
+}async function getChatParticipantIds(chatId) {
+  const { data, error } = await supabaseAdmin
+    .from("chat_participants")
+    .select("user_id")
+    .eq("chat_id", chatId);
 
   if (error) {
     throw error;
@@ -136,6 +133,37 @@ async function getChatParticipantIds(chatId) {
       (participant) =>
         participant.user_id
     ) || []
+  );
+}
+
+async function getChatIdsForProfile(profileId) {
+  const { data, error } = await supabaseAdmin
+    .from("chat_participants")
+    .select("chat_id")
+    .eq("user_id", profileId);
+
+  if (error) {
+    throw error;
+  }
+
+  return (
+    data?.map((row) => row.chat_id) || []
+  );
+}
+
+async function getOtherParticipantIds(chatId, excludeProfileId) {
+  const { data, error } = await supabaseAdmin
+    .from("chat_participants")
+    .select("user_id")
+    .eq("chat_id", chatId)
+    .neq("user_id", excludeProfileId);
+
+  if (error) {
+    throw error;
+  }
+
+  return (
+    data?.map((row) => row.user_id) || []
   );
 }
 
@@ -156,6 +184,24 @@ io.on("connection", (socket) => {
   socket.join(
     `user:${profileId}:chats`
   );
+
+  // Broadcast online status to all chat rooms
+  (async () => {
+    try {
+      const chatIds = await getChatIdsForProfile(profileId);
+      for (const chatId of chatIds) {
+        const otherIds = await getOtherParticipantIds(chatId, profileId);
+        for (const otherId of otherIds) {
+          io.to(`user:${otherId}:chats`).emit(
+            "user_online",
+            { profile_id: profileId, chat_id: chatId }
+          );
+        }
+      }
+    } catch (err) {
+      console.error("❌ BROADCAST ONLINE ERROR:", err.message || err);
+    }
+  })();
 
   // ====================================================
   // HELPERS
@@ -720,12 +766,55 @@ io.on("connection", (socket) => {
 
   socket.on(
     "disconnect",
-    (reason) => {
+    async (reason) => {
       console.log(
         "🔴 SOCKET DISCONNECTED:",
         socket.id,
         reason
       );
+
+      // Broadcast offline status to all chat rooms
+      try {
+        const chatIds = await getChatIdsForProfile(profileId);
+        for (const chatId of chatIds) {
+          const otherIds = await getOtherParticipantIds(chatId, profileId);
+          for (const otherId of otherIds) {
+            io.to(`user:${otherId}:chats`).emit(
+              "user_offline",
+              { profile_id: profileId, chat_id: chatId }
+            );
+          }
+        }
+      } catch (err) {
+        console.error("❌ BROADCAST OFFLINE ERROR:", err.message || err);
+      }
+    }
+  );
+
+  // ====================================================
+  // GET ONLINE STATUS
+  // ====================================================
+
+  socket.on(
+    "get_online_status",
+    async (payload, callback) => {
+      const reply =
+        typeof callback === "function"
+          ? callback
+          : () => {};
+
+      try {
+        const targetId = payload?.profile_id;
+        if (!targetId) {
+          reply({ online: false });
+          return;
+        }
+
+        reply({ online: isProfileOnline(targetId) });
+      } catch (err) {
+        console.error("❌ GET ONLINE STATUS ERROR:", err.message || err);
+        reply({ online: false });
+      }
     }
   );
 });
