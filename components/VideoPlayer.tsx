@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useId,
   useCallback,
   useEffect,
   useRef,
@@ -13,6 +14,10 @@ import {
   VolumeX,
   Maximize,
 } from "lucide-react";
+import {
+  playVideo,
+  pauseVideo,
+} from "@/lib/videoManager";
 
 type VideoPlayerProps = {
   src: string;
@@ -30,6 +35,7 @@ export default function VideoPlayer({
   src,
   className = "",
 }: VideoPlayerProps) {
+  const videoId = useId();
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
@@ -46,7 +52,8 @@ export default function VideoPlayer({
   const [hasStarted, setHasStarted] = useState(false);
 
   // =====================================================
-  // AUTO-PLAY MUTED WHEN IN VIEWPORT
+  // INTERSECTION OBSERVER — play only when visible,
+  // delegate to manager so only one video plays at a time
   // =====================================================
 
   useEffect(() => {
@@ -55,20 +62,42 @@ export default function VideoPlayer({
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && hasStarted) {
-          video.play().catch(() => {});
+        if (!hasStarted) return;
+
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+          // Ask the manager to play — it will pause any other video first
+          playVideo(videoId, video);
           setPlaying(true);
-        } else {
-          video.pause();
+        } else if (!entry.isIntersecting) {
+          // Left viewport entirely — pause
+          pauseVideo(videoId);
           setPlaying(false);
         }
+        // Between 0-50% visible: do nothing (keep current state)
       },
-      { threshold: 0.5 }
+      {
+        // Two thresholds: fully out (0) and 50% visible
+        threshold: [0, 0.5],
+      }
     );
 
     observer.observe(video);
-    return () => observer.disconnect();
-  }, [hasStarted]);
+    return () => {
+      observer.disconnect();
+      // When unmounting, pause if this video was playing
+      pauseVideo(videoId);
+    };
+  }, [videoId, hasStarted]);
+
+  // =====================================================
+  // CLEAN UP on unmount
+  // =====================================================
+
+  useEffect(() => {
+    return () => {
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    };
+  }, []);
 
   // =====================================================
   // TIME & BUFFER UPDATES
@@ -100,7 +129,7 @@ export default function VideoPlayer({
   }, []);
 
   // =====================================================
-  // PLAY / PAUSE
+  // PLAY / PAUSE (user-initiated — goes through manager)
   // =====================================================
 
   const togglePlay = useCallback(() => {
@@ -108,14 +137,14 @@ export default function VideoPlayer({
     if (!video) return;
 
     if (video.paused) {
-      video.play().catch(() => {});
+      playVideo(videoId, video);
       setPlaying(true);
       setHasStarted(true);
     } else {
-      video.pause();
+      pauseVideo(videoId);
       setPlaying(false);
     }
-  }, []);
+  }, [videoId]);
 
   const handleVideoClick = useCallback(() => {
     togglePlay();
