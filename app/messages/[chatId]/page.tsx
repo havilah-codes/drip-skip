@@ -1312,37 +1312,41 @@ export default function ChatPage() {
                         isMine ? "items-end" : "items-start"
                       }`}
                     >
-                      {/* REPLY PREVIEW */}
-                      {replyMessage && (
-                        <div className={`mb-1 px-3 py-1.5 rounded-xl text-[11px] border ${
-                          isMine
-                            ? "bg-zinc-800/50 border-zinc-700 text-zinc-300 rounded-br-sm"
-                            : "bg-zinc-900/80 border-zinc-800 text-zinc-400 rounded-bl-sm"
-                        }`}
-                        >
-                          <span className="font-medium text-cyan-400">
-                            {replyMessage.sender_id === currentProfileId ? "You" : otherProfile?.display_name || ""}
-                          </span>
-                          <span className="mx-1 text-zinc-600">·</span>
-                          <span className="line-clamp-1">
-                            {replyMessage.text || (extractPostIdFromUrl(replyMessage.text) ? "Shared post" : "Attachment")}
-                          </span>
-                        </div>
-                      )}
-
                       {/* MESSAGE BUBBLE */}
                       <div className="relative">
                         {extractPostIdFromUrl(message.text) ? (
                           <SharedPostCard postId={extractPostIdFromUrl(message.text)!} />
                         ) : (
                           <div
-                            className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed break-words break-all [overflow-wrap:anywhere] whitespace-pre-wrap shadow-xs ${
+                            className={`rounded-2xl text-sm leading-relaxed break-words break-all [overflow-wrap:anywhere] whitespace-pre-wrap shadow-xs overflow-hidden ${
                               isMine
                                 ? "bg-gradient-to-tr from-white to-zinc-200 text-black font-medium rounded-br-xs"
                                 : "bg-zinc-900 border border-zinc-800/80 text-zinc-100 rounded-bl-xs"
                             }`}
                           >
-                            {message.text}
+                            {/* INLINE REPLY QUOTE */}
+                            {replyMessage && (
+                              <div className={`px-4 pt-2.5 pb-0 ${
+                                isMine ? "opacity-70" : ""
+                              }`}>
+                                <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-black/10 border-l-2 border-cyan-400">
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-[10px] font-semibold text-cyan-400 mb-0.5">
+                                      {replyMessage.sender_id === currentProfileId ? "You" : otherProfile?.display_name || ""}
+                                    </p>
+                                    <p className={`text-[11px] leading-snug line-clamp-2 ${
+                                      isMine ? "text-black/70" : "text-zinc-400"
+                                    }`}>
+                                      {replyMessage.text || (extractPostIdFromUrl(replyMessage.text) ? "Shared post" : "Attachment")}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            <div className="px-4 py-2.5">
+                              {message.text}
+                            </div>
                           </div>
                         )}
 
