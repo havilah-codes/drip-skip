@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import VideoPlayer from "@/components/VideoPlayer";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -191,12 +192,9 @@ export default async function PublicPostPage({
         {/* VIDEO */}
         {post.video_url && (
           <div className="rounded-2xl overflow-hidden border border-zinc-900 mb-5">
-            <video
+            <VideoPlayer
               src={post.video_url}
-              controls
-              playsInline
-              preload="metadata"
-              className="w-full max-h-[600px] object-contain"
+              className="w-full max-h-[600px]"
             />
           </div>
         )}

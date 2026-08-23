@@ -15,6 +15,7 @@ import { onAuthStateChanged } from "firebase/auth";
 
 import CommentDrawer from "@/components/CommentDrawer";
 import ShareSheet from "@/components/ShareSheet";
+import VideoPlayer from "@/components/VideoPlayer";
 import { supabase } from "@/lib/supabase";
 import { syncProfile } from "@/lib/syncProfile";
 import { firebaseAuth } from "@/lib/firebase";
@@ -315,12 +316,9 @@ export default function PostCard({
 
       {post.video_url && (
         <div className="bg-black">
-          <video
+          <VideoPlayer
             src={post.video_url}
-            controls
-            playsInline
-            preload="metadata"
-            className="w-full max-h-[600px] object-contain"
+            className="w-full max-h-[600px]"
           />
         </div>
       )}
