@@ -40,6 +40,7 @@ export type Post = {
 type PostCardProps = {
   post: Post;
   currentProfileId?: string | null;
+  isRepost?: boolean;
 };
 
 type VoteType = "drip" | "skip";
@@ -47,6 +48,7 @@ type VoteType = "drip" | "skip";
 export default function PostCard({
   post,
   currentProfileId: propCurrentProfileId,
+  isRepost = false,
 }: PostCardProps) {
   const [imageError, setImageError] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
@@ -256,6 +258,12 @@ export default function PostCard({
 
   return (
     <article className="rounded-2xl border border-zinc-900 bg-zinc-950 overflow-hidden">
+      {isRepost && (
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-zinc-900/50">
+          <Repeat2 size={14} className="text-green-500" />
+          <span className="text-xs font-medium text-green-500">Reposted</span>
+        </div>
+      )}
       <div className="flex items-center gap-3 p-4">
         <Link href={`/profile/${username}`}>
           <img

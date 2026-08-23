@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, UserCheck, UserPlus, Repeat2 } from "lucide-react";
+import { ArrowLeft, UserCheck, UserPlus } from "lucide-react";
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { getOrCreateChat } from "@/lib/chat";
 
@@ -33,7 +33,6 @@ export default function PublicProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [reposts, setReposts] = useState<Post[]>([]);
-  const [activeTab, setActiveTab] = useState<"posts" | "reposts">("posts");
 
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
@@ -513,70 +512,31 @@ export default function PublicProfilePage() {
         </section>
 
         {/* POSTS LIST */}
-        <section className="mt-6">            {/* TABS */}
-            <div className="flex items-center gap-1 mb-4 border-b border-zinc-900">
-              <button
-                type="button"
-                onClick={() => setActiveTab("posts")}
-                className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${
-                  activeTab === "posts"
-                    ? "border-white text-white"
-                    : "border-transparent text-zinc-500 hover:text-zinc-300"
-                }`}
-              >
-                Posts
-                <span className="ml-1.5 text-xs text-zinc-600">{posts.length}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab("reposts")}
-                className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${
-                  activeTab === "reposts"
-                    ? "border-white text-white"
-                    : "border-transparent text-zinc-500 hover:text-zinc-300"
-                }`}
-              >
-                Reposts
-                <span className="ml-1.5 text-xs text-zinc-600">{reposts.length}</span>
-              </button>
-            </div>
+        <section className="mt-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-bold text-lg">Posts</h2>
+            <span className="text-xs text-zinc-600">{posts.length + reposts.length}</span>
+          </div>
 
-          {activeTab === "posts" ? (
-            posts.length === 0 ? (
-              <div className="rounded-2xl border border-zinc-900 bg-zinc-950 p-10 text-center">
-                <div className="w-12 h-12 rounded-full bg-zinc-900 flex items-center justify-center mx-auto mb-4 text-zinc-500">
-                  ✦
-                </div>
-                <h3 className="font-semibold">No posts yet</h3>
-                <p className="text-sm text-zinc-500 mt-2">
-                  @{profile.username} hasn't posted anything yet.
-                </p>
+          {posts.length === 0 && reposts.length === 0 ? (
+            <div className="rounded-2xl border border-zinc-900 bg-zinc-950 p-10 text-center">
+              <div className="w-12 h-12 rounded-full bg-zinc-900 flex items-center justify-center mx-auto mb-4 text-zinc-500">
+                ✦
               </div>
-            ) : (
-              <div className="space-y-4">
-                {posts.map((post) => (
-                  <PostCard key={post.id} post={post} />
-                ))}
-              </div>
-            )
+              <h3 className="font-semibold">No posts yet</h3>
+              <p className="text-sm text-zinc-500 mt-2">
+                @{profile.username} hasn't posted anything yet.
+              </p>
+            </div>
           ) : (
-            reposts.length === 0 ? (
-              <div className="rounded-2xl border border-zinc-900 bg-zinc-950 p-10 text-center">
-                <div className="w-12 h-12 rounded-full bg-zinc-900 flex items-center justify-center mx-auto mb-4 text-zinc-500">
-                  <Repeat2 size={20} />
-                </div>
-                <h3 className="font-semibold">No reposts yet</h3>
-                <p className="text-sm text-zinc-500 mt-2">
-                  @{profile.username} hasn't reposted anything yet.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {reposts.map((post) => (
-                  <PostCard key={post.id} post={post} />
-                ))}
-              </div>
-            )
+            <div className="space-y-4">
+              {posts.map((post) => (
+                <PostCard key={post.id} post={post} />
+              ))}
+              {reposts.map((post) => (
+                <PostCard key={`repost-${post.id}`} post={post} isRepost />
+              ))}
+            </div>
           )}
         </section>
 
