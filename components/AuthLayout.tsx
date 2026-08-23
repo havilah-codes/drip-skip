@@ -15,7 +15,7 @@ export default function AuthLayout({
 
       <div className="w-full max-w-[400px] my-auto flex flex-col items-center">
         <header className="text-center mb-8 sm:mb-10">
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent italic">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent italic font-display">
             Drip-or-Skip
           </h1>
           <p className="text-xs sm:text-sm font-medium text-zinc-400 mt-2 tracking-wide uppercase">
@@ -26,7 +26,7 @@ export default function AuthLayout({
         {children}
       </div>
 
-      <footer className="mt-8 text-center text-xs text-zinc-600 font-mono">
+      <footer className="mt-8 text-center text-xs text-zinc-600">
         &copy; {new Date().getFullYear()} DRIP-OR-SKIP. ALL RIGHTS RESERVED.
       </footer>
     </main>

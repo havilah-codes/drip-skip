@@ -1253,8 +1253,7 @@ export default function ChatPage() {
                   />
                 </div>
 
-                <div className="min-w-0">
-                  <p className="font-semibold text-sm leading-tight truncate">
+                <div className="min-w-0">                   <p className="font-semibold text-sm leading-tight truncate font-display">
                     {otherProfile.display_name}
                   </p>
                   <p className="text-xs text-zinc-400 truncate">
@@ -1285,7 +1284,7 @@ export default function ChatPage() {
                 <span className="absolute -bottom-1 -right-1 text-xl">👋</span>
               </div>
 
-              <h2 className="font-bold text-lg text-white">
+              <h2 className="font-bold text-lg text-white font-display">
                 Say hello to {otherProfile?.display_name || "them"}
               </h2>
 

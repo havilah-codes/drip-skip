@@ -377,7 +377,7 @@ export default function PublicProfilePage() {
               <span className="text-2xl text-zinc-500">?</span>
             </div>
 
-            <h1 className="text-xl font-bold">Profile not found</h1>
+            <h1 className="text-xl font-bold font-display">Profile not found</h1>
             <p className="text-sm text-zinc-500 mt-2">@{username} doesn't exist.</p>
 
             <Link
@@ -484,7 +484,7 @@ export default function PublicProfilePage() {
               )}
             </div>
             <div className="mt-4">
-              <h1 className="text-xl font-bold">{profile.display_name}</h1>
+              <h1 className="text-xl font-bold font-display">{profile.display_name}</h1>
               <p className="text-sm text-zinc-500">@{profile.username}</p>
             </div>
 
@@ -511,7 +511,7 @@ export default function PublicProfilePage() {
         {/* POSTS LIST */}
         <section className="mt-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-bold text-lg">Posts</h2>
+            <h2 className="font-bold text-lg font-display">Posts</h2>
             <span className="text-xs text-zinc-600">{posts.length + reposts.length}</span>
           </div>
 
@@ -520,7 +520,7 @@ export default function PublicProfilePage() {
               <div className="w-12 h-12 rounded-full bg-zinc-900 flex items-center justify-center mx-auto mb-4 text-zinc-500">
                 ✦
               </div>
-              <h3 className="font-semibold">No posts yet</h3>
+              <h3 className="font-semibold font-display">No posts yet</h3>
               <p className="text-sm text-zinc-500 mt-2">
                 @{profile.username} hasn't posted anything yet.
               </p>

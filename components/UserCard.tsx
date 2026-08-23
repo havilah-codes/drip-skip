@@ -47,7 +47,7 @@ export default function UserCard({
         href={`/profile/${profile.username}`}
         className="min-w-0 flex-1"
       >
-        <p className="font-semibold text-sm truncate">
+        <p className="font-semibold text-sm truncate font-display">
           {profile.display_name}
         </p>
 

@@ -363,7 +363,7 @@ export default function EditProfilePage() {
             <ArrowLeft size={19} />
           </button>
 
-          <h1 className="ml-3 font-semibold">
+          <h1 className="ml-3 font-semibold font-display">
             Edit Profile
           </h1>
 

@@ -205,7 +205,7 @@ export default function SignupPage() {
           </div>
 
           <div className="space-y-1">
-            <h2 className="text-xl font-bold text-white">
+            <h2 className="text-xl font-bold text-white font-display">
               Check your email
             </h2>
 

@@ -8,7 +8,7 @@ export default function LoadingScreen({
       <div className="flex flex-col items-center gap-6">
         {/* LOGO */}
         <div className="flex flex-col items-center gap-4">
-          <h1 className="text-3xl font-extrabold italic tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-extrabold italic tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent font-display">
             Drip or Skip
           </h1>
 

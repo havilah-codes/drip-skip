@@ -574,7 +574,7 @@ export default function MessagesPage() {
             <ArrowLeft size={19} />
           </button>
 
-          <h1 className="text-lg font-bold">
+          <h1 className="text-lg font-bold font-display">
             Chats
           </h1>
         </div>
@@ -611,7 +611,7 @@ export default function MessagesPage() {
               />
             </div>
 
-            <h2 className="font-bold text-lg">
+            <h2 className="font-bold text-lg font-display">
               No chats yet
             </h2>
 
@@ -661,8 +661,7 @@ export default function MessagesPage() {
                   />
 
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="font-semibold text-sm truncate">
+                    <div className="flex items-center justify-between gap-3">                        <p className="font-semibold text-sm truncate font-display">
                         {profile.display_name}
                       </p>
 

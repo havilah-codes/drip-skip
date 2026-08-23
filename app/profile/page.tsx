@@ -181,7 +181,7 @@ export default function ProfilePage() {
           />
 
           <div className="min-w-0">
-            <h2 className="text-xl font-bold truncate">
+            <h2 className="text-xl font-bold truncate font-display">
               {profile.display_name}
             </h2>
             <p className="text-sm text-zinc-500 mt-1">@{profile.username}</p>
@@ -218,8 +218,7 @@ export default function ProfilePage() {
       {/* POSTS LIST */}
       <section className="max-w-2xl mx-auto px-4 mt-10">
         <div className="flex items-center gap-2 mb-4">
-          <Grid3X3 size={17} />
-          <h2 className="font-semibold">Posts</h2>
+          <Grid3X3 size={17} />            <h2 className="font-semibold font-display">Posts</h2>
         </div>
 
         {posts.length === 0 ? (

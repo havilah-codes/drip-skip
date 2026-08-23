@@ -576,7 +576,7 @@ export default function FeedPage() {
       {/* NAVBAR */}
       <header className="sticky top-0 z-50 border-b border-zinc-900 bg-black/90 backdrop-blur">
         <div className="max-w-5xl mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between">
-          <Link href="/feed" className="text-xl font-black tracking-tight">
+          <Link href="/feed" className="text-xl font-black tracking-tight font-display">
             Drip or Skip
           </Link>
 
@@ -621,7 +621,7 @@ export default function FeedPage() {
       {/* FEED CONTENT */}
       <div className="max-w-2xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
         <section className="mb-6 sm:mb-8">
-          <h1 className="text-xl sm:text-2xl font-bold">
+          <h1 className="text-xl sm:text-2xl font-bold font-display">
             Welcome back, {displayName.split(" ")[0]}.
           </h1>
           <p className="text-sm text-zinc-500 mt-1">
@@ -769,7 +769,7 @@ export default function FeedPage() {
             </div>
           ) : posts.length === 0 ? (
             <div className="rounded-2xl border border-zinc-900 bg-zinc-950 p-8 text-center">
-              <h2 className="font-semibold">Your feed is empty</h2>
+              <h2 className="font-semibold font-display">Your feed is empty</h2>
               <p className="text-sm text-zinc-500 mt-2">
                 Follow some people or create a post to get things moving.
               </p>
@@ -800,7 +800,7 @@ export default function FeedPage() {
             <div className="flex items-center gap-2">
               <h2 className="font-semibold text-sm">Camera</h2>
               {isRecording && (
-                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/20 text-red-500 text-xs font-mono font-medium">
+                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/20 text-red-500 text-xs font-medium">
                   <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                   {formatTime(recordingTime)}
                 </div>
@@ -828,7 +828,7 @@ export default function FeedPage() {
                   else if (aspectRatio === "1:1") setAspectRatio("9:16");
                   else setAspectRatio("full");
                 }}
-                className={`px-2.5 py-1.5 rounded-full text-xs font-mono font-semibold transition-all ${
+                className={`px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
                   screenLight
                     ? "bg-zinc-200 text-zinc-900"
                     : "bg-zinc-900 text-zinc-300 hover:text-white"
@@ -879,7 +879,7 @@ export default function FeedPage() {
                   key={z}
                   type="button"
                   onClick={() => applyZoom(z)}
-                  className={`w-7 h-7 rounded-full text-[11px] font-bold font-mono transition-all ${
+                  className={`w-7 h-7 rounded-full text-[11px] font-bold transition-all ${
                     zoomLevel === z
                       ? "bg-white text-black scale-110"
                       : "text-zinc-300 hover:text-white hover:bg-white/10"

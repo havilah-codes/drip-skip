@@ -159,7 +159,7 @@ export default function ActivityPage() {
     <div className="min-h-screen bg-black text-white pb-32 pt-8 px-4 max-w-xl mx-auto">
       {/* Header Section */}
       <header className="mb-8">
-        <div className="flex items-center space-x-2 text-2xl font-bold tracking-tight">
+        <div className="flex items-center space-x-2 text-2xl font-bold tracking-tight font-display">
           <Bell className="w-6 h-6 stroke-[2.5]" />
           <span>Activity</span>
         </div>

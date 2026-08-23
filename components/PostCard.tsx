@@ -278,7 +278,7 @@ export default function PostCard({
 
         <div className="min-w-0 flex-1">
           <Link href={`/profile/${username}`} className="block group">
-            <p className="font-semibold text-sm truncate group-hover:underline">
+            <p className="font-semibold text-sm truncate group-hover:underline font-display">
               {displayName}
             </p>
             <p className="text-xs text-zinc-500 truncate">

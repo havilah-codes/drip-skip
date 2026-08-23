@@ -192,7 +192,7 @@ export default function ShareSheet({
       <div className="relative w-full max-w-lg bg-zinc-950 border border-zinc-800 rounded-t-3xl overflow-hidden animate-in slide-in-from-bottom duration-300">
         {/* HANDLE */}
         <div className="flex items-center justify-between px-4 pt-4 pb-2">
-          <h3 className="font-bold text-sm">Share post</h3>
+          <h3 className="font-bold text-sm font-display">Share post</h3>
           <button
             type="button"
             onClick={onClose}

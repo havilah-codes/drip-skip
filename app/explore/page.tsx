@@ -354,7 +354,7 @@ export default function ExplorePage() {
               className="text-white"
             />
 
-            <h1 className="text-2xl font-bold">
+            <h1 className="text-2xl font-bold font-display">
               Explore
             </h1>
           </div>
@@ -401,7 +401,7 @@ export default function ExplorePage() {
         {/* TRENDING HASHTAGS (when no search) */}
         {!search.trim() && trending.length > 0 && (
           <div className="mb-6">
-            <h2 className="font-semibold mb-3">
+            <h2 className="font-semibold mb-3 font-display">
               Trending Now
             </h2>
             <div className="flex flex-wrap gap-2">
@@ -449,7 +449,7 @@ export default function ExplorePage() {
               className="mx-auto text-zinc-700 mb-4"
             />
 
-            <h3 className="font-semibold">
+            <h3 className="font-semibold font-display">
               No users found
             </h3>
 

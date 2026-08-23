@@ -110,7 +110,7 @@ export default function HashtagPage() {
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
               <Hash size={18} className="text-cyan-400 shrink-0" />
-              <h1 className="font-bold text-lg truncate">{tag}</h1>
+              <h1 className="font-bold text-lg truncate font-display">{tag}</h1>
             </div>
             <p className="text-xs text-zinc-500">
               {postCount} {postCount === 1 ? "post" : "posts"}
@@ -126,7 +126,7 @@ export default function HashtagPage() {
             <div className="w-12 h-12 rounded-full bg-zinc-900 flex items-center justify-center mx-auto mb-4 text-zinc-500">
               <Hash size={20} />
             </div>
-            <h3 className="font-semibold">No posts with #{tag}</h3>
+            <h3 className="font-semibold font-display">No posts with #{tag}</h3>
             <p className="text-sm text-zinc-500 mt-2">
               Be the first to post with this hashtag!
             </p>

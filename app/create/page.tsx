@@ -481,7 +481,7 @@ export default function CreatePage() {
             ← Back
           </button>
 
-          <h1 className="text-lg font-semibold">
+          <h1 className="text-lg font-semibold font-display">
             New Fit
           </h1>
 

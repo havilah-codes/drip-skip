@@ -145,7 +145,7 @@ export default async function PublicPostPage({
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link
             href="/feed"
-            className="text-xl font-black tracking-tight"
+            className="text-xl font-black tracking-tight font-display"
           >
             Drip or Skip
           </Link>
@@ -202,7 +202,7 @@ export default async function PublicPostPage({
 
         {/* CTA */}
         <div className="mt-10 p-6 rounded-2xl border border-zinc-800 bg-zinc-950 text-center">
-          <h2 className="font-bold text-lg mb-2">
+          <h2 className="font-bold text-lg mb-2 font-display">
             Want to vote on this?
           </h2>
           <p className="text-sm text-zinc-400 mb-5">

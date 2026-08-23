@@ -210,7 +210,7 @@ export default function LoginPage() {
         {/* HEADER */}
 
         <div className="text-center">
-          <h2 className="text-xl font-bold text-white">
+          <h2 className="text-xl font-bold text-white font-display">
             Welcome back
           </h2>
 
