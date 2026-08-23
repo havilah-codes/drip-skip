@@ -6,7 +6,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
 import LoadingScreen from "@/components/LoadingScreen";
 import {
@@ -329,17 +329,29 @@ export default function MessagesPage() {
         handleVisibilityChange
       );
     };
-  }, [currentProfileId, loadChats]);
-
-  // Initial load
+  }, [currentProfileId, loadChats]);  // Initial load
   useEffect(() => {
     if (!currentProfileId) return;
-
     loadChats(true);
   }, [
     currentProfileId,
     loadChats,
   ]);
+
+  // Refresh chats when navigating back to messages list
+  const pathname = usePathname();
+  const prevPathnameRef = useRef(pathname);
+
+  useEffect(() => {
+    if (
+      pathname === "/messages" &&
+      prevPathnameRef.current !== "/messages" &&
+      currentProfileId
+    ) {
+      loadChats(false);
+    }
+    prevPathnameRef.current = pathname;
+  }, [pathname, currentProfileId, loadChats]);
 
   // ==========================================
   // SOCKET.IO CHAT LIST
