@@ -4,6 +4,7 @@ import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
+import LoadingScreen from "@/components/LoadingScreen";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const MAX_CAPTION_LENGTH = 150;
@@ -458,11 +459,7 @@ export default function CreatePage() {
   // ------------------------------------------
 
   if (isLoading) {
-    return (
-      <main className="min-h-screen flex items-center justify-center">
-        <p>Loading...</p>
-      </main>
-    );
+    return <LoadingScreen message="Loading..." />;
   }
 
   // ------------------------------------------

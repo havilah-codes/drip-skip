@@ -9,6 +9,7 @@ import { supabase } from "@/lib/supabase";
 import { syncProfile } from "@/lib/syncProfile";
 import UserCard from "@/components/UserCard";
 import BottomNav from "@/components/BottomNav";
+import LoadingScreen from "@/components/LoadingScreen";
 
 type Profile = {
   id: string;
@@ -270,13 +271,7 @@ export default function ExplorePage() {
   // ==========================================
 
   if (loading) {
-    return (
-      <main className="min-h-screen bg-black text-white flex items-center justify-center">
-        <p className="text-sm text-zinc-500 animate-pulse">
-          Loading Explore...
-        </p>
-      </main>
-    );
+    return <LoadingScreen message="Loading Explore..." />;
   }
 
   // ==========================================

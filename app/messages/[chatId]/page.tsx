@@ -17,6 +17,7 @@ import { ArrowLeft, Send, Image as ImageIcon, Smile, MoreVertical, Share2 } from
 
 import SharedPostCard, { extractPostIdFromUrl } from "@/components/SharedPostCard";
 import PostPicker from "@/components/PostPicker";
+import LoadingScreen from "@/components/LoadingScreen";
 
 import {
   onAuthStateChanged,
@@ -1208,13 +1209,7 @@ export default function ChatPage() {
   // ======================================================
 
   if (loading) {
-    return (
-      <main className="min-h-screen bg-black text-white flex items-center justify-center">
-        <p className="text-sm text-zinc-500 animate-pulse">
-          Loading chat...
-        </p>
-      </main>
-    );
+    return <LoadingScreen message="Loading chat..." />;
   }
 
   const avatar =

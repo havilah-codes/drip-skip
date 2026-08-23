@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { syncProfile } from "@/lib/syncProfile";
 import BottomNav from "@/components/BottomNav";
+import LoadingScreen from "@/components/LoadingScreen";
 import NotificationPrompt from "@/components/NotificationPrompt";
 import PostCard from "@/components/PostCard";
 
@@ -559,11 +560,7 @@ export default function FeedPage() {
   };
 
   if (authLoading) {
-    return (
-      <main className="min-h-screen bg-black text-white flex items-center justify-center">
-        <p className="text-sm text-zinc-500">Loading...</p>
-      </main>
-    );
+    return <LoadingScreen message="Loading your feed..." />;
   }
 
   if (!user) return null;

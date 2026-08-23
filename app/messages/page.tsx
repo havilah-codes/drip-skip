@@ -8,6 +8,7 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
+import LoadingScreen from "@/components/LoadingScreen";
 import {
   ArrowLeft,
   Search,
@@ -553,13 +554,7 @@ export default function MessagesPage() {
   // ==========================================
 
   if (loading) {
-    return (
-      <main className="min-h-screen bg-black text-white flex items-center justify-center">
-        <p className="text-sm text-zinc-500 animate-pulse">
-          Loading chats...
-        </p>
-      </main>
-    );
+    return <LoadingScreen message="Loading chats..." />;
   }
 
   // ==========================================

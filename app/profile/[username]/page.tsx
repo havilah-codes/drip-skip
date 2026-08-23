@@ -11,6 +11,7 @@ import { firebaseAuth } from "@/lib/firebase";
 import { supabase } from "@/lib/supabase";
 import { syncProfile } from "@/lib/syncProfile";
 import PostCard, { type Post } from "@/components/PostCard";
+import LoadingScreen from "@/components/LoadingScreen";
 
 type Profile = {
   id: string;
@@ -352,11 +353,7 @@ export default function PublicProfilePage() {
   // LOADING STATE
   // ==========================================
   if (loading) {
-    return (
-      <main className="min-h-screen bg-black text-white flex items-center justify-center">
-        <p className="text-sm text-zinc-500 animate-pulse">Loading profile...</p>
-      </main>
-    );
+    return <LoadingScreen message="Loading profile..." />;
   }
 
   // ==========================================
