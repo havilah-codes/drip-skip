@@ -43,7 +43,6 @@ export default function VideoPlayer({
 
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(true);
-  const [showPlayIcon, setShowPlayIcon] = useState(true);
   const [controlsVisible, setControlsVisible] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -125,7 +124,6 @@ export default function VideoPlayer({
 
   const handleEnded = useCallback(() => {
     setPlaying(false);
-    setShowPlayIcon(true);
   }, []);
 
   // =====================================================
@@ -148,11 +146,6 @@ export default function VideoPlayer({
 
   const handleVideoClick = useCallback(() => {
     togglePlay();
-    setShowPlayIcon(true);
-    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
-    hideTimerRef.current = setTimeout(() => {
-      setShowPlayIcon(false);
-    }, 800);
   }, [togglePlay]);
 
   // =====================================================
@@ -304,20 +297,14 @@ export default function VideoPlayer({
         className="w-full h-full object-contain"
       />
 
-      {/* CENTER PLAY/PAUSE ICON */}
-      <div
-        className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-200 ${
-          showPlayIcon ? "opacity-100" : "opacity-0"
-        }`}
-      >
-        <div className="w-16 h-16 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center transition-transform duration-200">
-          {playing ? (
-            <Pause size={28} className="text-white" />
-          ) : (
+      {/* CENTER PLAY ICON (visible only when paused) */}
+      {!playing && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-16 h-16 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center">
             <Play size={28} className="text-white ml-1" />
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* INITIAL STATE — BIG PLAY BUTTON */}
       {!hasStarted && (
