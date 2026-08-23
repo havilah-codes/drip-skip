@@ -532,9 +532,7 @@ io.on("connection", (socket) => {
           });
 
           return;
-        }
-
-        const chatId =
+        }        const chatId =
           message?.chat_id;
 
         const text =
@@ -543,10 +541,11 @@ io.on("connection", (socket) => {
             ? message.text.trim()
             : "";
 
+        const replyTo =
+          message?.reply_to || null;
+
         if (
-          !chatId ||
-          !text ||
-          text.length > 2000
+          !chatId || (!text && !replyTo) || text.length > 2000
         ) {
           reply({
             ok: false,
@@ -588,10 +587,11 @@ io.on("connection", (socket) => {
           .insert({
             chat_id: chatId,
             sender_id: profileId,
-            text,
+            text: text || null,
+            reply_to: replyTo,
           })
           .select(
-            "id, chat_id, sender_id, text, created_at"
+            "id, chat_id, sender_id, text, created_at, reply_to"
           )
           .single();
 

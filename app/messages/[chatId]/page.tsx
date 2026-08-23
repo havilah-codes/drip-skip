@@ -13,7 +13,7 @@ import { useParams, useRouter } from "next/navigation";
 
 // import { ArrowLeft, Send } from "lucide-react";
 
-import { ArrowLeft, Send, Image as ImageIcon, Smile, MoreVertical, Share2 } from "lucide-react";
+import { ArrowLeft, Send, Image as ImageIcon, Smile, MoreVertical, Share2, Reply, X } from "lucide-react";
 
 import SharedPostCard, { extractPostIdFromUrl } from "@/components/SharedPostCard";
 import PostPicker from "@/components/PostPicker";
@@ -42,6 +42,7 @@ type Message = {
   sender_id: string;
   text: string;
   created_at: string;
+  reply_to: string | null;
 };
 
 type OtherProfile = {
@@ -111,6 +112,9 @@ export default function ChatPage() {
 
   const [messageText, setMessageText] =
     useState("");
+
+  const [replyingTo, setReplyingTo] =
+    useState<Message | null>(null);
 
   const [loading, setLoading] =
     useState(true);
@@ -367,7 +371,7 @@ export default function ChatPage() {
         } = await supabase
           .from("messages")
           .select(
-            "id, chat_id, sender_id, text, created_at"
+            "id, chat_id, sender_id, text, created_at, reply_to"
           )
           .eq(
             "chat_id",
@@ -967,13 +971,8 @@ export default function ChatPage() {
       event?.preventDefault();
 
       const text =
-        messageText.trim();
-
-      if (
-        !text ||
-        !currentProfileId ||
-        !chatId ||
-        sending
+        messageText.trim();      if (
+        (!text && !replyingTo) || !currentProfileId || !chatId || sending
       ) {
         return;
       }
@@ -1052,6 +1051,8 @@ export default function ChatPage() {
                     chat_id:
                       chatId,
                     text,
+                    reply_to:
+                      replyingTo?.id || null,
                   },
                   (
                     error: Error | null,
@@ -1095,6 +1096,7 @@ export default function ChatPage() {
         }
 
         setMessageText("");
+        setReplyingTo(null);
 
         if (
           textareaRef.current
@@ -1296,30 +1298,66 @@ export default function ChatPage() {
             <div className="space-y-4">
               {messages.map((message) => {
                 const isMine = message.sender_id === currentProfileId;
+                const replyMessage = message.reply_to
+                  ? messages.find((m) => m.id === message.reply_to)
+                  : null;
 
                 return (
                   <div
                     key={message.id}
-                    className={`flex ${isMine ? "justify-end" : "justify-start"}`}
+                    className={`group/msg flex ${isMine ? "justify-end" : "justify-start"}`}
                   >
                     <div
                       className={`w-fit max-w-[75%] sm:max-w-[450px] min-w-0 flex flex-col ${
                         isMine ? "items-end" : "items-start"
                       }`}
                     >
-                      {extractPostIdFromUrl(message.text) ? (
-                        <SharedPostCard postId={extractPostIdFromUrl(message.text)!} />
-                      ) : (
-                        <div
-                          className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed break-words break-all [overflow-wrap:anywhere] whitespace-pre-wrap shadow-xs ${
-                            isMine
-                              ? "bg-gradient-to-tr from-white to-zinc-200 text-black font-medium rounded-br-xs"
-                              : "bg-zinc-900 border border-zinc-800/80 text-zinc-100 rounded-bl-xs"
-                          }`}
+                      {/* REPLY PREVIEW */}
+                      {replyMessage && (
+                        <div className={`mb-1 px-3 py-1.5 rounded-xl text-[11px] border ${
+                          isMine
+                            ? "bg-zinc-800/50 border-zinc-700 text-zinc-300 rounded-br-sm"
+                            : "bg-zinc-900/80 border-zinc-800 text-zinc-400 rounded-bl-sm"
+                        }`}
                         >
-                          {message.text}
+                          <span className="font-medium text-cyan-400">
+                            {replyMessage.sender_id === currentProfileId ? "You" : otherProfile?.display_name || ""}
+                          </span>
+                          <span className="mx-1 text-zinc-600">·</span>
+                          <span className="line-clamp-1">
+                            {replyMessage.text || (extractPostIdFromUrl(replyMessage.text) ? "Shared post" : "Attachment")}
+                          </span>
                         </div>
                       )}
+
+                      {/* MESSAGE BUBBLE */}
+                      <div className="relative">
+                        {extractPostIdFromUrl(message.text) ? (
+                          <SharedPostCard postId={extractPostIdFromUrl(message.text)!} />
+                        ) : (
+                          <div
+                            className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed break-words break-all [overflow-wrap:anywhere] whitespace-pre-wrap shadow-xs ${
+                              isMine
+                                ? "bg-gradient-to-tr from-white to-zinc-200 text-black font-medium rounded-br-xs"
+                                : "bg-zinc-900 border border-zinc-800/80 text-zinc-100 rounded-bl-xs"
+                            }`}
+                          >
+                            {message.text}
+                          </div>
+                        )}
+
+                        {/* REPLY BUTTON */}
+                        <button
+                          type="button"
+                          onClick={() => setReplyingTo(message)}
+                          className={`absolute top-1/2 -translate-y-1/2 opacity-0 group-hover/msg:opacity-100 transition-opacity p-1.5 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white ${
+                            isMine ? "-left-9" : "-right-9"
+                          }`}
+                          aria-label="Reply"
+                        >
+                          <Reply size={14} />
+                        </button>
+                      </div>
 
                       <span className="text-[10px] font-medium text-zinc-500 mt-1.5 px-1 tracking-tight">
                         {formatTime(message.created_at)}
@@ -1358,6 +1396,30 @@ export default function ChatPage() {
           </div>
         )}
 
+        {/* REPLY COMPOSER BAR */}
+        {replyingTo && (
+          <div className="max-w-2xl mx-auto px-4 pt-3 pb-0">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800">
+              <Reply size={14} className="text-cyan-400 shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] text-cyan-400 font-medium">
+                  Replying to {replyingTo.sender_id === currentProfileId ? "yourself" : otherProfile?.display_name || "message"}
+                </p>
+                <p className="text-xs text-zinc-400 truncate">
+                  {replyingTo.text || (extractPostIdFromUrl(replyingTo.text) ? "Shared post" : "Attachment")}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setReplyingTo(null)}
+                className="p-1 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors shrink-0"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* INPUT FORM */}
         <form onSubmit={handleSendMessage} className="max-w-2xl mx-auto p-3">
           <div className="flex items-end gap-2 rounded-2xl border border-zinc-800 bg-zinc-900/80 p-2 focus-within:border-zinc-700 focus-within:ring-1 focus-within:ring-zinc-700 transition-all">
@@ -1390,9 +1452,9 @@ export default function ChatPage() {
 
             <button
               type="submit"
-              disabled={!messageText.trim() || sending}
+              disabled={(!messageText.trim() && !replyingTo) || sending}
               className={`w-9 h-9 shrink-0 rounded-xl flex items-center justify-center transition-all duration-200 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${
-                messageText.trim() && !sending
+                (messageText.trim() || replyingTo) && !sending
                   ? "bg-white text-black font-semibold shadow-md"
                   : "bg-zinc-800 text-zinc-500"
               }`}
