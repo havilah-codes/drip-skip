@@ -289,20 +289,61 @@ export default function ExplorePage() {
   // ==========================================
 
   useEffect(() => {
-    const loadTrending = async () => {
+    let cancelled = false;
+
+    // Delay trending load so it doesn't block the main page
+    const timer = setTimeout(async () => {
       try {
-        const { data } = await supabase
-          .rpc("get_trending_hashtags", { limit_count: 10 });
+        // First check if the function exists by querying hashtags table directly
+        const { data: hashtagData } = await supabase
+          .from("hashtags")
+          .select("id")
+          .limit(1);
 
-        if (data) {
-          setTrending(data);
+        if (cancelled || !hashtagData) return;
+
+        // Hashtags table exists, try loading trending
+        const { data, error } = await supabase
+          .from("post_hashtags")
+          .select("hashtag_id, hashtags (id, name)")
+          .order("created_at", { ascending: false })
+          .limit(50);
+
+        if (cancelled) return;
+
+        if (error || !data || data.length === 0) return;
+
+        // Count occurrences client-side
+        const counts = new Map<string, { id: string; name: string; count: number }>();
+
+        for (const row of data) {
+          const h = Array.isArray(row.hashtags) ? row.hashtags[0] : row.hashtags;
+          if (!h) continue;
+          const existing = counts.get(h.name);
+          if (existing) {
+            existing.count++;
+          } else {
+            counts.set(h.name, { id: h.id, name: h.name, count: 1 });
+          }
         }
-      } catch (error) {
-        console.error("TRENDING LOAD ERROR:", error);
-      }
-    };
 
-    loadTrending();
+        const sorted = Array.from(counts.values())
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 10)
+          .map((t) => ({ id: t.id, name: t.name, post_count: t.count }));
+
+        if (!cancelled && sorted.length > 0) {
+          setTrending(sorted);
+        }
+      } catch {
+        // Hashtags table or data doesn't exist yet — that's fine
+      }
+    }, 1000);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, []);
 
   return (
