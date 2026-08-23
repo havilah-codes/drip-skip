@@ -273,28 +273,14 @@ export default function ExplorePage() {
   };
 
   // ==========================================
-  // LOADING
-  // ==========================================
-
-  if (loading) {
-    return <LoadingScreen message="Loading Explore..." />;
-  }
-
-  // ==========================================
-  // PAGE
-  // ==========================================
-
-  // ==========================================
-  // LOAD TRENDING HASHTAGS
+  // LOAD TRENDING HASHTAGS (fire-and-forget, after main page mounts)
   // ==========================================
 
   useEffect(() => {
     let cancelled = false;
 
-    // Delay trending load so it doesn't block the main page
     const timer = setTimeout(async () => {
       try {
-        // First check if the function exists by querying hashtags table directly
         const { data: hashtagData } = await supabase
           .from("hashtags")
           .select("id")
@@ -302,7 +288,6 @@ export default function ExplorePage() {
 
         if (cancelled || !hashtagData) return;
 
-        // Hashtags table exists, try loading trending
         const { data, error } = await supabase
           .from("post_hashtags")
           .select("hashtag_id, hashtags (id, name)")
@@ -310,10 +295,8 @@ export default function ExplorePage() {
           .limit(50);
 
         if (cancelled) return;
-
         if (error || !data || data.length === 0) return;
 
-        // Count occurrences client-side
         const counts = new Map<string, { id: string; name: string; count: number }>();
 
         for (const row of data) {
@@ -336,7 +319,7 @@ export default function ExplorePage() {
           setTrending(sorted);
         }
       } catch {
-        // Hashtags table or data doesn't exist yet — that's fine
+        // Hashtags table doesn't exist yet — that's fine
       }
     }, 1000);
 
@@ -345,6 +328,18 @@ export default function ExplorePage() {
       clearTimeout(timer);
     };
   }, []);
+
+  // ==========================================
+  // LOADING
+  // ==========================================
+
+  if (loading) {
+    return <LoadingScreen message="Loading Explore..." />;
+  }
+
+  // ==========================================
+  // PAGE
+  // ==========================================
 
   return (
     <main className="min-h-screen bg-black text-white pb-28">
