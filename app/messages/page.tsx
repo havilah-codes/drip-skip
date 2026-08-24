@@ -700,7 +700,7 @@ export default function MessagesPage() {
                         <span
                           className={`text-[11px] ${
                             chat.unread_count > 0
-                              ? "text-zinc-300"
+                              ? "text-text-s"
                               : "text-text-m"
                           }`}
                         >

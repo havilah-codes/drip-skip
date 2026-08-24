@@ -215,10 +215,10 @@ export default function ShareSheet({
                 {copied ? (
                   <Check size={18} className="text-green-400" />
                 ) : (
-                  <Copy size={18} className="text-zinc-300" />
+                  <Copy size={18} className="text-text-s" />
                 )}
               </div>
-              <span className="text-xs font-medium text-zinc-300">
+              <span className="text-xs font-medium text-text-s">
                 {copied ? "Copied!" : "Copy link"}
               </span>
             </button>
@@ -230,9 +230,9 @@ export default function ShareSheet({
               className="flex-1 flex flex-col items-center gap-2 py-3 rounded-2xl bg-bg-sunken hover:bg-zinc-800 transition-colors"
             >
               <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center">
-                <Share2 size={18} className="text-zinc-300" />
+                <Share2 size={18} className="text-text-s" />
               </div>
-              <span className="text-xs font-medium text-zinc-300">
+              <span className="text-xs font-medium text-text-s">
                 Share
               </span>
             </button>

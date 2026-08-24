@@ -103,7 +103,7 @@ export default function SharedPostCard({ postId }: { postId: string }) {
           alt={profile?.display_name || "User"}
           className="w-5 h-5 rounded-full object-cover"
         />
-        <span className="text-xs font-medium text-zinc-300 truncate">
+        <span className="text-xs font-medium text-text-s truncate">
           {profile?.display_name || "Drip User"}
         </span>
         <ExternalLink size={12} className="text-text-m ml-auto shrink-0" />

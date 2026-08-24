@@ -78,7 +78,7 @@ export default function UserCard({
             disabled:opacity-50
             ${
               isFollowing
-                ? "border border-border-d text-zinc-300 hover:text-text-p hover:bg-bg-sunken"
+                ? "border border-border-d text-text-s hover:text-text-p hover:bg-bg-sunken"
                 : "bg-btn text-btn-text hover:bg-btn/80"
             }
           `}

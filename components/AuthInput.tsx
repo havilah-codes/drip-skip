@@ -30,7 +30,7 @@ export default function AuthInput({
 
   return (
     <div className="w-full flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-xs font-semibold text-zinc-300 tracking-wide uppercase">
+      <label htmlFor={id} className="text-xs font-semibold text-text-s tracking-wide uppercase">
         {label}
       </label>
       

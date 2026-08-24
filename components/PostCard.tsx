@@ -298,7 +298,7 @@ export default function PostCard({
 
       {post.text && (
         <div className="px-4 pb-4">
-          <p className="text-sm sm:text-[15px] leading-6 text-zinc-100 whitespace-pre-wrap break-words">
+          <p className="text-sm sm:text-[15px] leading-6 text-text-p whitespace-pre-wrap break-words">
             <HashtagText text={post.text} />
           </p>
         </div>

@@ -174,7 +174,7 @@ export default async function PublicPostPage({
 
         {/* TEXT */}
         {post.text && (
-          <p className="text-[15px] leading-7 text-zinc-100 whitespace-pre-wrap break-words mb-5">
+          <p className="text-[15px] leading-7 text-text-p whitespace-pre-wrap break-words mb-5">
             <HashtagText text={post.text} />
           </p>
         )}

@@ -468,7 +468,7 @@ export default function PublicProfilePage() {
                       disabled={followLoading || !currentUser}
                       className={`px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 active:scale-95 transition-all disabled:opacity-50 ${
                         isFollowing
-                          ? "border border-border-d text-zinc-300 hover:text-rose-400 hover:border-rose-950 hover:bg-rose-950/20"
+                          ? "border border-border-d text-text-s hover:text-rose-400 hover:border-rose-950 hover:bg-rose-950/20"
                           : "bg-btn text-btn-text hover:bg-btn/80"
                       }`}
                     >

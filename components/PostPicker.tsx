@@ -141,7 +141,7 @@ export default function PostPicker({
                     {/* Text preview */}
                     <div className="min-w-0 flex-1">
                       {preview ? (
-                        <p className="text-sm text-zinc-200 line-clamp-2 leading-relaxed">
+                        <p className="text-sm text-text-p line-clamp-2 leading-relaxed">
                           {preview}
                         </p>
                       ) : post.image_url || post.video_url ? (

@@ -169,7 +169,7 @@ export default function CommentDrawer({
         
         {/* Header */}
         <div className="p-4 border-b border-border-s flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2 text-zinc-200 font-semibold">
+          <div className="flex items-center gap-2 text-text-p font-semibold">
             <MessageCircle className="w-5 h-5 text-text-s" />
             <span>Comments ({comments.length})</span>
           </div>
@@ -206,7 +206,7 @@ export default function CommentDrawer({
                   <div className="flex items-center justify-between">
                     <Link
                       href={`/profile/${comment.profile?.username || ''}`}
-                      className="text-xs font-semibold text-zinc-200 hover:underline"
+                      className="text-xs font-semibold text-text-p hover:underline"
                     >
                       {comment.profile?.display_name || `@${comment.profile?.username}`}
                     </Link>
@@ -221,7 +221,7 @@ export default function CommentDrawer({
                     )}
                   </div>
 
-                  <p className="text-sm text-zinc-300 mt-0.5 break-words">
+                  <p className="text-sm text-text-s mt-0.5 break-words">
                     {comment.text}
                   </p>
                 </div>

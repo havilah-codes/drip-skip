@@ -100,7 +100,7 @@ export default function NotificationPrompt() {
           <button
             type="button"
             onClick={dismiss}
-            className="px-3 py-1.5 rounded-xl text-xs text-text-t hover:text-zinc-300 transition-colors"
+            className="px-3 py-1.5 rounded-xl text-xs text-text-t hover:text-text-s transition-colors"
           >
             Not now
           </button>

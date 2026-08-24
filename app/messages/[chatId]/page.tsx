@@ -1369,7 +1369,7 @@ export default function ChatPage() {
                             className={`rounded-2xl text-sm leading-relaxed break-words break-all [overflow-wrap:anywhere] whitespace-pre-wrap shadow-xs overflow-hidden ${
                               isMine
                                 ? "bg-gradient-to-tr from-white to-zinc-200 text-black font-medium rounded-br-xs"
-                                : "bg-bg-sunken border border-border-d/80 text-zinc-100 rounded-bl-xs"
+                                : "bg-bg-sunken border border-border-d/80 text-text-p rounded-bl-xs"
                             }`}
                           >
                             {/* INLINE REPLY QUOTE */}

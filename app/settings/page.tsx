@@ -310,7 +310,7 @@ export default function SettingsPage() {
                 ) : (
                   <form onSubmit={handlePasswordReset} className="space-y-3">
                     <p className="text-xs text-text-t">
-                      We&apos;ll send a password reset link to <span className="text-zinc-300">{user?.email}</span>.
+                      We&apos;ll send a password reset link to <span className="text-text-s">{user?.email}</span>.
                     </p>
                     {resetError && (
                       <p className="text-xs text-red-400">{resetError}</p>
@@ -435,7 +435,7 @@ export default function SettingsPage() {
                         flex flex-col items-center gap-1.5 py-3 rounded-xl border text-xs font-medium transition-all
                         ${active
                           ? "border-white/30 bg-white/10 text-text-p"
-                          : "border-border-d bg-bg-sunken/50 text-text-t hover:text-zinc-300 hover:border-zinc-700"
+                          : "border-border-d bg-bg-sunken/50 text-text-t hover:text-text-s hover:border-zinc-700"
                         }
                       `}
                     >

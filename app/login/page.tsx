@@ -306,7 +306,7 @@ export default function LoginPage() {
                     "Password reset will be available soon."
                   )
                 }
-                className="text-[11px] text-text-s hover:text-zinc-200 transition-colors"
+                className="text-[11px] text-text-s hover:text-text-p transition-colors"
               >
                 Forgot password?
               </button>
