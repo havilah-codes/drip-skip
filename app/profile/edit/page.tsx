@@ -11,6 +11,7 @@ import { ArrowLeft, Camera, Loader2 } from "lucide-react";
 
 import {
   onAuthStateChanged,
+  updateProfile,
   type User,
 } from "firebase/auth";
 
@@ -283,6 +284,26 @@ export default function EditProfilePage() {
         "✅ PROFILE UPDATED:",
         updatedProfile
       );
+
+      // ==========================================
+      // SYNC FIREBASE AUTH PHOTO URL
+      // ==========================================
+
+      if (newAvatarUrl && user) {
+        try {
+          await updateProfile(user, {
+            photoURL: newAvatarUrl,
+          });
+          console.log(
+            "✅ FIREBASE PHOTO URL UPDATED"
+          );
+        } catch (firebaseErr) {
+          console.error(
+            "❌ FIREBASE PHOTO UPDATE FAILED:",
+            firebaseErr
+          );
+        }
+      }
 
       // ==========================================
       // GO BACK TO PROFILE
