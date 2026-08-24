@@ -259,9 +259,9 @@ export default function PostCard({
 
 
   return (
-    <article className="rounded-2xl border border-zinc-900 bg-zinc-950 overflow-hidden">
+    <article className="rounded-2xl border border-border-s bg-bg-raised overflow-hidden">
       {isRepost && (
-        <div className="flex items-center gap-2 px-4 py-2 border-b border-zinc-900/50">
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-border-s/50">
           <Repeat2 size={14} className="text-green-500" />
           <span className="text-xs font-medium text-green-500">Reposted</span>
         </div>
@@ -272,7 +272,7 @@ export default function PostCard({
             src={avatar}
             alt={displayName}
             onError={() => setAvatarError(true)}
-            className="w-10 h-10 rounded-full object-cover border border-zinc-800 shrink-0"
+            className="w-10 h-10 rounded-full object-cover border border-border-d shrink-0"
           />
         </Link>
 
@@ -281,7 +281,7 @@ export default function PostCard({
             <p className="font-semibold text-sm truncate group-hover:underline font-display">
               {displayName}
             </p>
-            <p className="text-xs text-zinc-500 truncate">
+            <p className="text-xs text-text-t truncate">
               @{username} · {timeAgo}
             </p>
           </Link>
@@ -289,7 +289,7 @@ export default function PostCard({
 
         <button
           type="button"
-          className="w-8 h-8 flex items-center justify-center rounded-full text-zinc-500 hover:text-white hover:bg-zinc-900 transition-colors"
+          className="w-8 h-8 flex items-center justify-center rounded-full text-text-t hover:text-text-p hover:bg-bg-sunken transition-colors"
           aria-label="More options"
         >
           <MoreHorizontal size={18} />
@@ -305,7 +305,7 @@ export default function PostCard({
       )}
 
       {post.image_url && !imageError && (
-        <div className="bg-black">
+        <div className="bg-bg">
           <img
             src={post.image_url}
             alt="Post content"
@@ -316,7 +316,7 @@ export default function PostCard({
       )}
 
       {post.video_url && (
-        <div className="bg-black">
+        <div className="bg-bg">
           <VideoPlayer
             src={post.video_url}
             className="w-full max-h-[600px]"
@@ -336,7 +336,7 @@ export default function PostCard({
                 userVote === "drip"
                   ? "border-cyan-400/60 bg-cyan-400/15 text-cyan-300"
                   : userVote === "skip"
-                  ? "border-zinc-900 bg-zinc-900/40 text-zinc-600"
+                  ? "border-border-s bg-bg-sunken/40 text-text-m"
                   : "border-cyan-400/30 bg-cyan-400/10 text-cyan-300 hover:bg-cyan-400/20 hover:border-cyan-400/60"
               }
               disabled:cursor-not-allowed
@@ -372,7 +372,7 @@ export default function PostCard({
                 userVote === "skip"
                   ? "border-rose-400/60 bg-rose-400/15 text-rose-300"
                   : userVote === "drip"
-                  ? "border-zinc-900 bg-zinc-900/40 text-zinc-600"
+                  ? "border-border-s bg-bg-sunken/40 text-text-m"
                   : "border-rose-400/30 bg-rose-400/10 text-rose-300 hover:bg-rose-400/20 hover:border-rose-400/60"
               }
               disabled:cursor-not-allowed
@@ -400,11 +400,11 @@ export default function PostCard({
         </div>
       </div>
 
-      <div className="flex items-center justify-between px-3 py-2 border-t border-zinc-900/50 mt-3">
+      <div className="flex items-center justify-between px-3 py-2 border-t border-border-s/50 mt-3">
         <button
           type="button"
           onClick={() => setCommentsOpen(true)}
-          className="flex items-center gap-2 px-3 py-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-900 active:scale-95 transition-all"
+          className="flex items-center gap-2 px-3 py-2 rounded-xl text-text-s hover:text-text-p hover:bg-bg-sunken active:scale-95 transition-all"
         >
           <MessageCircle size={17} />
           <span className="text-xs font-medium">
@@ -420,7 +420,7 @@ export default function PostCard({
           className={`flex items-center gap-2 px-3 py-2 rounded-xl active:scale-95 transition-all ${
             userReposted
               ? "text-green-400 hover:text-green-300 hover:bg-green-400/10"
-              : "text-zinc-500 hover:text-white hover:bg-zinc-900"
+              : "text-text-t hover:text-text-p hover:bg-bg-sunken"
           }`}
           aria-label="Repost"
         >
@@ -433,7 +433,7 @@ export default function PostCard({
         <button
           type="button"
           onClick={() => setShareOpen(true)}
-          className="flex items-center gap-2 px-3 py-2 rounded-xl text-zinc-500 hover:text-white hover:bg-zinc-900 active:scale-95 transition-all"
+          className="flex items-center gap-2 px-3 py-2 rounded-xl text-text-t hover:text-text-p hover:bg-bg-sunken active:scale-95 transition-all"
           aria-label="Share"
         >
           <Share2 size={17} />

@@ -130,7 +130,7 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-black text-white pb-20">
+      <main className="min-h-screen bg-bg text-text-p pb-20">
         <ProfileSkeleton />
       </main>
     );
@@ -146,14 +146,14 @@ export default function ProfilePage() {
       : "/default-avatar.png";
 
   return (
-    <main className="min-h-screen bg-black text-white pb-24">
+    <main className="min-h-screen bg-bg text-text-p pb-24">
       {/* HEADER */}
-      <header className="sticky top-0 z-40 border-b border-zinc-900 bg-black/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-border-s bg-bg/80 backdrop-blur-xl">
         <div className="max-w-2xl mx-auto h-14 px-4 flex items-center justify-between">
           <button
             type="button"
             onClick={() => router.back()}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors"
+            className="w-9 h-9 rounded-full flex items-center justify-center text-text-s hover:text-text-p hover:bg-bg-sunken transition-colors"
             aria-label="Go back"
           >
             <ArrowLeft size={20} />
@@ -163,7 +163,7 @@ export default function ProfilePage() {
 
           <Link
             href="/settings"
-            className="w-9 h-9 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors"
+            className="w-9 h-9 rounded-full flex items-center justify-center text-text-s hover:text-text-p hover:bg-bg-sunken transition-colors"
             aria-label="Settings"
           >
             <Settings size={19} />
@@ -178,39 +178,39 @@ export default function ProfilePage() {
             src={avatarSrc}
             alt={profile.display_name}
             onError={() => setAvatarError(true)}
-            className="w-24 h-24 rounded-full object-cover border border-zinc-800"
+            className="w-24 h-24 rounded-full object-cover border border-border-d"
           />
 
           <div className="min-w-0">
             <h2 className="text-xl font-bold truncate font-display">
               {profile.display_name}
             </h2>
-            <p className="text-sm text-zinc-500 mt-1">@{profile.username}</p>
+            <p className="text-sm text-text-t mt-1">@{profile.username}</p>
           </div>
         </div>
 
         {/* STATS */}
         <div className="grid grid-cols-3 gap-2 mt-7">
-          <div className="rounded-2xl bg-zinc-950 border border-zinc-900 p-4 text-center">
+          <div className="rounded-2xl bg-bg-raised border border-border-s p-4 text-center">
             <p className="text-lg font-bold">{posts.length}</p>
-            <p className="text-xs text-zinc-500 mt-1">Posts</p>
+            <p className="text-xs text-text-t mt-1">Posts</p>
           </div>
 
-          <div className="rounded-2xl bg-zinc-950 border border-zinc-900 p-4 text-center">
+          <div className="rounded-2xl bg-bg-raised border border-border-s p-4 text-center">
             <p className="text-lg font-bold text-cyan-400">{totalDrips}</p>
-            <p className="text-xs text-zinc-500 mt-1">Drips</p>
+            <p className="text-xs text-text-t mt-1">Drips</p>
           </div>
 
-          <div className="rounded-2xl bg-zinc-950 border border-zinc-900 p-4 text-center">
+          <div className="rounded-2xl bg-bg-raised border border-border-s p-4 text-center">
             <p className="text-lg font-bold text-rose-400">{totalSkips}</p>
-            <p className="text-xs text-zinc-500 mt-1">Skips</p>
+            <p className="text-xs text-text-t mt-1">Skips</p>
           </div>
         </div>
 
         {/* EDIT PROFILE */}
         <Link
           href="/profile/edit"
-          className="mt-5 w-full h-11 rounded-xl border border-zinc-800 flex items-center justify-center text-sm font-semibold hover:bg-zinc-900 transition-colors"
+          className="mt-5 w-full h-11 rounded-xl border border-border-d flex items-center justify-center text-sm font-semibold hover:bg-bg-sunken transition-colors"
         >
           Edit Profile
         </Link>
@@ -223,15 +223,15 @@ export default function ProfilePage() {
         </div>
 
         {posts.length === 0 ? (
-          <div className="rounded-2xl border border-zinc-900 bg-zinc-950 p-10 text-center">
+          <div className="rounded-2xl border border-border-s bg-bg-raised p-10 text-center">
             <p className="font-semibold">No posts yet.</p>
-            <p className="text-sm text-zinc-500 mt-2">
+            <p className="text-sm text-text-t mt-2">
               Share something with the council.
             </p>
 
             <Link
               href="/feed"
-              className="inline-flex mt-5 px-5 py-2.5 rounded-xl bg-white text-black text-sm font-bold active:scale-95 transition-all"
+              className="inline-flex mt-5 px-5 py-2.5 rounded-xl bg-btn text-btn-text text-sm font-bold active:scale-95 transition-all"
             >
               Create a post
             </Link>

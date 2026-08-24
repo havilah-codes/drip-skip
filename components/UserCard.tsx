@@ -29,7 +29,7 @@ export default function UserCard({
     profile.avatar_url || "/default-avatar.png";
 
   return (
-    <div className="flex items-center gap-3 p-4 rounded-2xl border border-zinc-900 bg-zinc-950">
+    <div className="flex items-center gap-3 p-4 rounded-2xl border border-border-s bg-bg-raised">
       {/* AVATAR */}
       <Link
         href={`/profile/${profile.username}`}
@@ -38,7 +38,7 @@ export default function UserCard({
         <img
           src={avatar}
           alt={profile.display_name}
-          className="w-12 h-12 rounded-full object-cover border border-zinc-800"
+          className="w-12 h-12 rounded-full object-cover border border-border-d"
         />
       </Link>
 
@@ -51,7 +51,7 @@ export default function UserCard({
           {profile.display_name}
         </p>
 
-        <p className="text-xs text-zinc-500 truncate">
+        <p className="text-xs text-text-t truncate">
           @{profile.username}
         </p>
       </Link>
@@ -78,8 +78,8 @@ export default function UserCard({
             disabled:opacity-50
             ${
               isFollowing
-                ? "border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-900"
-                : "bg-white text-black hover:bg-zinc-200"
+                ? "border border-border-d text-zinc-300 hover:text-text-p hover:bg-bg-sunken"
+                : "bg-btn text-btn-text hover:bg-btn/80"
             }
           `}
         >

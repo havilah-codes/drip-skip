@@ -617,8 +617,8 @@ export default function FeedPage() {
 
   if (authLoading) {
     return (
-      <main className="min-h-screen bg-black text-white pb-20">
-        <header className="sticky top-0 z-50 border-b border-zinc-900 bg-black/90 backdrop-blur">
+      <main className="min-h-screen bg-bg text-text-p pb-20">
+        <header className="sticky top-0 z-50 border-b border-border-s bg-bg/90 backdrop-blur">
           <div className="max-w-5xl mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between">
             <span className="text-xl font-black tracking-tight font-display">Drip or Skip</span>
           </div>
@@ -634,21 +634,21 @@ export default function FeedPage() {
   if (!user) return null;
 
   return (
-    <main className="min-h-screen bg-black text-white pb-20">
+    <main className="min-h-screen bg-bg text-text-p pb-20">
       {/* NAVBAR */}
-      <header className="sticky top-0 z-50 border-b border-zinc-900 bg-black/90 backdrop-blur">
+      <header className="sticky top-0 z-50 border-b border-border-s bg-bg/90 backdrop-blur">
         <div className="max-w-5xl mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between">
           <Link href="/feed" className="text-xl font-black tracking-tight font-display">
             Drip or Skip
           </Link>
 
           <nav className="hidden sm:flex items-center gap-6">
-            <Link href="/feed" className="text-sm text-white font-medium">
+            <Link href="/feed" className="text-sm text-text-p font-medium">
               Feed
             </Link>
             <Link
               href="/profile"
-              className="text-sm text-zinc-400 hover:text-white transition-colors font-medium"
+              className="text-sm text-text-s hover:text-text-p transition-colors font-medium"
             >
               Profile
             </Link>
@@ -659,20 +659,20 @@ export default function FeedPage() {
               <img
                 src={avatar}
                 alt=""
-                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full object-cover border border-zinc-800 hover:border-zinc-500 transition-colors"
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full object-cover border border-border-d hover:border-zinc-500 transition-colors"
               />
             </Link>
 
             <div className="hidden sm:block text-right">
               <p className="text-sm font-semibold">{displayName}</p>
-              <p className="text-[11px] text-zinc-500">{user.email}</p>
+              <p className="text-[11px] text-text-t">{user.email}</p>
             </div>
 
             <button
               type="button"
               onClick={handleLogout}
               disabled={loggingOut}
-              className="text-xs text-zinc-400 hover:text-white transition-colors disabled:opacity-50 ml-1"
+              className="text-xs text-text-s hover:text-text-p transition-colors disabled:opacity-50 ml-1"
             >
               {loggingOut ? "Logging out..." : "Log out"}
             </button>
@@ -686,7 +686,7 @@ export default function FeedPage() {
           <h1 className="text-xl sm:text-2xl font-bold font-display">
             Welcome back, {displayName.split(" ")[0]}.
           </h1>
-          <p className="text-sm text-zinc-500 mt-1">
+          <p className="text-sm text-text-t mt-1">
             See what the council is talking about.
           </p>
         </section>
@@ -696,7 +696,7 @@ export default function FeedPage() {
         <NotificationPrompt />
 
         {/* CREATE POST COMPOSER */}
-        <section className="rounded-2xl border border-zinc-800 bg-zinc-950 p-3 sm:p-4 mb-6">
+        <section className="rounded-2xl border border-border-d bg-bg-raised p-3 sm:p-4 mb-6">
           <div className="flex gap-3">
             <img
               src={avatar}
@@ -711,12 +711,12 @@ export default function FeedPage() {
                 placeholder="What's on your mind?"
                 rows={3}
                 disabled={posting}
-                className="w-full resize-none bg-transparent outline-none text-sm text-white placeholder:text-zinc-600 disabled:opacity-50"
+                className="w-full resize-none bg-transparent outline-none text-sm text-text-p placeholder:text-text-m disabled:opacity-50"
               />
 
               {/* IMAGE PREVIEW */}
               {selectedImage && (
-                <div className="mt-3 relative rounded-xl overflow-hidden border border-zinc-800">
+                <div className="mt-3 relative rounded-xl overflow-hidden border border-border-d">
                   <img
                     src={URL.createObjectURL(selectedImage)}
                     alt="Selected"
@@ -726,7 +726,7 @@ export default function FeedPage() {
                     type="button"
                     onClick={() => setSelectedImage(null)}
                     disabled={posting}
-                    className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/80 text-white flex items-center justify-center text-sm"
+                    className="absolute top-2 right-2 w-8 h-8 rounded-full bg-bg/80 text-text-p flex items-center justify-center text-sm"
                   >
                     ×
                   </button>
@@ -735,7 +735,7 @@ export default function FeedPage() {
 
               {/* VIDEO PREVIEW */}
               {selectedVideo && (
-                <div className="mt-3 relative rounded-xl overflow-hidden border border-zinc-800">
+                <div className="mt-3 relative rounded-xl overflow-hidden border border-border-d">
                   {thumbnailSeeking ? (
                     <VideoFramePicker
                       file={selectedVideo}
@@ -755,21 +755,21 @@ export default function FeedPage() {
                       <button
                         type="button"
                         onClick={() => setThumbnailSeeking(true)}
-                        className="absolute bottom-2 left-2 px-2.5 py-1 rounded-lg bg-black/70 text-white text-[11px] font-medium backdrop-blur-sm hover:bg-black/80 transition-colors"
+                        className="absolute bottom-2 left-2 px-2.5 py-1 rounded-lg bg-bg/70 text-text-p text-[11px] font-medium backdrop-blur-sm hover:bg-bg/80 transition-colors"
                       >
                         🎬 Pick thumbnail
                       </button>
                     </div>
                   ) : (
-                    <div className="w-full max-h-80 bg-zinc-900 flex items-center justify-center py-12">
-                      <span className="text-sm text-zinc-500 animate-pulse">Loading preview...</span>
+                    <div className="w-full max-h-80 bg-bg-sunken flex items-center justify-center py-12">
+                      <span className="text-sm text-text-t animate-pulse">Loading preview...</span>
                     </div>
                   )}
                   <button
                     type="button"
                     onClick={() => { setSelectedVideo(null); setVideoThumbnail(null); }}
                     disabled={posting}
-                    className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/80 text-white flex items-center justify-center text-sm"
+                    className="absolute top-2 right-2 w-8 h-8 rounded-full bg-bg/80 text-text-p flex items-center justify-center text-sm"
                   >
                     ×
                   </button>
@@ -777,11 +777,11 @@ export default function FeedPage() {
               )}
 
               {/* ACTION BAR */}
-              <div className="flex items-center justify-between gap-2 pt-3 mt-2 border-t border-zinc-900">
+              <div className="flex items-center justify-between gap-2 pt-3 mt-2 border-t border-border-s">
                 <div className="flex items-center gap-1 sm:gap-2">
                   <label
                     htmlFor="post-image"
-                    className="flex items-center justify-center gap-2 px-2.5 sm:px-3 py-2 rounded-xl text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 cursor-pointer transition-all"
+                    className="flex items-center justify-center gap-2 px-2.5 sm:px-3 py-2 rounded-xl text-xs font-medium text-text-s hover:text-text-p hover:bg-bg-sunken cursor-pointer transition-all"
                   >
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -801,7 +801,7 @@ export default function FeedPage() {
 
                   <label
                     htmlFor="post-video"
-                    className="flex items-center justify-center gap-2 px-2.5 sm:px-3 py-2 rounded-xl text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 cursor-pointer transition-all"
+                    className="flex items-center justify-center gap-2 px-2.5 sm:px-3 py-2 rounded-xl text-xs font-medium text-text-s hover:text-text-p hover:bg-bg-sunken cursor-pointer transition-all"
                   >
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="3" y="5" width="13" height="14" rx="2" />
@@ -822,7 +822,7 @@ export default function FeedPage() {
                     type="button"
                     onClick={openCamera}
                     disabled={posting}
-                    className="flex items-center justify-center gap-2 px-2.5 sm:px-3 py-2 rounded-xl text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 transition-all disabled:opacity-50"
+                    className="flex items-center justify-center gap-2 px-2.5 sm:px-3 py-2 rounded-xl text-xs font-medium text-text-s hover:text-text-p hover:bg-bg-sunken transition-all disabled:opacity-50"
                   >
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M14.5 4h-5L7.5 7H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2.5z" />
@@ -838,7 +838,7 @@ export default function FeedPage() {
                     posting ||
                     (!post.trim() && !selectedImage && !selectedVideo)
                   }
-                  className="px-4 sm:px-5 py-2 rounded-xl bg-white text-black text-xs font-bold transition-all hover:bg-zinc-200 disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
+                  className="px-4 sm:px-5 py-2 rounded-xl bg-btn text-btn-text text-xs font-bold transition-all hover:bg-btn/80 disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
                 >
                   {posting ? "Posting..." : "Post"}
                 </button>
@@ -852,9 +852,9 @@ export default function FeedPage() {
           {feedLoading ? (
             <FeedSkeleton count={2} />
           ) : posts.length === 0 ? (
-            <div className="rounded-2xl border border-zinc-900 bg-zinc-950 p-8 text-center">
+            <div className="rounded-2xl border border-border-s bg-bg-raised p-8 text-center">
               <h2 className="font-semibold font-display">Your feed is empty</h2>
-              <p className="text-sm text-zinc-500 mt-2">
+              <p className="text-sm text-text-t mt-2">
                 Follow some people or create a post to get things moving.
               </p>
             </div>
@@ -1087,7 +1087,7 @@ function VideoFramePicker({
   }, [captureCurrentFrame, onFramePick]);
 
   return (
-    <div className="bg-zinc-900 rounded-xl overflow-hidden">
+    <div className="bg-bg-sunken rounded-xl overflow-hidden">
       {/* Video preview area */}
       <div className="relative">
         {previewFrame ? (
@@ -1097,8 +1097,8 @@ function VideoFramePicker({
             className="w-full max-h-80 object-cover"
           />
         ) : (
-          <div className="w-full max-h-80 bg-zinc-950 flex items-center justify-center py-12">
-            <span className="text-sm text-zinc-500 animate-pulse">Loading...</span>
+          <div className="w-full max-h-80 bg-bg-raised flex items-center justify-center py-12">
+            <span className="text-sm text-text-t animate-pulse">Loading...</span>
           </div>
         )}
       </div>
@@ -1136,10 +1136,10 @@ function VideoFramePicker({
           className="w-full h-1 bg-zinc-700 rounded-full appearance-none cursor-pointer accent-cyan-400"
         />
         <div className="flex items-center justify-between mt-1">
-          <span className="text-[10px] text-zinc-500 font-medium tabular-nums">
+          <span className="text-[10px] text-text-t font-medium tabular-nums">
             {Math.floor(currentTime)}s / {Math.floor(duration)}s
           </span>
-          <span className="text-[10px] text-zinc-600">Drag to pick a frame</span>
+          <span className="text-[10px] text-text-m">Drag to pick a frame</span>
         </div>
       </div>
 
@@ -1155,7 +1155,7 @@ function VideoFramePicker({
         <button
           type="button"
           onClick={handleConfirm}
-          className="flex-1 px-3 py-2 rounded-xl bg-white text-black text-xs font-bold hover:bg-zinc-200 transition-colors"
+          className="flex-1 px-3 py-2 rounded-xl bg-btn text-btn-text text-xs font-bold hover:bg-btn/80 transition-colors"
         >
           Use this frame
         </button>

@@ -335,7 +335,7 @@ export default function ExplorePage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-black text-white pb-28">
+      <main className="min-h-screen bg-bg text-text-p pb-28">
         <ExploreSkeleton />
         <BottomNav />
       </main>
@@ -347,7 +347,7 @@ export default function ExplorePage() {
   // ==========================================
 
   return (
-    <main className="min-h-screen bg-black text-white pb-28">
+    <main className="min-h-screen bg-bg text-text-p pb-28">
       <div className="max-w-2xl mx-auto px-4 py-6">
 
         {/* HEADER */}
@@ -356,7 +356,7 @@ export default function ExplorePage() {
           <div className="flex items-center gap-2">
             <Sparkles
               size={22}
-              className="text-white"
+              className="text-text-p"
             />
 
             <h1 className="text-2xl font-bold font-display">
@@ -364,7 +364,7 @@ export default function ExplorePage() {
             </h1>
           </div>
 
-          <p className="text-sm text-zinc-500 mt-1">
+          <p className="text-sm text-text-t mt-1">
             Discover people and find your council.
           </p>
         </div>
@@ -374,7 +374,7 @@ export default function ExplorePage() {
         <div className="relative mb-6">
           <Search
             size={18}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-text-t"
           />
 
           <input
@@ -389,14 +389,14 @@ export default function ExplorePage() {
               h-12
               rounded-2xl
               border
-              border-zinc-800
-              bg-zinc-950
+              border-border-d
+              bg-bg-raised
               pl-11
               pr-4
               text-sm
-              text-white
+              text-text-p
               outline-none
-              placeholder:text-zinc-600
+              placeholder:text-text-m
               focus:border-zinc-600
               transition-colors
             "
@@ -414,13 +414,13 @@ export default function ExplorePage() {
                 <Link
                   key={tag.id}
                   href={`/hashtag/${tag.name}`}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-800 bg-zinc-950 hover:bg-zinc-900 hover:border-zinc-700 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border-d bg-bg-raised hover:bg-bg-sunken hover:border-zinc-700 transition-colors"
                 >
                   <Hash size={14} className="text-cyan-400" />
                   <span className="text-sm font-medium">
                     {tag.name}
                   </span>
-                  <span className="text-[10px] text-zinc-600">
+                  <span className="text-[10px] text-text-m">
                     {tag.post_count}
                   </span>
                 </Link>
@@ -439,7 +439,7 @@ export default function ExplorePage() {
           </h2>
 
           {searching && (
-            <span className="text-xs text-zinc-600">
+            <span className="text-xs text-text-m">
               Searching...
             </span>
           )}
@@ -448,17 +448,17 @@ export default function ExplorePage() {
         {/* RESULTS */}
 
         {profiles.length === 0 ? (
-          <div className="rounded-2xl border border-zinc-900 bg-zinc-950 p-10 text-center">
+          <div className="rounded-2xl border border-border-s bg-bg-raised p-10 text-center">
             <Search
               size={28}
-              className="mx-auto text-zinc-700 mb-4"
+              className="mx-auto text-text-m mb-4"
             />
 
             <h3 className="font-semibold font-display">
               No users found
             </h3>
 
-            <p className="text-sm text-zinc-500 mt-2">
+            <p className="text-sm text-text-t mt-2">
               Try searching for another username
               or name.
             </p>

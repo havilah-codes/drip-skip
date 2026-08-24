@@ -467,7 +467,7 @@ export default function CreatePage() {
   // ------------------------------------------
 
   return (
-    <main className="min-h-screen bg-white dark:bg-black">
+    <main className="min-h-screen bg-white dark:bg-bg">
       <div className="mx-auto w-full max-w-xl px-4 pb-10">
 
         {/* Header */}
@@ -511,7 +511,7 @@ export default function CreatePage() {
                 <button
                   type="button"
                   onClick={handleRemoveImage}
-                  className="absolute right-4 top-4 rounded-full bg-black/70 px-4 py-2 text-sm font-medium text-white backdrop-blur"
+                  className="absolute right-4 top-4 rounded-full bg-bg/70 px-4 py-2 text-sm font-medium text-text-p backdrop-blur"
                 >
                   Change
                 </button>
@@ -598,7 +598,7 @@ export default function CreatePage() {
               !user ||
               isSubmitting
             }
-            className="w-full rounded-2xl bg-black px-5 py-4 font-semibold text-white transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 dark:bg-white dark:text-black"
+            className="w-full rounded-2xl bg-bg px-5 py-4 font-semibold text-text-p transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 dark:bg-white dark:text-black"
           >
             {isSubmitting
               ? statusText || "Posting..."

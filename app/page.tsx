@@ -25,7 +25,7 @@ export default function RootPage() {
   }, [router]);
 
   return (
-    <main className="min-h-screen bg-black text-white flex items-center justify-center">
+    <main className="min-h-screen bg-bg text-text-p flex items-center justify-center">
       <div className="flex flex-col items-center gap-6">
         <div className="flex flex-col items-center gap-4">
           <h1 className="text-3xl font-extrabold italic tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent font-display">

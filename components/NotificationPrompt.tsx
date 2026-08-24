@@ -72,9 +72,9 @@ export default function NotificationPrompt() {
   if (!visible) return null;
 
   return (
-    <div className="mb-4 flex items-start gap-3 rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
-      <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-900">
-        <Bell size={18} className="text-zinc-400" />
+    <div className="mb-4 flex items-start gap-3 rounded-2xl border border-border-d bg-bg-raised p-4">
+      <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bg-sunken">
+        <Bell size={18} className="text-text-s" />
       </div>
 
       <div className="min-w-0 flex-1">
@@ -82,7 +82,7 @@ export default function NotificationPrompt() {
           Stay in the loop
         </p>
 
-        <p className="mt-0.5 text-xs text-zinc-500">
+        <p className="mt-0.5 text-xs text-text-t">
           Get notified when someone messages you, even
           when the app is closed.
         </p>
@@ -92,7 +92,7 @@ export default function NotificationPrompt() {
             type="button"
             disabled={subscribing}
             onClick={handleEnable}
-            className="px-4 py-1.5 rounded-xl bg-white text-black text-xs font-bold active:scale-95 transition-all disabled:opacity-50"
+            className="px-4 py-1.5 rounded-xl bg-btn text-btn-text text-xs font-bold active:scale-95 transition-all disabled:opacity-50"
           >
             {subscribing ? "Enabling…" : "Enable"}
           </button>
@@ -100,7 +100,7 @@ export default function NotificationPrompt() {
           <button
             type="button"
             onClick={dismiss}
-            className="px-3 py-1.5 rounded-xl text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+            className="px-3 py-1.5 rounded-xl text-xs text-text-t hover:text-zinc-300 transition-colors"
           >
             Not now
           </button>
@@ -110,7 +110,7 @@ export default function NotificationPrompt() {
       <button
         type="button"
         onClick={dismiss}
-        className="mt-0.5 shrink-0 text-zinc-600 hover:text-zinc-400 transition-colors"
+        className="mt-0.5 shrink-0 text-text-m hover:text-text-s transition-colors"
         aria-label="Dismiss"
       >
         <X size={16} />

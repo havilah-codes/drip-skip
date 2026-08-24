@@ -354,7 +354,7 @@ export default function PublicProfilePage() {
   // ==========================================
   if (loading) {
     return (
-      <main className="min-h-screen bg-black text-white pb-20">
+      <main className="min-h-screen bg-bg text-text-p pb-20">
         <ProfileSkeleton />
       </main>
     );
@@ -365,28 +365,28 @@ export default function PublicProfilePage() {
   // ==========================================
   if (notFound || !profile) {
     return (
-      <main className="min-h-screen bg-black text-white">
+      <main className="min-h-screen bg-bg text-text-p">
         <div className="max-w-2xl mx-auto px-4 py-6">
           <button
             type="button"
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors"
+            className="flex items-center gap-2 text-sm text-text-s hover:text-text-p transition-colors"
           >
             <ArrowLeft size={18} />
             Back
           </button>
 
           <div className="flex flex-col items-center justify-center py-32 text-center">
-            <div className="w-16 h-16 rounded-full bg-zinc-900 flex items-center justify-center mb-5 border border-zinc-800">
-              <span className="text-2xl text-zinc-500">?</span>
+            <div className="w-16 h-16 rounded-full bg-bg-sunken flex items-center justify-center mb-5 border border-border-d">
+              <span className="text-2xl text-text-t">?</span>
             </div>
 
             <h1 className="text-xl font-bold font-display">Profile not found</h1>
-            <p className="text-sm text-zinc-500 mt-2">@{username} doesn't exist.</p>
+            <p className="text-sm text-text-t mt-2">@{username} doesn't exist.</p>
 
             <Link
               href="/feed"
-              className="mt-6 px-5 py-2.5 rounded-xl bg-white text-black text-sm font-bold active:scale-95 transition-all"
+              className="mt-6 px-5 py-2.5 rounded-xl bg-btn text-btn-text text-sm font-bold active:scale-95 transition-all"
             >
               Back to feed
             </Link>
@@ -403,14 +403,14 @@ export default function PublicProfilePage() {
   // MAIN PROFILE VIEW
   // ==========================================
   return (
-    <main className="min-h-screen bg-black text-white">
+    <main className="min-h-screen bg-bg text-text-p">
       {/* TOP HEADER */}
-      <header className="sticky top-0 z-40 border-b border-zinc-900 bg-black/85 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-border-s bg-bg/85 backdrop-blur-xl">
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center">
           <button
             type="button"
             onClick={() => router.back()}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-900 transition-all"
+            className="w-9 h-9 rounded-full flex items-center justify-center text-text-s hover:text-text-p hover:bg-bg-sunken transition-all"
             aria-label="Go back"
           >
             <ArrowLeft size={19} />
@@ -418,7 +418,7 @@ export default function PublicProfilePage() {
 
           <div className="ml-3 min-w-0">
             <p className="font-semibold truncate">{profile.display_name}</p>
-            <p className="text-xs text-zinc-500">@{profile.username}</p>
+            <p className="text-xs text-text-t">@{profile.username}</p>
           </div>
         </div>
       </header>
@@ -427,7 +427,7 @@ export default function PublicProfilePage() {
       <div className="max-w-2xl mx-auto px-4 py-6 pb-28">
 
         {/* PROFILE HEADER CARD */}
-        <section className="rounded-3xl border border-zinc-900 bg-zinc-950 overflow-hidden">
+        <section className="rounded-3xl border border-border-s bg-bg-raised overflow-hidden">
           {/* COVER GRAPHIC */}
           <div className="h-28 sm:h-36 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black" />
 
@@ -438,14 +438,14 @@ export default function PublicProfilePage() {
                 src={avatarSrc}
                 alt={profile.display_name}
                 onError={() => setAvatarError(true)}
-                className="w-24 h-24 rounded-full object-cover border-4 border-black bg-zinc-900"
+                className="w-24 h-24 rounded-full object-cover border-4 border-black bg-bg-sunken"
               />
 
               {/* ACTION BUTTON */}
               {isSelf ? (
                 <Link
                   href="/profile/edit"
-                  className="px-5 py-2.5 rounded-xl border border-zinc-800 text-white text-sm font-bold hover:bg-zinc-900 transition-colors"
+                  className="px-5 py-2.5 rounded-xl border border-border-d text-text-p text-sm font-bold hover:bg-bg-sunken transition-colors"
                 >
                   Edit Profile
                 </Link>
@@ -456,7 +456,7 @@ export default function PublicProfilePage() {
                       type="button"
                       onClick={handleMessage}
                       disabled={messageLoading || !currentUser}
-                      className="px-5 py-2.5 rounded-xl border border-zinc-800 text-white text-sm font-bold hover:bg-zinc-900 active:scale-95 transition-all disabled:opacity-50"
+                      className="px-5 py-2.5 rounded-xl border border-border-d text-text-p text-sm font-bold hover:bg-bg-sunken active:scale-95 transition-all disabled:opacity-50"
                     >
                       {messageLoading ? "Opening..." : "Message"}
                     </button>
@@ -468,8 +468,8 @@ export default function PublicProfilePage() {
                       disabled={followLoading || !currentUser}
                       className={`px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 active:scale-95 transition-all disabled:opacity-50 ${
                         isFollowing
-                          ? "border border-zinc-800 text-zinc-300 hover:text-rose-400 hover:border-rose-950 hover:bg-rose-950/20"
-                          : "bg-white text-black hover:bg-zinc-200"
+                          ? "border border-border-d text-zinc-300 hover:text-rose-400 hover:border-rose-950 hover:bg-rose-950/20"
+                          : "bg-btn text-btn-text hover:bg-btn/80"
                       }`}
                     >
                       {isFollowing ? (
@@ -489,24 +489,24 @@ export default function PublicProfilePage() {
             </div>
             <div className="mt-4">
               <h1 className="text-xl font-bold font-display">{profile.display_name}</h1>
-              <p className="text-sm text-zinc-500">@{profile.username}</p>
+              <p className="text-sm text-text-t">@{profile.username}</p>
             </div>
 
             {/* STATS */}
             <div className="flex items-center gap-6 mt-5">
               <div>
                 <p className="font-bold">{posts.length}</p>
-                <p className="text-xs text-zinc-500">Posts</p>
+                <p className="text-xs text-text-t">Posts</p>
               </div>
 
               <div>
                 <p className="font-bold">{followersCount}</p>
-                <p className="text-xs text-zinc-500">Followers</p>
+                <p className="text-xs text-text-t">Followers</p>
               </div>
 
               <div>
                 <p className="font-bold">{followingCount}</p>
-                <p className="text-xs text-zinc-500">Following</p>
+                <p className="text-xs text-text-t">Following</p>
               </div>
             </div>
           </div>
@@ -516,16 +516,16 @@ export default function PublicProfilePage() {
         <section className="mt-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-bold text-lg font-display">Posts</h2>
-            <span className="text-xs text-zinc-600">{posts.length + reposts.length}</span>
+            <span className="text-xs text-text-m">{posts.length + reposts.length}</span>
           </div>
 
           {posts.length === 0 && reposts.length === 0 ? (
-            <div className="rounded-2xl border border-zinc-900 bg-zinc-950 p-10 text-center">
-              <div className="w-12 h-12 rounded-full bg-zinc-900 flex items-center justify-center mx-auto mb-4 text-zinc-500">
+            <div className="rounded-2xl border border-border-s bg-bg-raised p-10 text-center">
+              <div className="w-12 h-12 rounded-full bg-bg-sunken flex items-center justify-center mx-auto mb-4 text-text-t">
                 ✦
               </div>
               <h3 className="font-semibold font-display">No posts yet</h3>
-              <p className="text-sm text-zinc-500 mt-2">
+              <p className="text-sm text-text-t mt-2">
                 @{profile.username} hasn't posted anything yet.
               </p>
             </div>

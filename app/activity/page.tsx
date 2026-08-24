@@ -156,7 +156,7 @@ export default function ActivityPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white pb-32 pt-8 px-4 max-w-xl mx-auto">
+    <div className="min-h-screen bg-bg text-text-p pb-32 pt-8 px-4 max-w-xl mx-auto">
       {/* Header Section */}
       <header className="mb-8">
         <div className="flex items-center space-x-2 text-2xl font-bold tracking-tight font-display">
@@ -175,7 +175,7 @@ export default function ActivityPage() {
         </div>
       ) : activities.length === 0 ? (
         <div className="text-center py-20 text-neutral-400 border border-neutral-900 bg-neutral-950/40 rounded-2xl">
-          <p className="text-base font-medium text-white">No activity yet</p>
+          <p className="text-base font-medium text-text-p">No activity yet</p>
           <p className="text-sm mt-1 text-neutral-500">
             When people follow you or vote on your posts, you'll see it here.
           </p>
@@ -198,7 +198,7 @@ export default function ActivityPage() {
                     alt={item.actor.username}
                     className="w-12 h-12 rounded-full object-cover bg-neutral-800"
                   />
-                  <div className="absolute -bottom-1 -right-1 p-1 rounded-full bg-black border border-neutral-800">
+                  <div className="absolute -bottom-1 -right-1 p-1 rounded-full bg-bg border border-neutral-800">
                     {item.type === 'drip' && (
                       <Flame className="w-3.5 h-3.5 text-orange-500 fill-orange-500" />
                     )}
@@ -213,7 +213,7 @@ export default function ActivityPage() {
 
                 {/* Details */}
                 <div className="flex-1 min-w-0 pr-2">
-                  <p className="text-sm font-semibold text-white leading-tight truncate">
+                  <p className="text-sm font-semibold text-text-p leading-tight truncate">
                     {item.actor.displayName || item.actor.username}
                   </p>
                   <p className="text-xs text-neutral-400 truncate mt-0.5">

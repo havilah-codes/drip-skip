@@ -91,10 +91,10 @@ export default function HashtagPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-black text-white pb-20">
-        <header className="sticky top-0 z-40 border-b border-zinc-900 bg-black/85 backdrop-blur-xl">
+      <main className="min-h-screen bg-bg text-text-p pb-20">
+        <header className="sticky top-0 z-40 border-b border-border-s bg-bg/85 backdrop-blur-xl">
           <div className="max-w-2xl mx-auto px-4 h-14 flex items-center gap-3">
-            <button type="button" onClick={() => router.back()} className="w-9 h-9 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-900 transition-all" aria-label="Go back">
+            <button type="button" onClick={() => router.back()} className="w-9 h-9 rounded-full flex items-center justify-center text-text-s hover:text-text-p hover:bg-bg-sunken transition-all" aria-label="Go back">
               <ArrowLeft size={19} />
             </button>
             <div className="skeleton-bone h-5 w-32" />
@@ -108,14 +108,14 @@ export default function HashtagPage() {
   }
 
   return (
-    <main className="min-h-screen bg-black text-white pb-20">
+    <main className="min-h-screen bg-bg text-text-p pb-20">
       {/* HEADER */}
-      <header className="sticky top-0 z-40 border-b border-zinc-900 bg-black/85 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-border-s bg-bg/85 backdrop-blur-xl">
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center gap-3">
           <button
             type="button"
             onClick={() => router.back()}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-900 transition-all"
+            className="w-9 h-9 rounded-full flex items-center justify-center text-text-s hover:text-text-p hover:bg-bg-sunken transition-all"
             aria-label="Go back"
           >
             <ArrowLeft size={19} />
@@ -126,7 +126,7 @@ export default function HashtagPage() {
               <Hash size={18} className="text-cyan-400 shrink-0" />
               <h1 className="font-bold text-lg truncate font-display">{tag}</h1>
             </div>
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-text-t">
               {postCount} {postCount === 1 ? "post" : "posts"}
             </p>
           </div>
@@ -136,12 +136,12 @@ export default function HashtagPage() {
       {/* POSTS */}
       <div className="max-w-2xl mx-auto px-4 py-4">
         {posts.length === 0 ? (
-          <div className="rounded-2xl border border-zinc-900 bg-zinc-950 p-10 text-center">
-            <div className="w-12 h-12 rounded-full bg-zinc-900 flex items-center justify-center mx-auto mb-4 text-zinc-500">
+          <div className="rounded-2xl border border-border-s bg-bg-raised p-10 text-center">
+            <div className="w-12 h-12 rounded-full bg-bg-sunken flex items-center justify-center mx-auto mb-4 text-text-t">
               <Hash size={20} />
             </div>
             <h3 className="font-semibold font-display">No posts with #{tag}</h3>
-            <p className="text-sm text-zinc-500 mt-2">
+            <p className="text-sm text-text-t mt-2">
               Be the first to post with this hashtag!
             </p>
           </div>

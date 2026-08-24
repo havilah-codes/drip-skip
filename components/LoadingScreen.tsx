@@ -4,7 +4,7 @@ export default function LoadingScreen({
   message?: string;
 }) {
   return (
-    <main className="min-h-screen bg-black text-white flex items-center justify-center">
+    <main className="min-h-screen bg-bg text-text-p flex items-center justify-center">
       <div className="flex flex-col items-center gap-6">
         {/* LOGO */}
         <div className="flex flex-col items-center gap-4">
@@ -21,7 +21,7 @@ export default function LoadingScreen({
         </div>
 
         {/* MESSAGE */}
-        <p className="text-xs text-zinc-500 font-medium tracking-wide">
+        <p className="text-xs text-text-t font-medium tracking-wide">
           {message}
         </p>
       </div>

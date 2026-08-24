@@ -218,8 +218,8 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-black text-white flex items-center justify-center">
-        <Loader2 size={24} className="animate-spin text-zinc-500" />
+      <main className="min-h-screen bg-bg text-text-p flex items-center justify-center">
+        <Loader2 size={24} className="animate-spin text-text-t" />
       </main>
     );
   }
@@ -229,18 +229,18 @@ export default function SettingsPage() {
   // ==========================================
 
   return (
-    <main className="min-h-screen bg-black text-white">
+    <main className="min-h-screen bg-bg text-text-p">
 
       {/* ====================================== */}
       {/* HEADER */}
       {/* ====================================== */}
 
-      <header className="sticky top-0 z-40 border-b border-zinc-900 bg-black/85 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-border-s bg-bg/85 backdrop-blur-xl">
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center">
           <button
             type="button"
             onClick={() => router.back()}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-900 transition-all"
+            className="w-9 h-9 rounded-full flex items-center justify-center text-text-s hover:text-text-p hover:bg-bg-sunken transition-all"
           >
             <ArrowLeft size={19} />
           </button>
@@ -261,19 +261,19 @@ export default function SettingsPage() {
         {/* ==================================== */}
 
         <section>
-          <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3 px-1">
+          <h2 className="text-xs font-semibold text-text-t uppercase tracking-wider mb-3 px-1">
             Account
           </h2>
 
-          <div className="rounded-2xl border border-zinc-900 bg-zinc-950 overflow-hidden divide-y divide-zinc-900">
+          <div className="rounded-2xl border border-border-s bg-bg-raised overflow-hidden divide-y divide-zinc-900">
 
             {/* Email */}
             <div className="flex items-center gap-3 px-4 py-3.5">
-              <div className="w-9 h-9 rounded-xl bg-zinc-900 flex items-center justify-center shrink-0">
-                <Mail size={17} className="text-zinc-400" />
+              <div className="w-9 h-9 rounded-xl bg-bg-sunken flex items-center justify-center shrink-0">
+                <Mail size={17} className="text-text-s" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs text-zinc-500">Email</p>
+                <p className="text-xs text-text-t">Email</p>
                 <p className="text-sm font-medium truncate">{user?.email || "—"}</p>
               </div>
             </div>
@@ -282,24 +282,24 @@ export default function SettingsPage() {
             <button
               type="button"
               onClick={() => setShowPasswordReset(!showPasswordReset)}
-              className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-zinc-900/50 transition-colors text-left"
+              className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-bg-sunken/50 transition-colors text-left"
             >
-              <div className="w-9 h-9 rounded-xl bg-zinc-900 flex items-center justify-center shrink-0">
-                <Lock size={17} className="text-zinc-400" />
+              <div className="w-9 h-9 rounded-xl bg-bg-sunken flex items-center justify-center shrink-0">
+                <Lock size={17} className="text-text-s" />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium">Change password</p>
-                <p className="text-xs text-zinc-500">Send a reset link to your email</p>
+                <p className="text-xs text-text-t">Send a reset link to your email</p>
               </div>
               <ChevronRight
                 size={16}
-                className={`text-zinc-600 transition-transform ${showPasswordReset ? "rotate-90" : ""}`}
+                className={`text-text-m transition-transform ${showPasswordReset ? "rotate-90" : ""}`}
               />
             </button>
 
             {/* Password reset form (expandable) */}
             {showPasswordReset && (
-              <div className="px-4 pb-4 pt-1 bg-zinc-950">
+              <div className="px-4 pb-4 pt-1 bg-bg-raised">
                 {resetSent ? (
                   <div className="flex items-center gap-2 rounded-xl bg-emerald-950/40 border border-emerald-900/40 px-4 py-3">
                     <Check size={16} className="text-emerald-400 shrink-0" />
@@ -309,7 +309,7 @@ export default function SettingsPage() {
                   </div>
                 ) : (
                   <form onSubmit={handlePasswordReset} className="space-y-3">
-                    <p className="text-xs text-zinc-500">
+                    <p className="text-xs text-text-t">
                       We&apos;ll send a password reset link to <span className="text-zinc-300">{user?.email}</span>.
                     </p>
                     {resetError && (
@@ -318,7 +318,7 @@ export default function SettingsPage() {
                     <button
                       type="submit"
                       disabled={resetLoading}
-                      className="w-full rounded-xl bg-white text-black py-2.5 text-sm font-bold hover:bg-zinc-200 disabled:opacity-50 transition-all"
+                      className="w-full rounded-xl bg-btn text-btn-text py-2.5 text-sm font-bold hover:bg-btn/80 disabled:opacity-50 transition-all"
                     >
                       {resetLoading ? "Sending..." : "Send reset link"}
                     </button>
@@ -335,25 +335,25 @@ export default function SettingsPage() {
         {/* ==================================== */}
 
         <section>
-          <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3 px-1">
+          <h2 className="text-xs font-semibold text-text-t uppercase tracking-wider mb-3 px-1">
             Notifications
           </h2>
 
-          <div className="rounded-2xl border border-zinc-900 bg-zinc-950 overflow-hidden divide-y divide-zinc-900">
+          <div className="rounded-2xl border border-border-s bg-bg-raised overflow-hidden divide-y divide-zinc-900">
 
             {/* Push notifications */}
             <div className="px-4 py-4">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-zinc-900 flex items-center justify-center shrink-0">
+                <div className="w-9 h-9 rounded-xl bg-bg-sunken flex items-center justify-center shrink-0">
                   {notifPermission === "granted" ? (
                     <Bell size={17} className="text-emerald-400" />
                   ) : (
-                    <BellOff size={17} className="text-zinc-400" />
+                    <BellOff size={17} className="text-text-s" />
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium">Push notifications</p>
-                  <p className="text-xs text-zinc-500 mt-0.5">
+                  <p className="text-xs text-text-t mt-0.5">
                     {notifPermission === "granted"
                       ? "Enabled — you'll get notified about messages and activity"
                       : notifPermission === "denied"
@@ -375,18 +375,18 @@ export default function SettingsPage() {
                   <button
                     type="button"
                     onClick={handleOpenSystemSettings}
-                    className="text-xs text-zinc-400 underline underline-offset-2 hover:text-white transition-colors"
+                    className="text-xs text-text-s underline underline-offset-2 hover:text-text-p transition-colors"
                   >
                     Open browser settings
                   </button>
                 ) : notifPermission === "unsupported" ? (
-                  <span className="text-xs text-zinc-600">Unavailable</span>
+                  <span className="text-xs text-text-m">Unavailable</span>
                 ) : (
                   <button
                     type="button"
                     disabled={notifLoading}
                     onClick={handleEnableNotifications}
-                    className="px-4 py-2 rounded-xl bg-white text-black text-xs font-bold hover:bg-zinc-200 disabled:opacity-50 transition-all"
+                    className="px-4 py-2 rounded-xl bg-btn text-btn-text text-xs font-bold hover:bg-btn/80 disabled:opacity-50 transition-all"
                   >
                     {notifLoading ? "Enabling..." : "Enable notifications"}
                   </button>
@@ -402,19 +402,19 @@ export default function SettingsPage() {
         {/* ==================================== */}
 
         <section>
-          <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3 px-1">
+          <h2 className="text-xs font-semibold text-text-t uppercase tracking-wider mb-3 px-1">
             Appearance
           </h2>
 
-          <div className="rounded-2xl border border-zinc-900 bg-zinc-950 overflow-hidden">
+          <div className="rounded-2xl border border-border-s bg-bg-raised overflow-hidden">
             <div className="p-4">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-9 h-9 rounded-xl bg-zinc-900 flex items-center justify-center shrink-0">
-                  <Moon size={17} className="text-zinc-400" />
+                <div className="w-9 h-9 rounded-xl bg-bg-sunken flex items-center justify-center shrink-0">
+                  <Moon size={17} className="text-text-s" />
                 </div>
                 <div>
                   <p className="text-sm font-medium">Theme</p>
-                  <p className="text-xs text-zinc-500">Choose your preferred look</p>
+                  <p className="text-xs text-text-t">Choose your preferred look</p>
                 </div>
               </div>
 
@@ -434,8 +434,8 @@ export default function SettingsPage() {
                       className={`
                         flex flex-col items-center gap-1.5 py-3 rounded-xl border text-xs font-medium transition-all
                         ${active
-                          ? "border-white/30 bg-white/10 text-white"
-                          : "border-zinc-800 bg-zinc-900/50 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700"
+                          ? "border-white/30 bg-white/10 text-text-p"
+                          : "border-border-d bg-bg-sunken/50 text-text-t hover:text-zinc-300 hover:border-zinc-700"
                         }
                       `}
                     >
@@ -454,21 +454,21 @@ export default function SettingsPage() {
         {/* ==================================== */}
 
         <section>
-          <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3 px-1">
+          <h2 className="text-xs font-semibold text-text-t uppercase tracking-wider mb-3 px-1">
             Account actions
           </h2>
 
-          <div className="rounded-2xl border border-zinc-900 bg-zinc-950 overflow-hidden divide-y divide-zinc-900">
+          <div className="rounded-2xl border border-border-s bg-bg-raised overflow-hidden divide-y divide-zinc-900">
 
             {/* Sign out */}
             <button
               type="button"
               disabled={loggingOut}
               onClick={handleSignOut}
-              className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-zinc-900/50 transition-colors text-left"
+              className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-bg-sunken/50 transition-colors text-left"
             >
-              <div className="w-9 h-9 rounded-xl bg-zinc-900 flex items-center justify-center shrink-0">
-                <LogOut size={17} className="text-zinc-400" />
+              <div className="w-9 h-9 rounded-xl bg-bg-sunken flex items-center justify-center shrink-0">
+                <LogOut size={17} className="text-text-s" />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium">
@@ -482,7 +482,7 @@ export default function SettingsPage() {
               type="button"
               disabled={deleting}
               onClick={() => setShowDeleteConfirm(true)}
-              className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-zinc-900/50 transition-colors text-left"
+              className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-bg-sunken/50 transition-colors text-left"
             >
               <div className="w-9 h-9 rounded-xl bg-red-950/60 flex items-center justify-center shrink-0">
                 <Trash2 size={17} className="text-red-400" />
@@ -491,7 +491,7 @@ export default function SettingsPage() {
                 <p className="text-sm font-medium text-red-400">
                   {deleting ? "Deleting..." : "Delete account"}
                 </p>
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-text-t">
                   Permanently remove your account and all data
                 </p>
               </div>
@@ -505,7 +505,7 @@ export default function SettingsPage() {
         {/* ==================================== */}
 
         <div className="text-center pt-4">
-          <p className="text-[11px] text-zinc-700">Drip or Skip v0.1.0</p>
+          <p className="text-[11px] text-text-m">Drip or Skip v0.1.0</p>
         </div>
 
       </div>
@@ -517,21 +517,21 @@ export default function SettingsPage() {
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
           <div
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            className="absolute inset-0 bg-bg/70 backdrop-blur-sm"
             onClick={() => !deleting && setShowDeleteConfirm(false)}
           />
-          <div className="relative w-full max-w-sm rounded-3xl bg-zinc-950 border border-zinc-800 p-6 space-y-5 animate-in fade-in zoom-in-95 duration-200">
+          <div className="relative w-full max-w-sm rounded-3xl bg-bg-raised border border-border-d p-6 space-y-5 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 rounded-full bg-red-950/60 flex items-center justify-center shrink-0">
                 <Shield size={20} className="text-red-400" />
               </div>
               <div>
                 <h3 className="font-bold font-display">Delete account?</h3>
-                <p className="text-xs text-zinc-500 mt-0.5">This cannot be undone.</p>
+                <p className="text-xs text-text-t mt-0.5">This cannot be undone.</p>
               </div>
             </div>
 
-            <p className="text-sm text-zinc-400 leading-relaxed">
+            <p className="text-sm text-text-s leading-relaxed">
               All your posts, votes, messages, and profile data will be permanently deleted. This action is irreversible.
             </p>
 
@@ -540,7 +540,7 @@ export default function SettingsPage() {
                 type="button"
                 disabled={deleting}
                 onClick={() => setShowDeleteConfirm(false)}
-                className="flex-1 rounded-xl border border-zinc-800 py-3 text-sm font-medium hover:bg-zinc-900 transition-colors"
+                className="flex-1 rounded-xl border border-border-d py-3 text-sm font-medium hover:bg-bg-sunken transition-colors"
               >
                 Cancel
               </button>
@@ -548,7 +548,7 @@ export default function SettingsPage() {
                 type="button"
                 disabled={deleting}
                 onClick={handleDeleteAccount}
-                className="flex-1 rounded-xl bg-red-600 py-3 text-sm font-bold text-white hover:bg-red-500 disabled:opacity-50 transition-all"
+                className="flex-1 rounded-xl bg-red-600 py-3 text-sm font-bold text-text-p hover:bg-red-500 disabled:opacity-50 transition-all"
               >
                 {deleting ? (
                   <span className="flex items-center justify-center gap-2">

@@ -1,37 +1,97 @@
 @import "tailwindcss";
 
+/* =====================================================
+   THEME SYSTEM — CSS custom properties for light/dark
+   Tokens use RGB triplets so opacity utilities work:
+     bg-surface / text-primary / border-default etc.
+   ===================================================== */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Dark mode (default — matches current app look) */
+  --bg: 0 0 0;
+  --bg-raised: 9 9 11;
+  --bg-sunken: 24 24 27;
+  --bg-hover: 24 24 27;
+  --border: 39 39 42;
+  --border-subtle: 24 24 27;
+  --text: 255 255 255;
+  --text-sec: 161 161 170;
+  --text-ter: 113 113 122;
+  --text-muted: 82 82 91;
+  --btn: 255 255 255;
+  --btn-text: 0 0 0;
+  --skeleton: rgba(39, 39, 42, 0.6);
+  --shimmer: rgba(255, 255, 255, 0.06);
+  --slider-track: rgba(255, 255, 255, 0.3);
+  --slider-thumb: #ffffff;
+  --glass: rgba(0, 0, 0, 0.4);
+  --glass-border: rgba(255, 255, 255, 0.15);
+  --glass-highlight: rgba(255, 255, 255, 0.15);
+  --overlay: rgba(0, 0, 0, 0.7);
+  --backdrop: rgba(0, 0, 0, 0.6);
 }
 
+.light {
+  --bg: 255 255 255;
+  --bg-raised: 250 250 250;
+  --bg-sunken: 244 244 245;
+  --bg-hover: 239 239 239;
+  --border: 228 228 231;
+  --border-subtle: 244 244 245;
+  --text: 9 9 11;
+  --text-sec: 113 113 122;
+  --text-ter: 161 161 170;
+  --text-muted: 212 212 216;
+  --btn: 9 9 11;
+  --btn-text: 255 255 255;
+  --skeleton: rgba(228, 228, 231, 0.6);
+  --shimmer: rgba(0, 0, 0, 0.04);
+  --slider-track: rgba(0, 0, 0, 0.15);
+  --slider-thumb: #09090b;
+  --glass: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(0, 0, 0, 0.1);
+  --glass-highlight: rgba(0, 0, 0, 0.1);
+  --overlay: rgba(0, 0, 0, 0.4);
+  --backdrop: rgba(0, 0, 0, 0.3);
+}
+
+/* =====================================================
+   TAILWIND THEME — map tokens to Tailwind utilities
+   ===================================================== */
+
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-bg: rgb(var(--bg));
+  --color-bg-raised: rgb(var(--bg-raised));
+  --color-bg-sunken: rgb(var(--bg-sunken));
+  --color-bg-hover: rgb(var(--bg-hover));
+  --color-border-d: rgb(var(--border));
+  --color-border-s: rgb(var(--border-subtle));
+  --color-text-p: rgb(var(--text));
+  --color-text-s: rgb(var(--text-sec));
+  --color-text-t: rgb(var(--text-ter));
+  --color-text-m: rgb(var(--text-muted));
+  --color-btn: rgb(var(--btn));
+  --color-btn-text: rgb(var(--btn-text));
+  --color-background: rgb(var(--bg));
+  --color-foreground: rgb(var(--text));
   --font-sans: var(--font-inter);
   --font-display: var(--font-manrope);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* =====================================================
+   BASE STYLES
+   ===================================================== */
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: rgb(var(--bg));
+  color: rgb(var(--text));
   font-family: var(--font-inter), Arial, Helvetica, sans-serif;
 }
 
 /* =====================================================
-   TYPOGRAPHY SYSTEM
-   Manrope = display/headings/branding
-   Inter   = functional UI/body text
+   TYPOGRAPHY
    ===================================================== */
 
-/* Manrope utilities */
 .font-display {
   font-family: var(--font-manrope), Arial, Helvetica, sans-serif;
 }
@@ -40,20 +100,19 @@ body {
   font-family: var(--font-inter), Arial, Helvetica, sans-serif;
 }
 
-/* Skeleton shimmer animation */
+/* =====================================================
+   SKELETON SHIMMER
+   ===================================================== */
+
 @keyframes shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
 .skeleton-bone {
   position: relative;
   overflow: hidden;
-  background: rgba(39, 39, 42, 0.6);
+  background: var(--skeleton);
 }
 
 .skeleton-bone::after {
@@ -61,17 +120,20 @@ body {
   position: absolute;
   inset: 0;
   transform: translateX(-100%);
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+  background: linear-gradient(90deg, transparent, var(--shimmer), transparent);
   animation: shimmer 1.8s infinite;
 }
 
-/* Video player volume slider */
+/* =====================================================
+   VIDEO PLAYER VOLUME SLIDER
+   ===================================================== */
+
 .volume-slider {
   -webkit-appearance: none;
   appearance: none;
   height: 4px;
   border-radius: 2px;
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--slider-track);
   outline: none;
 }
 
@@ -81,7 +143,7 @@ body {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: white;
+  background: var(--slider-thumb);
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
@@ -90,7 +152,7 @@ body {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: white;
+  background: var(--slider-thumb);
   border: none;
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);

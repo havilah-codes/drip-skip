@@ -199,26 +199,26 @@ export default function SignupPage() {
   if (isSubmitted) {
     return (
       <AuthLayout tagline="Welcome to the council">
-        <div className="w-full bg-zinc-900/60 border border-zinc-800 rounded-2xl p-6 text-center flex flex-col items-center gap-4 animate-fadeIn">
+        <div className="w-full bg-bg-sunken/60 border border-border-d rounded-2xl p-6 text-center flex flex-col items-center gap-4 animate-fadeIn">
           <div className="w-14 h-14 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-2xl">
             ✉️
           </div>
 
           <div className="space-y-1">
-            <h2 className="text-xl font-bold text-white font-display">
+            <h2 className="text-xl font-bold text-text-p font-display">
               Check your email
             </h2>
 
-            <p className="text-xs text-zinc-400">
+            <p className="text-xs text-text-s">
               We sent a verification link to:
             </p>
 
-            <p className="text-sm font-semibold text-white break-all pt-1">
+            <p className="text-sm font-semibold text-text-p break-all pt-1">
               {email}
             </p>
           </div>
 
-          <p className="text-xs text-zinc-400 leading-relaxed pt-2">
+          <p className="text-xs text-text-s leading-relaxed pt-2">
             Click the verification link in your
             email to verify your account. Once
             verified, you can log in to Drip-or-Skip.
@@ -226,7 +226,7 @@ export default function SignupPage() {
 
           <Link
             href="/login"
-            className="w-full h-11 mt-2 rounded-xl bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 text-white font-medium text-sm flex items-center justify-center transition-colors"
+            className="w-full h-11 mt-2 rounded-xl bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 text-text-p font-medium text-sm flex items-center justify-center transition-colors"
           >
             Back to login
           </Link>
@@ -246,11 +246,11 @@ export default function SignupPage() {
         {/* HEADER */}
 
         <div className="text-center">
-          <h2 className="text-xl font-bold text-white">
+          <h2 className="text-xl font-bold text-text-p">
             Create your account
           </h2>
 
-          <p className="text-xs text-zinc-400 mt-1">
+          <p className="text-xs text-text-s mt-1">
             Join your squad and start judging the
             fits.
           </p>
@@ -327,12 +327,12 @@ export default function SignupPage() {
 
         {/* LOGIN */}
 
-        <div className="text-center pt-2 border-t border-zinc-900">
-          <p className="text-xs text-zinc-400">
+        <div className="text-center pt-2 border-t border-border-s">
+          <p className="text-xs text-text-s">
             Already have an account?{" "}
             <Link
               href="/login"
-              className="font-semibold text-white hover:underline transition-all"
+              className="font-semibold text-text-p hover:underline transition-all"
             >
               Log in
             </Link>

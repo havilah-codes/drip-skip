@@ -160,22 +160,22 @@ export default function CommentDrawer({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-bg/70 backdrop-blur-sm animate-fade-in">
       {/* Backdrop click to dismiss */}
       <div className="absolute inset-0" onClick={onClose} />
 
       {/* Modal Container (Centered) */}
-      <div className="relative z-10 bg-zinc-950 border border-zinc-800 rounded-2xl max-h-[85vh] h-[600px] flex flex-col w-full max-w-md mx-auto overflow-hidden shadow-2xl">
+      <div className="relative z-10 bg-bg-raised border border-border-d rounded-2xl max-h-[85vh] h-[600px] flex flex-col w-full max-w-md mx-auto overflow-hidden shadow-2xl">
         
         {/* Header */}
-        <div className="p-4 border-b border-zinc-900 flex items-center justify-between shrink-0">
+        <div className="p-4 border-b border-border-s flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2 text-zinc-200 font-semibold">
-            <MessageCircle className="w-5 h-5 text-zinc-400" />
+            <MessageCircle className="w-5 h-5 text-text-s" />
             <span>Comments ({comments.length})</span>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-full text-zinc-400 hover:text-white bg-zinc-900 hover:bg-zinc-800 transition"
+            className="p-1 rounded-full text-text-s hover:text-text-p bg-bg-sunken hover:bg-zinc-800 transition"
           >
             <X className="w-5 h-5" />
           </button>
@@ -185,10 +185,10 @@ export default function CommentDrawer({
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {loading ? (
             <div className="flex justify-center items-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-zinc-500" />
+              <Loader2 className="w-6 h-6 animate-spin text-text-t" />
             </div>
           ) : comments.length === 0 ? (
-            <div className="text-center py-12 text-zinc-500 text-sm">
+            <div className="text-center py-12 text-text-t text-sm">
               No comments yet. Be the first to drop your take!
             </div>
           ) : (
@@ -198,7 +198,7 @@ export default function CommentDrawer({
                   <img
                     src={comment.profile?.avatar_url || '/default-avatar.png'}
                     alt={comment.profile?.username || 'User'}
-                    className="w-8 h-8 rounded-full object-cover border border-zinc-800"
+                    className="w-8 h-8 rounded-full object-cover border border-border-d"
                   />
                 </Link>
 
@@ -214,7 +214,7 @@ export default function CommentDrawer({
                     {comment.user_id === currentProfileId && (
                       <button
                         onClick={() => handleDeleteComment(comment.id)}
-                        className="text-zinc-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition p-1"
+                        className="text-text-m hover:text-red-400 opacity-0 group-hover:opacity-100 transition p-1"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -233,7 +233,7 @@ export default function CommentDrawer({
         {/* Input Bar */}
         <form
           onSubmit={handleAddComment}
-          className="p-3 border-t border-zinc-900 bg-black flex items-center gap-2 shrink-0"
+          className="p-3 border-t border-border-s bg-bg flex items-center gap-2 shrink-0"
         >
           <input
             type="text"
@@ -241,12 +241,12 @@ export default function CommentDrawer({
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="Add a comment..."
             disabled={submitting || !currentProfileId}
-            className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-zinc-700"
+            className="flex-1 bg-bg-sunken border border-border-d rounded-xl px-3 py-2 text-sm text-text-p placeholder:text-text-t focus:outline-none focus:border-zinc-700"
           />
           <button
             type="submit"
             disabled={!newComment.trim() || submitting || !currentProfileId}
-            className="p-2 rounded-xl bg-white text-black hover:bg-zinc-200 disabled:opacity-30 disabled:cursor-not-allowed transition"
+            className="p-2 rounded-xl bg-btn text-btn-text hover:bg-btn/80 disabled:opacity-30 disabled:cursor-not-allowed transition"
           >
             {submitting ? (
               <Loader2 className="w-4 h-4 animate-spin" />

@@ -45,10 +45,10 @@ export default function AuthInput({
           required={required}
           aria-invalid={!!error}
           aria-describedby={error ? `${id}-error` : undefined}
-          className={`w-full h-12 px-4 rounded-xl bg-zinc-900/80 border text-white text-sm placeholder-zinc-500 transition-all duration-200 focus:outline-none focus:ring-2 ${
+          className={`w-full h-12 px-4 rounded-xl bg-bg-sunken/80 border text-text-p text-sm placeholder-zinc-500 transition-all duration-200 focus:outline-none focus:ring-2 ${
             error
               ? 'border-red-500/80 focus:ring-red-500/50'
-              : 'border-zinc-800 focus:border-zinc-400 focus:ring-white/10'
+              : 'border-border-d focus:border-zinc-400 focus:ring-white/10'
           }`}
         />
 
@@ -56,7 +56,7 @@ export default function AuthInput({
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition-colors focus:outline-none focus:ring-1 focus:ring-white rounded p-1"
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-s hover:text-text-p transition-colors focus:outline-none focus:ring-1 focus:ring-white rounded p-1"
             aria-label={showPassword ? "Hide password" : "Show password"}
           >
             {showPassword ? (

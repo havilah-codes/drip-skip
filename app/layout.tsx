@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Manrope, Inter } from "next/font/google";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
+import ThemeInit from "@/components/ThemeInit";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -28,7 +29,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       className={`${manrope.variable} ${inter.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        <ThemeInit />
+      </head>
       <body className="min-h-full flex flex-col">{children}
         <ServiceWorkerRegistration />
       </body>

@@ -55,8 +55,8 @@ export default function BottomNav() {
         rounded-full
         border
         border-white/15
-        bg-black/40
-        supports-[backdrop-filter]:bg-zinc-900/40
+        bg-bg/40
+        supports-[backdrop-filter]:bg-bg-sunken/40
         backdrop-blur-3xl
         backdrop-saturate-150
         shadow-[0_20px_50px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.15)]
@@ -92,8 +92,8 @@ export default function BottomNav() {
                     w-20
                     h-12
                     rounded-full
-                    bg-white
-                    text-black
+                    bg-btn
+                    text-btn-text
                     flex
                     items-center
                     justify-center
@@ -132,8 +132,8 @@ export default function BottomNav() {
                 active:scale-90
                 ${
                   active
-                    ? "text-white"
-                    : "text-zinc-400 hover:text-zinc-200"
+                    ? "text-text-p"
+                    : "text-text-s hover:text-text-p"
                 }
               `}
             >

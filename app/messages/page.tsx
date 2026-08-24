@@ -567,10 +567,10 @@ export default function MessagesPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-black text-white">
-        <header className="sticky top-0 z-40 border-b border-zinc-900 bg-black/85 backdrop-blur-xl">
+      <main className="min-h-screen bg-bg text-text-p">
+        <header className="sticky top-0 z-40 border-b border-border-s bg-bg/85 backdrop-blur-xl">
           <div className="max-w-2xl mx-auto px-4 h-14 flex items-center gap-3">
-            <button type="button" onClick={() => router.back()} className="w-9 h-9 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-900 transition-all" aria-label="Go back">
+            <button type="button" onClick={() => router.back()} className="w-9 h-9 rounded-full flex items-center justify-center text-text-s hover:text-text-p hover:bg-bg-sunken transition-all" aria-label="Go back">
               <ArrowLeft size={19} />
             </button>
             <h1 className="text-lg font-bold font-display">Chats</h1>
@@ -578,8 +578,8 @@ export default function MessagesPage() {
         </header>
         <div className="max-w-2xl mx-auto px-4 py-5 pb-28">
           <div className="relative mb-5">
-            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" />
-            <div className="w-full h-12 pl-11 pr-4 rounded-2xl border border-zinc-900 bg-zinc-950" />
+            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-t" />
+            <div className="w-full h-12 pl-11 pr-4 rounded-2xl border border-border-s bg-bg-raised" />
           </div>
           <ChatListSkeleton count={6} />
         </div>
@@ -593,13 +593,13 @@ export default function MessagesPage() {
   // ==========================================
 
   return (
-    <main className="min-h-screen bg-black text-white">
-      <header className="sticky top-0 z-40 border-b border-zinc-900 bg-black/85 backdrop-blur-xl">
+    <main className="min-h-screen bg-bg text-text-p">
+      <header className="sticky top-0 z-40 border-b border-border-s bg-bg/85 backdrop-blur-xl">
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center gap-3">
           <button
             type="button"
             onClick={() => router.back()}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-900 transition-all"
+            className="w-9 h-9 rounded-full flex items-center justify-center text-text-s hover:text-text-p hover:bg-bg-sunken transition-all"
             aria-label="Go back"
           >
             <ArrowLeft size={19} />
@@ -617,7 +617,7 @@ export default function MessagesPage() {
         <div className="relative mb-5">
           <Search
             size={18}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-text-t"
           />
 
           <input
@@ -627,7 +627,7 @@ export default function MessagesPage() {
               setSearch(event.target.value)
             }
             placeholder="Search chats..."
-            className="w-full h-12 pl-11 pr-4 rounded-2xl border border-zinc-900 bg-zinc-950 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-zinc-700 transition-colors"
+            className="w-full h-12 pl-11 pr-4 rounded-2xl border border-border-s bg-bg-raised text-sm text-text-p placeholder:text-text-m outline-none focus:border-zinc-700 transition-colors"
           />
         </div>
 
@@ -635,10 +635,10 @@ export default function MessagesPage() {
 
         {filteredChats.length === 0 && (
           <div className="flex flex-col items-center justify-center py-28 text-center">
-            <div className="w-16 h-16 rounded-full bg-zinc-950 border border-zinc-900 flex items-center justify-center mb-5">
+            <div className="w-16 h-16 rounded-full bg-bg-raised border border-border-s flex items-center justify-center mb-5">
               <MessageCircle
                 size={26}
-                className="text-zinc-600"
+                className="text-text-m"
               />
             </div>
 
@@ -646,7 +646,7 @@ export default function MessagesPage() {
               No chats yet
             </h2>
 
-            <p className="text-sm text-zinc-500 mt-2 max-w-xs">
+            <p className="text-sm text-text-t mt-2 max-w-xs">
               Start a conversation by visiting someone's
               profile and tapping Message.
             </p>
@@ -656,7 +656,7 @@ export default function MessagesPage() {
               onClick={() =>
                 router.push("/explore")
               }
-              className="mt-6 px-5 py-2.5 rounded-xl bg-white text-black text-sm font-bold active:scale-95 transition-all"
+              className="mt-6 px-5 py-2.5 rounded-xl bg-btn text-btn-text text-sm font-bold active:scale-95 transition-all"
             >
               Find people
             </button>
@@ -683,12 +683,12 @@ export default function MessagesPage() {
                       `/messages/${chat.id}`
                     )
                   }
-                  className="w-full flex items-center gap-3 p-3 rounded-2xl border border-transparent hover:border-zinc-900 hover:bg-zinc-950 transition-all text-left active:scale-[0.99]"
+                  className="w-full flex items-center gap-3 p-3 rounded-2xl border border-transparent hover:border-border-s hover:bg-bg-raised transition-all text-left active:scale-[0.99]"
                 >
                   <img
                     src={avatar}
                     alt={profile.display_name}
-                    className="w-12 h-12 rounded-full object-cover border border-zinc-800 shrink-0"
+                    className="w-12 h-12 rounded-full object-cover border border-border-d shrink-0"
                   />
 
                   <div className="min-w-0 flex-1">
@@ -701,7 +701,7 @@ export default function MessagesPage() {
                           className={`text-[11px] ${
                             chat.unread_count > 0
                               ? "text-zinc-300"
-                              : "text-zinc-600"
+                              : "text-text-m"
                           }`}
                         >
                           {getTimeAgo(
@@ -710,7 +710,7 @@ export default function MessagesPage() {
                         </span>
 
                         {chat.unread_count > 0 && (
-                          <span className="min-w-5 h-5 px-1.5 rounded-full bg-white text-black text-[10px] font-bold flex items-center justify-center">
+                          <span className="min-w-5 h-5 px-1.5 rounded-full bg-btn text-btn-text text-[10px] font-bold flex items-center justify-center">
                             {chat.unread_count > 99
                               ? "99+"
                               : chat.unread_count}
@@ -719,7 +719,7 @@ export default function MessagesPage() {
                       </div>
                     </div>
 
-                    <p className="text-xs text-zinc-500 truncate mt-1">
+                    <p className="text-xs text-text-t truncate mt-1">
                       @{profile.username}
                     </p>
                   </div>

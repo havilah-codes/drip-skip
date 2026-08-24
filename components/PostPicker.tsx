@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { X, Send, Image as ImageIcon, FileText } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { extractVideoFrame } from "@/lib/videoThumbnail";
 
 type PostPreview = {
   id: string;
@@ -72,36 +73,36 @@ export default function PostPicker({
     <div className="fixed inset-0 z-[90] flex items-end justify-center">
       {/* BACKDROP */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-bg/60 backdrop-blur-sm"
         onClick={onClose}
       />
 
       {/* SHEET */}
-      <div className="relative w-full max-w-lg bg-zinc-950 border border-zinc-800 rounded-t-3xl overflow-hidden animate-in slide-in-from-bottom duration-300">
+      <div className="relative w-full max-w-lg bg-bg-raised border border-border-d rounded-t-3xl overflow-hidden animate-in slide-in-from-bottom duration-300">
         {/* HANDLE */}
         <div className="flex items-center justify-between px-4 pt-4 pb-2">
           <h3 className="font-bold text-sm font-display">Share a post</h3>
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-text-s hover:text-text-p hover:bg-bg-sunken transition-colors"
           >
             <X size={18} />
           </button>
         </div>
 
-        <p className="px-4 pb-3 text-xs text-zinc-500">
+        <p className="px-4 pb-3 text-xs text-text-t">
           Pick a post to send in this chat
         </p>
 
         {/* POSTS LIST */}
         <div className="max-h-80 overflow-y-auto">
           {loading ? (
-            <div className="py-10 text-center text-sm text-zinc-500">
+            <div className="py-10 text-center text-sm text-text-t">
               Loading your posts...
             </div>
           ) : posts.length === 0 ? (
-            <div className="py-10 text-center text-sm text-zinc-500">
+            <div className="py-10 text-center text-sm text-text-t">
               You don&apos;t have any posts yet
             </div>
           ) : (
@@ -120,10 +121,10 @@ export default function PostPicker({
                     type="button"
                     onClick={() => handleSend(post)}
                     disabled={!!sending}
-                    className="w-full flex items-start gap-3 p-3 rounded-xl hover:bg-zinc-900 transition-colors disabled:opacity-50 text-left"
+                    className="w-full flex items-start gap-3 p-3 rounded-xl hover:bg-bg-sunken transition-colors disabled:opacity-50 text-left"
                   >
                     {/* Thumbnail */}
-                    <div className="w-14 h-14 rounded-lg bg-zinc-900 border border-zinc-800 overflow-hidden shrink-0 flex items-center justify-center">
+                    <div className="w-14 h-14 rounded-lg bg-bg-sunken border border-border-d overflow-hidden shrink-0 flex items-center justify-center">
                       {post.image_url ? (
                         <img
                           src={post.image_url}
@@ -131,13 +132,9 @@ export default function PostPicker({
                           className="w-full h-full object-cover"
                         />
                       ) : post.video_url ? (
-                        <video
-                          src={post.video_url}
-                          preload="metadata"
-                          className="w-full h-full object-cover"
-                        />
+                        <VideoThumb src={post.video_url} />
                       ) : (
-                        <FileText size={18} className="text-zinc-600" />
+                        <FileText size={18} className="text-text-m" />
                       )}
                     </div>
 
@@ -148,13 +145,13 @@ export default function PostPicker({
                           {preview}
                         </p>
                       ) : post.image_url || post.video_url ? (
-                        <p className="text-sm text-zinc-500 italic">
+                        <p className="text-sm text-text-t italic">
                           {post.video_url ? "Video" : "Photo"}
                         </p>
                       ) : (
-                        <p className="text-sm text-zinc-500 italic">Post</p>
+                        <p className="text-sm text-text-t italic">Post</p>
                       )}
-                      <p className="text-[10px] text-zinc-600 mt-1">
+                      <p className="text-[10px] text-text-m mt-1">
                         {new Date(post.created_at).toLocaleDateString(
                           undefined,
                           { month: "short", day: "numeric" }
@@ -166,10 +163,10 @@ export default function PostPicker({
                     <div className="shrink-0 mt-1">
                       {isSending ? (
                         <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center">
-                          <Send size={14} className="text-zinc-400 animate-pulse" />
+                          <Send size={14} className="text-text-s animate-pulse" />
                         </div>
                       ) : (
-                        <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 group-hover:text-white">
+                        <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-text-s group-hover:text-text-p">
                           <Send size={14} />
                         </div>
                       )}
@@ -185,5 +182,26 @@ export default function PostPicker({
         <div className="h-8" />
       </div>
     </div>
+  );
+}
+
+// Small helper: extracts and shows a single frame from a video URL
+function VideoThumb({ src }: { src: string }) {
+  const [frame, setFrame] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    extractVideoFrame(src, 0.5).then((f) => {
+      if (!cancelled && f) setFrame(f);
+    });
+    return () => { cancelled = true; };
+  }, [src]);
+
+  if (!frame) {
+    return <FileText size={18} className="text-text-m" />;
+  }
+
+  return (
+    <img src={frame} alt="" className="w-full h-full object-cover" />
   );
 }

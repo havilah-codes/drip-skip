@@ -140,8 +140,8 @@ export default async function PublicPostPage({
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://dripskip.com";
 
   return (
-    <main className="min-h-screen bg-black text-white">
-      <header className="sticky top-0 z-50 border-b border-zinc-900 bg-black/90 backdrop-blur">
+    <main className="min-h-screen bg-bg text-text-p">
+      <header className="sticky top-0 z-50 border-b border-border-s bg-bg/90 backdrop-blur">
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link
             href="/feed"
@@ -151,7 +151,7 @@ export default async function PublicPostPage({
           </Link>
           <Link
             href="/signup"
-            className="px-4 py-2 rounded-xl bg-white text-black text-xs font-bold hover:bg-zinc-200 transition-colors"
+            className="px-4 py-2 rounded-xl bg-btn text-btn-text text-xs font-bold hover:bg-btn/80 transition-colors"
           >
             Get the app
           </Link>
@@ -164,11 +164,11 @@ export default async function PublicPostPage({
           <img
             src={avatar}
             alt={displayName}
-            className="w-11 h-11 rounded-full object-cover border border-zinc-800"
+            className="w-11 h-11 rounded-full object-cover border border-border-d"
           />
           <div>
             <p className="font-semibold text-sm">{displayName}</p>
-            <p className="text-xs text-zinc-500">@{username}</p>
+            <p className="text-xs text-text-t">@{username}</p>
           </div>
         </div>
 
@@ -181,7 +181,7 @@ export default async function PublicPostPage({
 
         {/* IMAGE */}
         {post.image_url && (
-          <div className="rounded-2xl overflow-hidden border border-zinc-900 mb-5">
+          <div className="rounded-2xl overflow-hidden border border-border-s mb-5">
             <img
               src={post.image_url}
               alt="Post content"
@@ -192,7 +192,7 @@ export default async function PublicPostPage({
 
         {/* VIDEO */}
         {post.video_url && (
-          <div className="rounded-2xl overflow-hidden border border-zinc-900 mb-5">
+          <div className="rounded-2xl overflow-hidden border border-border-s mb-5">
             <VideoPlayer
               src={post.video_url}
               className="w-full max-h-[600px]"
@@ -201,24 +201,24 @@ export default async function PublicPostPage({
         )}
 
         {/* CTA */}
-        <div className="mt-10 p-6 rounded-2xl border border-zinc-800 bg-zinc-950 text-center">
+        <div className="mt-10 p-6 rounded-2xl border border-border-d bg-bg-raised text-center">
           <h2 className="font-bold text-lg mb-2 font-display">
             Want to vote on this?
           </h2>
-          <p className="text-sm text-zinc-400 mb-5">
+          <p className="text-sm text-text-s mb-5">
             Join Drip or Skip to vote drip or skip, comment, and share
             your own fits.
           </p>
           <div className="flex items-center justify-center gap-3">
             <Link
               href="/signup"
-              className="px-6 py-3 rounded-xl bg-white text-black text-sm font-bold hover:bg-zinc-200 transition-colors"
+              className="px-6 py-3 rounded-xl bg-btn text-btn-text text-sm font-bold hover:bg-btn/80 transition-colors"
             >
               Sign up free
             </Link>
             <Link
               href="/login"
-              className="px-6 py-3 rounded-xl border border-zinc-700 text-white text-sm font-bold hover:bg-zinc-900 transition-colors"
+              className="px-6 py-3 rounded-xl border border-zinc-700 text-text-p text-sm font-bold hover:bg-bg-sunken transition-colors"
             >
               Log in
             </Link>

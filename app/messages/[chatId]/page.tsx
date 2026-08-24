@@ -1243,8 +1243,8 @@ export default function ChatPage() {
 
   if (loading) {
     return (
-      <div className="h-screen w-full bg-black text-white flex flex-col overflow-hidden">
-        <header className="sticky top-0 z-50 border-b border-zinc-900 bg-black/90 backdrop-blur">
+      <div className="h-screen w-full bg-bg text-text-p flex flex-col overflow-hidden">
+        <header className="sticky top-0 z-50 border-b border-border-s bg-bg/90 backdrop-blur">
           <div className="max-w-2xl mx-auto h-14 flex items-center px-4 gap-3">
             <div className="skeleton-bone w-10 h-10 rounded-full" />
             <div className="space-y-1.5">
@@ -1268,15 +1268,15 @@ export default function ChatPage() {
 
   return (
     <>
-    <main className="h-screen w-full bg-zinc-950 text-white flex flex-col overflow-hidden select-none">
+    <main className="h-screen w-full bg-bg-raised text-text-p flex flex-col overflow-hidden select-none">
       {/* HEADER */}
-      <div className="shrink-0 z-40 border-b border-zinc-800/60 bg-zinc-950/80 backdrop-blur-2xl">
+      <div className="shrink-0 z-40 border-b border-border-d/60 bg-bg-raised/80 backdrop-blur-2xl">
         <div className="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => router.push("/messages")}
-              className="w-9 h-9 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800/60 active:scale-95 transition-all"
+              className="w-9 h-9 rounded-full flex items-center justify-center text-text-s hover:text-text-p hover:bg-zinc-800/60 active:scale-95 transition-all"
               aria-label="Back to chats"
             >
               <ArrowLeft size={20} />
@@ -1302,7 +1302,7 @@ export default function ChatPage() {
                 <div className="min-w-0">                   <p className="font-semibold text-sm leading-tight truncate font-display">
                     {otherProfile.display_name}
                   </p>
-                  <p className="text-xs text-zinc-400 truncate">
+                  <p className="text-xs text-text-s truncate">
                     @{otherProfile.username}
                   </p>
                 </div>
@@ -1310,7 +1310,7 @@ export default function ChatPage() {
             )}
           </div>
 
-          <button className="w-9 h-9 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800/60 transition-all">
+          <button className="w-9 h-9 rounded-full flex items-center justify-center text-text-s hover:text-text-p hover:bg-zinc-800/60 transition-all">
             <MoreVertical size={18} />
           </button>
         </div>
@@ -1330,11 +1330,11 @@ export default function ChatPage() {
                 <span className="absolute -bottom-1 -right-1 text-xl">👋</span>
               </div>
 
-              <h2 className="font-bold text-lg text-white font-display">
+              <h2 className="font-bold text-lg text-text-p font-display">
                 Say hello to {otherProfile?.display_name || "them"}
               </h2>
 
-              <p className="text-xs text-zinc-400 mt-1 max-w-xs leading-relaxed">
+              <p className="text-xs text-text-s mt-1 max-w-xs leading-relaxed">
                 Send a message to break the ice and start rating fits together.
               </p>
             </div>
@@ -1369,7 +1369,7 @@ export default function ChatPage() {
                             className={`rounded-2xl text-sm leading-relaxed break-words break-all [overflow-wrap:anywhere] whitespace-pre-wrap shadow-xs overflow-hidden ${
                               isMine
                                 ? "bg-gradient-to-tr from-white to-zinc-200 text-black font-medium rounded-br-xs"
-                                : "bg-zinc-900 border border-zinc-800/80 text-zinc-100 rounded-bl-xs"
+                                : "bg-bg-sunken border border-border-d/80 text-zinc-100 rounded-bl-xs"
                             }`}
                           >
                             {/* INLINE REPLY QUOTE */}
@@ -1377,13 +1377,13 @@ export default function ChatPage() {
                               <div className={`px-4 pt-2.5 pb-0 ${
                                 isMine ? "opacity-70" : ""
                               }`}>
-                                <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-black/10 border-l-2 border-cyan-400">
+                                <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-bg/10 border-l-2 border-cyan-400">
                                   <div className="min-w-0 flex-1">
                                     <p className="text-[10px] font-semibold text-cyan-400 mb-0.5">
                                       {replyMessage.sender_id === currentProfileId ? "You" : otherProfile?.display_name || ""}
                                     </p>
                                 <p className={`text-[11px] leading-snug line-clamp-2 ${
-                                  isMine ? "text-black/70" : "text-zinc-400"
+                                  isMine ? "text-black/70" : "text-text-s"
                                 }`}>
                                   {extractPostIdFromUrl(replyMessage.text) ? "Shared post" : (replyMessage.text || "Attachment")}
                                 </p>
@@ -1406,7 +1406,7 @@ export default function ChatPage() {
                             setReplyingTo(message);
                             setLongPressedId(null);
                           }}
-                          className={`absolute top-1/2 -translate-y-1/2 transition-opacity p-1.5 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white ${
+                          className={`absolute top-1/2 -translate-y-1/2 transition-opacity p-1.5 rounded-full hover:bg-zinc-800 text-text-s hover:text-text-p ${
                             isMine ? "-left-9" : "-right-9"
                           } ${
                             longPressedId === message.id
@@ -1419,7 +1419,7 @@ export default function ChatPage() {
                         </button>
                       </div>
 
-                      <span className="text-[10px] font-medium text-zinc-500 mt-1.5 px-1 tracking-tight">
+                      <span className="text-[10px] font-medium text-text-t mt-1.5 px-1 tracking-tight">
                         {formatTime(message.created_at)}
                       </span>
                     </div>
@@ -1434,17 +1434,17 @@ export default function ChatPage() {
       </div>
 
       {/* COMPOSER WRAPPER */}
-      <div className="shrink-0 relative border-t border-zinc-800/60 bg-zinc-950/80 backdrop-blur-2xl pb-safe">
+      <div className="shrink-0 relative border-t border-border-d/60 bg-bg-raised/80 backdrop-blur-2xl pb-safe">
         {/* TYPING INDICATOR */}
         {isOtherUserTyping && otherProfile && (
           <div className="absolute -top-10 left-0 right-0 z-20 pointer-events-none flex justify-start max-w-2xl mx-auto px-4">
-            <div className="pointer-events-auto inline-flex items-center gap-2 bg-zinc-900/90 border border-zinc-800 px-3 py-1 rounded-full shadow-lg">
+            <div className="pointer-events-auto inline-flex items-center gap-2 bg-bg-sunken/90 border border-border-d px-3 py-1 rounded-full shadow-lg">
               <img
                 src={avatar}
                 alt="Typing..."
                 className="w-5 h-5 rounded-full object-cover"
               />
-              <span className="text-xs text-zinc-400 font-medium">
+              <span className="text-xs text-text-s font-medium">
                 {otherProfile.display_name.split(" ")[0]} is typing
               </span>
               <div className="flex items-center gap-1 ml-1">
@@ -1459,20 +1459,20 @@ export default function ChatPage() {
         {/* REPLY COMPOSER BAR */}
         {replyingTo && (
           <div className="max-w-2xl mx-auto px-4 pt-3 pb-0">
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-bg-sunken border border-border-d">
               <Reply size={14} className="text-cyan-400 shrink-0" />
               <div className="min-w-0 flex-1">
                 <p className="text-[10px] text-cyan-400 font-medium">
                   Replying to {replyingTo.sender_id === currentProfileId ? "yourself" : otherProfile?.display_name || "message"}
                 </p>
-                <p className="text-xs text-zinc-400 truncate">
+                <p className="text-xs text-text-s truncate">
                   {extractPostIdFromUrl(replyingTo.text) ? "Shared post" : (replyingTo.text || "Attachment")}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setReplyingTo(null)}
-                className="p-1 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors shrink-0"
+                className="p-1 rounded-full hover:bg-zinc-800 text-text-s hover:text-text-p transition-colors shrink-0"
               >
                 <X size={14} />
               </button>
@@ -1482,10 +1482,10 @@ export default function ChatPage() {
 
         {/* INPUT FORM */}
         <form onSubmit={handleSendMessage} className="max-w-2xl mx-auto p-3">
-          <div className="flex items-end gap-2 rounded-2xl border border-zinc-800 bg-zinc-900/80 p-2 focus-within:border-zinc-700 focus-within:ring-1 focus-within:ring-zinc-700 transition-all">
+          <div className="flex items-end gap-2 rounded-2xl border border-border-d bg-bg-sunken/80 p-2 focus-within:border-zinc-700 focus-within:ring-1 focus-within:ring-zinc-700 transition-all">
             <button
               type="button"
-              className="p-2 text-zinc-400 hover:text-white transition-colors shrink-0"
+              className="p-2 text-text-s hover:text-text-p transition-colors shrink-0"
             >
               <ImageIcon size={18} />
             </button>
@@ -1493,7 +1493,7 @@ export default function ChatPage() {
             <button
               type="button"
               onClick={() => setPostPickerOpen(true)}
-              className="p-2 text-zinc-400 hover:text-white transition-colors shrink-0"
+              className="p-2 text-text-s hover:text-text-p transition-colors shrink-0"
               aria-label="Share a post"
             >
               <Share2 size={18} />
@@ -1507,7 +1507,7 @@ export default function ChatPage() {
               placeholder="Message..."
               rows={1}
               maxLength={2000}
-              className="flex-1 min-w-0 max-h-32 resize-none bg-transparent py-2 text-sm text-white placeholder:text-zinc-500 outline-none"
+              className="flex-1 min-w-0 max-h-32 resize-none bg-transparent py-2 text-sm text-text-p placeholder:text-text-t outline-none"
             />
 
             <button
@@ -1515,8 +1515,8 @@ export default function ChatPage() {
               disabled={(!messageText.trim() && !replyingTo) || sending}
               className={`w-9 h-9 shrink-0 rounded-xl flex items-center justify-center transition-all duration-200 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${
                 (messageText.trim() || replyingTo) && !sending
-                  ? "bg-white text-black font-semibold shadow-md"
-                  : "bg-zinc-800 text-zinc-500"
+                  ? "bg-btn text-btn-text font-semibold shadow-md"
+                  : "bg-zinc-800 text-text-t"
               }`}
             >
               <Send size={16} />

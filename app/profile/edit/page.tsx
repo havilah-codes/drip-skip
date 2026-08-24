@@ -354,23 +354,23 @@ export default function EditProfilePage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-black text-white flex items-center justify-center">
+      <main className="min-h-screen bg-bg text-text-p flex items-center justify-center">
         <Loader2
           size={24}
-          className="animate-spin text-zinc-500"
+          className="animate-spin text-text-t"
         />
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-black text-white">
+    <main className="min-h-screen bg-bg text-text-p">
 
       {/* ====================================== */}
       {/* HEADER */}
       {/* ====================================== */}
 
-      <header className="sticky top-0 z-40 border-b border-zinc-900 bg-black/85 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-border-s bg-bg/85 backdrop-blur-xl">
 
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center">
 
@@ -379,7 +379,7 @@ export default function EditProfilePage() {
             onClick={() =>
               router.back()
             }
-            className="w-9 h-9 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-900 transition-all"
+            className="w-9 h-9 rounded-full flex items-center justify-center text-text-s hover:text-text-p hover:bg-bg-sunken transition-all"
           >
             <ArrowLeft size={19} />
           </button>
@@ -414,12 +414,12 @@ export default function EditProfilePage() {
               <img
                 src={previewAvatar}
                 alt="Profile"
-                className="w-28 h-28 rounded-full object-cover border-4 border-zinc-900 bg-zinc-950"
+                className="w-28 h-28 rounded-full object-cover border-4 border-border-s bg-bg-raised"
               />
 
               <label
                 htmlFor="avatar"
-                className="absolute bottom-0 right-0 w-10 h-10 rounded-full bg-white text-black flex items-center justify-center cursor-pointer shadow-xl hover:bg-zinc-200 transition-colors"
+                className="absolute bottom-0 right-0 w-10 h-10 rounded-full bg-btn text-btn-text flex items-center justify-center cursor-pointer shadow-xl hover:bg-btn/80 transition-colors"
               >
                 <Camera size={18} />
 
@@ -436,7 +436,7 @@ export default function EditProfilePage() {
 
             </div>
 
-            <p className="text-xs text-zinc-500 mt-3">
+            <p className="text-xs text-text-t mt-3">
               Change profile photo
             </p>
 
@@ -467,7 +467,7 @@ export default function EditProfilePage() {
                   )
                 }
                 maxLength={50}
-                className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm outline-none focus:border-zinc-500 transition-colors"
+                className="w-full rounded-xl border border-border-d bg-bg-raised px-4 py-3 text-sm outline-none focus:border-zinc-500 transition-colors"
                 placeholder="Your name"
               />
             </div>
@@ -484,7 +484,7 @@ export default function EditProfilePage() {
 
               <div className="relative">
 
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-m">
                   @
                 </span>
 
@@ -502,13 +502,13 @@ export default function EditProfilePage() {
                     )
                   }
                   maxLength={30}
-                  className="w-full rounded-xl border border-zinc-800 bg-zinc-950 pl-9 pr-4 py-3 text-sm outline-none focus:border-zinc-500 transition-colors"
+                  className="w-full rounded-xl border border-border-d bg-bg-raised pl-9 pr-4 py-3 text-sm outline-none focus:border-zinc-500 transition-colors"
                   placeholder="username"
                 />
 
               </div>
 
-              <p className="text-xs text-zinc-600 mt-2">
+              <p className="text-xs text-text-m mt-2">
                 3–30 characters · letters,
                 numbers, _ and .
               </p>
@@ -533,7 +533,7 @@ export default function EditProfilePage() {
           <button
             type="submit"
             disabled={saving}
-            className="w-full rounded-xl bg-white text-black py-3.5 text-sm font-bold hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="w-full rounded-xl bg-btn text-btn-text py-3.5 text-sm font-bold hover:bg-btn/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             {saving ? (
               <span className="flex items-center justify-center gap-2">

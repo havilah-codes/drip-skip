@@ -25,7 +25,7 @@ export function Bone({
 
 export function PostSkeleton() {
   return (
-    <article className="rounded-2xl border border-zinc-900 bg-zinc-950 overflow-hidden">
+    <article className="rounded-2xl border border-border-s bg-bg-raised overflow-hidden">
       {/* Header: avatar + name + username */}
       <div className="flex items-center gap-3 p-4">
         <Bone className="w-10 h-10 shrink-0" rounded />
@@ -53,7 +53,7 @@ export function PostSkeleton() {
       </div>
 
       {/* Action bar */}
-      <div className="flex items-center justify-between px-3 py-3 mt-3 border-t border-zinc-900/50">
+      <div className="flex items-center justify-between px-3 py-3 mt-3 border-t border-border-s/50">
         <Bone className="h-4 w-20" />
         <Bone className="h-4 w-16" />
         <Bone className="h-4 w-14" />
@@ -108,7 +108,7 @@ export function UserCardSkeleton({ count = 4 }: { count?: number }) {
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className="flex items-center gap-3 p-3 rounded-2xl border border-zinc-900 bg-zinc-950"
+          className="flex items-center gap-3 p-3 rounded-2xl border border-border-s bg-bg-raised"
         >
           <Bone className="w-12 h-12 shrink-0" rounded />
           <div className="flex-1 space-y-2">

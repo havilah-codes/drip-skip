@@ -18,6 +18,7 @@ import {
   playVideo,
   pauseVideo,
 } from "@/lib/videoManager";
+import { extractVideoFrame } from "@/lib/videoThumbnail";
 
 type VideoPlayerProps = {
   src: string;
@@ -51,6 +52,7 @@ export default function VideoPlayer({
   const [dragging, setDragging] = useState(false);
   const [volumeDragging, setVolumeDragging] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
+  const [thumbnail, setThumbnail] = useState<string | null>(null);
 
   // =====================================================
   // INTERSECTION OBSERVER — play only when visible,
@@ -99,6 +101,20 @@ export default function VideoPlayer({
       if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
     };
   }, []);
+
+  // =====================================================
+  // EXTRACT THUMBNAIL from video on load
+  // =====================================================
+
+  useEffect(() => {
+    if (hasStarted) return;
+
+    let cancelled = false;
+    extractVideoFrame(src, 0.5).then((frame) => {
+      if (!cancelled && frame) setThumbnail(frame);
+    });
+    return () => { cancelled = true; };
+  }, [src, hasStarted]);
 
   // =====================================================
   // TIME & BUFFER UPDATES
@@ -293,7 +309,7 @@ export default function VideoPlayer({
   return (
     <div
       ref={containerRef}
-      className={`relative bg-black overflow-hidden group select-none ${className}`}
+      className={`relative bg-bg overflow-hidden group select-none ${className}`}
       onMouseMove={showControls}
       onTouchStart={showControls}
     >
@@ -315,20 +331,42 @@ export default function VideoPlayer({
       {/* CENTER PLAY ICON (visible only when paused) */}
       {!playing && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-16 h-16 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center">
-            <Play size={28} className="text-white ml-1" />
+          <div className="w-16 h-16 rounded-full bg-bg/50 backdrop-blur-sm flex items-center justify-center">
+            <Play size={28} className="text-text-p ml-1" />
           </div>
         </div>
       )}
 
-      {/* INITIAL STATE — BIG PLAY BUTTON */}
-      {!hasStarted && (
+      {/* THUMBNAIL OVERLAY (before playback starts) */}
+      {!hasStarted && thumbnail && (
+        <div
+          className="absolute inset-0 z-10 cursor-pointer"
+          onClick={handleVideoClick}
+        >
+          <img
+            src={thumbnail}
+            alt=""
+            className="w-full h-full object-cover"
+          />
+          {/* Gradient overlay for depth */}
+          <div className="absolute inset-0 bg-bg/30" />
+          {/* Big play button */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-20 h-20 rounded-full bg-bg/60 backdrop-blur-md flex items-center justify-center border border-white/10 hover:bg-bg/70 transition-all active:scale-95">
+              <Play size={32} className="text-text-p ml-1.5" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* INITIAL STATE — BIG PLAY BUTTON (no thumbnail available) */}
+      {!hasStarted && !thumbnail && (
         <div
           className="absolute inset-0 flex items-center justify-center cursor-pointer z-10"
           onClick={handleVideoClick}
         >
-          <div className="w-20 h-20 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center border border-white/10 hover:bg-black/70 transition-all active:scale-95">
-            <Play size={32} className="text-white ml-1.5" />
+          <div className="w-20 h-20 rounded-full bg-bg/60 backdrop-blur-md flex items-center justify-center border border-white/10 hover:bg-bg/70 transition-all active:scale-95">
+            <Play size={32} className="text-text-p ml-1.5" />
           </div>
         </div>
       )}
@@ -372,7 +410,7 @@ export default function VideoPlayer({
           {/* CONTROLS ROW */}
           <div className="flex items-center justify-between mt-2">
             {/* TIME */}
-            <span className="text-[11px] text-white/70 font-medium tabular-nums">
+            <span className="text-[11px] text-text-p/70 font-medium tabular-nums">
               {formatTime(currentTime)} / {formatTime(duration)}
             </span>
 
@@ -383,7 +421,7 @@ export default function VideoPlayer({
                 <button
                   type="button"
                   onClick={toggleMute}
-                  className="w-8 h-8 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                  className="w-8 h-8 flex items-center justify-center rounded-full text-text-p/80 hover:text-text-p hover:bg-white/10 transition-colors"
                 >
                   {muted || volume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}
                 </button>
@@ -415,7 +453,7 @@ export default function VideoPlayer({
               <button
                 type="button"
                 onClick={toggleFullscreen}
-                className="w-8 h-8 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                className="w-8 h-8 flex items-center justify-center rounded-full text-text-p/80 hover:text-text-p hover:bg-white/10 transition-colors"
               >
                 <Maximize size={16} />
               </button>

@@ -10,7 +10,7 @@ export default function AuthLayout({
   tagline = "The council has judged your fit."
 }: AuthLayoutProps) {
   return (
-    <main className="min-h-screen w-full bg-black text-white flex flex-col justify-between items-center px-6 py-8 sm:justify-center sm:py-12 select-none">
+    <main className="min-h-screen w-full bg-bg text-text-p flex flex-col justify-between items-center px-6 py-8 sm:justify-center sm:py-12 select-none">
       <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-900 via-black to-black pointer-events-none -z-10" />
 
       <div className="w-full max-w-[400px] my-auto flex flex-col items-center">
@@ -18,7 +18,7 @@ export default function AuthLayout({
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent italic font-display">
             Drip-or-Skip
           </h1>
-          <p className="text-xs sm:text-sm font-medium text-zinc-400 mt-2 tracking-wide uppercase">
+          <p className="text-xs sm:text-sm font-medium text-text-s mt-2 tracking-wide uppercase">
             {tagline}
           </p>
         </header>
@@ -26,7 +26,7 @@ export default function AuthLayout({
         {children}
       </div>
 
-      <footer className="mt-8 text-center text-xs text-zinc-600">
+      <footer className="mt-8 text-center text-xs text-text-m">
         &copy; {new Date().getFullYear()} DRIP-OR-SKIP. ALL RIGHTS RESERVED.
       </footer>
     </main>

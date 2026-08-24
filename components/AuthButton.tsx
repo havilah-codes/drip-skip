@@ -17,7 +17,7 @@ export default function AuthButton({
     <button
       type="submit"
       disabled={loading}
-      className="w-full h-12 mt-2 rounded-xl bg-white text-black font-semibold text-sm tracking-wide transition-all duration-200 hover:bg-zinc-200 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-white/5"
+      className="w-full h-12 mt-2 rounded-xl bg-btn text-btn-text font-semibold text-sm tracking-wide transition-all duration-200 hover:bg-btn/80 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-white/5"
     >
       {loading ? (
         <>

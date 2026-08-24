@@ -2,13 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Film } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { extractVideoFrame } from "@/lib/videoThumbnail";
 
 type SharedPostData = {
   id: string;
   text: string | null;
   image_url: string | null;
+  video_url: string | null;
   profiles: {
     username: string;
     display_name: string;
@@ -30,13 +32,14 @@ export default function SharedPostCard({ postId }: { postId: string }) {
 
     const fetchPost = async () => {
       try {
-        const { data } = await supabase
+  const { data } = await supabase
           .from("posts")
           .select(
             `
             id,
             text,
             image_url,
+            video_url,
             profiles (
               username,
               display_name,
@@ -63,7 +66,7 @@ export default function SharedPostCard({ postId }: { postId: string }) {
 
   if (loading) {
     return (
-      <div className="w-64 rounded-xl border border-zinc-800 bg-zinc-900 p-3 animate-pulse">
+      <div className="w-64 rounded-xl border border-border-d bg-bg-sunken p-3 animate-pulse">
         <div className="h-3 bg-zinc-800 rounded w-1/2 mb-2" />
         <div className="h-2 bg-zinc-800 rounded w-3/4" />
       </div>
@@ -76,7 +79,7 @@ export default function SharedPostCard({ postId }: { postId: string }) {
         href={`/post/${postId}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 transition-colors text-xs text-zinc-400"
+        className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-border-d bg-bg-sunken hover:bg-zinc-800 transition-colors text-xs text-text-s"
       >
         <ExternalLink size={14} />
         View post
@@ -91,7 +94,7 @@ export default function SharedPostCard({ postId }: { postId: string }) {
       href={`/post/${post.id}`}
       target="_blank"
       rel="noopener noreferrer"
-      className="block w-64 rounded-xl border border-zinc-800 bg-zinc-900 hover:bg-zinc-800/80 transition-colors overflow-hidden"
+      className="block w-64 rounded-xl border border-border-d bg-bg-sunken hover:bg-zinc-800/80 transition-colors overflow-hidden"
     >
       {/* Header */}
       <div className="flex items-center gap-2 px-3 pt-3 pb-2">
@@ -103,19 +106,19 @@ export default function SharedPostCard({ postId }: { postId: string }) {
         <span className="text-xs font-medium text-zinc-300 truncate">
           {profile?.display_name || "Drip User"}
         </span>
-        <ExternalLink size={12} className="text-zinc-600 ml-auto shrink-0" />
+        <ExternalLink size={12} className="text-text-m ml-auto shrink-0" />
       </div>
 
       {/* Text preview */}
       {post.text && (
-        <p className="px-3 pb-2 text-xs text-zinc-400 line-clamp-2 leading-relaxed">
+        <p className="px-3 pb-2 text-xs text-text-s line-clamp-2 leading-relaxed">
           {post.text}
         </p>
       )}
 
       {/* Image preview */}
       {post.image_url && (
-        <div className="border-t border-zinc-800">
+        <div className="border-t border-border-d">
           <img
             src={post.image_url}
             alt="Shared post"
@@ -124,12 +127,42 @@ export default function SharedPostCard({ postId }: { postId: string }) {
         </div>
       )}
 
+      {/* Video thumbnail preview */}
+      {!post.image_url && post.video_url && (
+        <SharedVideoThumb url={post.video_url} />
+      )}
+
       {/* Footer */}
-      <div className="px-3 py-2 border-t border-zinc-800/50">
-        <span className="text-[10px] text-zinc-500 font-medium">
+      <div className="px-3 py-2 border-t border-border-d/50">
+        <span className="text-[10px] text-text-t font-medium">
           dripskip.com
         </span>
       </div>
     </Link>
+  );
+}
+
+// Lazy video thumbnail — extracts a single frame client-side
+function SharedVideoThumb({ url }: { url: string }) {
+  const [frame, setFrame] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    extractVideoFrame(url, 0.5).then((f) => {
+      if (!cancelled && f) setFrame(f);
+    });
+    return () => { cancelled = true; };
+  }, [url]);
+
+  return (
+    <div className="border-t border-border-d relative">
+      {frame ? (
+        <img src={frame} alt="Video" className="w-full h-32 object-cover" />
+      ) : (
+        <div className="w-full h-32 bg-bg-sunken flex items-center justify-center">
+          <Film size={20} className="text-text-m" />
+        </div>
+      )}
+    </div>
   );
 }

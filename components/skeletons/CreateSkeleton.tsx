@@ -2,7 +2,7 @@ import { Bone } from "./SkeletonPulse";
 
 export function CreateSkeleton() {
   return (
-    <main className="min-h-screen bg-white dark:bg-black">
+    <main className="min-h-screen bg-white dark:bg-bg">
       <div className="mx-auto w-full max-w-xl px-4 pb-10">
         {/* Header */}
         <header className="flex items-center justify-between py-5">

@@ -184,32 +184,32 @@ export default function ShareSheet({
     <div className="fixed inset-0 z-[90] flex items-end justify-center">
       {/* BACKDROP */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-bg/60 backdrop-blur-sm"
         onClick={onClose}
       />
 
       {/* SHEET */}
-      <div className="relative w-full max-w-lg bg-zinc-950 border border-zinc-800 rounded-t-3xl overflow-hidden animate-in slide-in-from-bottom duration-300">
+      <div className="relative w-full max-w-lg bg-bg-raised border border-border-d rounded-t-3xl overflow-hidden animate-in slide-in-from-bottom duration-300">
         {/* HANDLE */}
         <div className="flex items-center justify-between px-4 pt-4 pb-2">
           <h3 className="font-bold text-sm font-display">Share post</h3>
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-text-s hover:text-text-p hover:bg-bg-sunken transition-colors"
           >
             <X size={18} />
           </button>
         </div>
 
         {/* ACTION BUTTONS */}
-        <div className="px-4 py-3 border-b border-zinc-900">
+        <div className="px-4 py-3 border-b border-border-s">
           <div className="flex items-center gap-3">
             {/* Copy Link */}
             <button
               type="button"
               onClick={handleCopyLink}
-              className="flex-1 flex flex-col items-center gap-2 py-3 rounded-2xl bg-zinc-900 hover:bg-zinc-800 transition-colors"
+              className="flex-1 flex flex-col items-center gap-2 py-3 rounded-2xl bg-bg-sunken hover:bg-zinc-800 transition-colors"
             >
               <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center">
                 {copied ? (
@@ -227,7 +227,7 @@ export default function ShareSheet({
             <button
               type="button"
               onClick={handleNativeShare}
-              className="flex-1 flex flex-col items-center gap-2 py-3 rounded-2xl bg-zinc-900 hover:bg-zinc-800 transition-colors"
+              className="flex-1 flex flex-col items-center gap-2 py-3 rounded-2xl bg-bg-sunken hover:bg-zinc-800 transition-colors"
             >
               <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center">
                 <Share2 size={18} className="text-zinc-300" />
@@ -243,16 +243,16 @@ export default function ShareSheet({
         {currentProfileId && (
           <div className="max-h-72 overflow-y-auto">
             <div className="px-4 py-3">
-              <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
+              <p className="text-xs font-semibold text-text-t uppercase tracking-wider mb-3">
                 Send to chat
               </p>
 
               {loadingChats ? (
-                <div className="py-6 text-center text-sm text-zinc-500">
+                <div className="py-6 text-center text-sm text-text-t">
                   Loading chats...
                 </div>
               ) : chats.length === 0 ? (
-                <div className="py-6 text-center text-sm text-zinc-500">
+                <div className="py-6 text-center text-sm text-text-t">
                   No chats yet
                 </div>
               ) : (
@@ -272,18 +272,18 @@ export default function ShareSheet({
                         type="button"
                         onClick={() => handleSendToChat(chat.chat_id)}
                         disabled={isSent || isSending}
-                        className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-zinc-900 transition-colors disabled:opacity-60"
+                        className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-bg-sunken transition-colors disabled:opacity-60"
                       >
                         <img
                           src={avatarUrl}
                           alt={user.display_name}
-                          className="w-10 h-10 rounded-full object-cover border border-zinc-800 shrink-0"
+                          className="w-10 h-10 rounded-full object-cover border border-border-d shrink-0"
                         />
                         <div className="min-w-0 flex-1 text-left">
                           <p className="text-sm font-medium truncate">
                             {user.display_name}
                           </p>
-                          <p className="text-xs text-zinc-500 truncate">
+                          <p className="text-xs text-text-t truncate">
                             @{user.username}
                           </p>
                         </div>
@@ -292,13 +292,13 @@ export default function ShareSheet({
                             Sent
                           </span>
                         ) : isSending ? (
-                          <span className="text-xs text-zinc-500 shrink-0">
+                          <span className="text-xs text-text-t shrink-0">
                             Sending...
                           </span>
                         ) : (
                           <MessageCircle
                             size={18}
-                            className="text-zinc-500 shrink-0"
+                            className="text-text-t shrink-0"
                           />
                         )}
                       </button>

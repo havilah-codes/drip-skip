@@ -210,11 +210,11 @@ export default function LoginPage() {
         {/* HEADER */}
 
         <div className="text-center">
-          <h2 className="text-xl font-bold text-white font-display">
+          <h2 className="text-xl font-bold text-text-p font-display">
             Welcome back
           </h2>
 
-          <p className="text-xs text-zinc-400 mt-1">
+          <p className="text-xs text-text-s mt-1">
             The council is waiting.
           </p>
         </div>
@@ -235,7 +235,7 @@ export default function LoginPage() {
           disabled={
             loading || googleLoading
           }
-          className="w-full h-11 rounded-xl bg-white text-black font-semibold text-sm flex items-center justify-center gap-3 transition-all hover:bg-zinc-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full h-11 rounded-xl bg-btn text-btn-text font-semibold text-sm flex items-center justify-center gap-3 transition-all hover:bg-btn/80 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {googleLoading ? (
             "Connecting to Google..."
@@ -255,7 +255,7 @@ export default function LoginPage() {
         <div className="flex items-center gap-3">
           <div className="h-px flex-1 bg-zinc-800" />
 
-          <span className="text-[10px] uppercase tracking-wider text-zinc-600">
+          <span className="text-[10px] uppercase tracking-wider text-text-m">
             or
           </span>
 
@@ -306,7 +306,7 @@ export default function LoginPage() {
                     "Password reset will be available soon."
                   )
                 }
-                className="text-[11px] text-zinc-400 hover:text-zinc-200 transition-colors"
+                className="text-[11px] text-text-s hover:text-zinc-200 transition-colors"
               >
                 Forgot password?
               </button>
@@ -325,13 +325,13 @@ export default function LoginPage() {
 
         {/* SIGNUP */}
 
-        <div className="text-center pt-2 border-t border-zinc-900">
-          <p className="text-xs text-zinc-400">
+        <div className="text-center pt-2 border-t border-border-s">
+          <p className="text-xs text-text-s">
             Don't have an account?{" "}
 
             <Link
               href="/signup"
-              className="font-semibold text-white hover:underline transition-all"
+              className="font-semibold text-text-p hover:underline transition-all"
             >
               Sign up
             </Link>
