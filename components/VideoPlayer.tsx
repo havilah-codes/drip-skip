@@ -43,11 +43,13 @@ export default function VideoPlayer({
 
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(true);
+  const [volume, setVolume] = useState(1);
   const [controlsVisible, setControlsVisible] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [buffered, setBuffered] = useState(0);
   const [dragging, setDragging] = useState(false);
+  const [volumeDragging, setVolumeDragging] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
 
   // =====================================================
@@ -149,18 +151,31 @@ export default function VideoPlayer({
   }, [togglePlay]);
 
   // =====================================================
-  // MUTE
+  // VOLUME
   // =====================================================
+
+  const applyVolume = useCallback((val: number) => {
+    const video = videoRef.current;
+    if (!video) return;
+    const clamped = Math.max(0, Math.min(1, val));
+    video.volume = clamped;
+    video.muted = clamped === 0;
+    setVolume(clamped);
+    setMuted(clamped === 0);
+  }, []);
 
   const toggleMute = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
       const video = videoRef.current;
       if (!video) return;
-      video.muted = !video.muted;
-      setMuted(video.muted);
+      if (video.muted || video.volume === 0) {
+        applyVolume(volume > 0 ? volume : 1);
+      } else {
+        applyVolume(0);
+      }
     },
-    []
+    [applyVolume, volume]
   );
 
   // =====================================================
@@ -259,13 +274,13 @@ export default function VideoPlayer({
   }, [playing]);
 
   useEffect(() => {
-    if (!playing) {
+    if (!playing || volumeDragging) {
       setControlsVisible(true);
       if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
     } else {
       showControls();
     }
-  }, [playing, showControls]);
+  }, [playing, volumeDragging, showControls]);
 
   // =====================================================
   // RENDER
@@ -363,14 +378,38 @@ export default function VideoPlayer({
 
             {/* RIGHT BUTTONS */}
             <div className="flex items-center gap-2">
-              {/* MUTE */}
-              <button
-                type="button"
-                onClick={toggleMute}
-                className="w-8 h-8 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/10 transition-colors"
-              >
-                {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-              </button>
+              {/* VOLUME GROUP */}
+              <div className="relative flex items-center group/vol">
+                <button
+                  type="button"
+                  onClick={toggleMute}
+                  className="w-8 h-8 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                >
+                  {muted || volume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                </button>
+
+                {/* VOLUME SLIDER — appears on hover */}
+                <div className="overflow-hidden w-0 group-hover/vol:w-20 transition-all duration-200 flex items-center">
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={muted ? 0 : volume}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      applyVolume(parseFloat(e.target.value));
+                    }}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      setVolumeDragging(true);
+                    }}
+                    onMouseUp={() => setVolumeDragging(false)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="volume-slider w-full h-1 cursor-pointer accent-white"
+                  />
+                </div>
+              </div>
 
               {/* FULLSCREEN */}
               <button

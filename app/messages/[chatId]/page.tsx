@@ -133,17 +133,18 @@ export default function ChatPage() {
   const [
     otherUserOnline,
     setOtherUserOnline,
-  ] = useState(false);
+  ] = useState(false);  const [postPickerOpen, setPostPickerOpen] = useState(false);
 
-  const [postPickerOpen, setPostPickerOpen] = useState(false);
+  const [longPressedId, setLongPressedId] = useState<string | null>(null);
 
   const typingTimeoutRef =
     useRef<ReturnType<
       typeof setTimeout
     > | null>(null);
 
-  const isTypingRef =
-    useRef(false);
+  const isTypingRef = useRef(false);
+
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const messagesEndRef =
     useRef<HTMLDivElement | null>(
@@ -1185,6 +1186,36 @@ export default function ChatPage() {
   };
 
   // ======================================================
+  // LONG PRESS FOR REPLY (mobile)
+  // ======================================================
+
+  const handleLongPressStart = useCallback((messageId: string) => {
+    longPressTimerRef.current = setTimeout(() => {
+      setLongPressedId(messageId);
+    }, 500);
+  }, []);
+
+  const handleLongPressEnd = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
+
+  const dismissLongPress = useCallback(() => {
+    setLongPressedId(null);
+  }, []);
+
+  // Clean up long press timer on unmount
+  useEffect(() => {
+    return () => {
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
+      }
+    };
+  }, []);
+
+  // ======================================================
   // TIME
   // ======================================================
 
@@ -1286,7 +1317,7 @@ export default function ChatPage() {
       </div>
 
       {/* MESSAGES (Strict vertical-only scroll, no horizontal overflow) */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden" onClick={dismissLongPress}>
         <div className="max-w-2xl mx-auto px-4 py-6">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-28 text-center">
@@ -1319,6 +1350,10 @@ export default function ChatPage() {
                   <div
                     key={message.id}
                     className={`group/msg flex ${isMine ? "justify-end" : "justify-start"}`}
+                    onTouchStart={() => handleLongPressStart(message.id)}
+                    onTouchEnd={handleLongPressEnd}
+                    onTouchMove={handleLongPressEnd}
+                    onTouchCancel={handleLongPressEnd}
                   >
                     <div
                       className={`w-fit max-w-[75%] sm:max-w-[450px] min-w-0 flex flex-col ${
@@ -1347,11 +1382,11 @@ export default function ChatPage() {
                                     <p className="text-[10px] font-semibold text-cyan-400 mb-0.5">
                                       {replyMessage.sender_id === currentProfileId ? "You" : otherProfile?.display_name || ""}
                                     </p>
-                                    <p className={`text-[11px] leading-snug line-clamp-2 ${
-                                      isMine ? "text-black/70" : "text-zinc-400"
-                                    }`}>
-                                      {replyMessage.text || (extractPostIdFromUrl(replyMessage.text) ? "Shared post" : "Attachment")}
-                                    </p>
+                                <p className={`text-[11px] leading-snug line-clamp-2 ${
+                                  isMine ? "text-black/70" : "text-zinc-400"
+                                }`}>
+                                  {extractPostIdFromUrl(replyMessage.text) ? "Shared post" : (replyMessage.text || "Attachment")}
+                                </p>
                                   </div>
                                 </div>
                               </div>
@@ -1366,9 +1401,17 @@ export default function ChatPage() {
                         {/* REPLY BUTTON */}
                         <button
                           type="button"
-                          onClick={() => setReplyingTo(message)}
-                          className={`absolute top-1/2 -translate-y-1/2 opacity-0 group-hover/msg:opacity-100 transition-opacity p-1.5 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white ${
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setReplyingTo(message);
+                            setLongPressedId(null);
+                          }}
+                          className={`absolute top-1/2 -translate-y-1/2 transition-opacity p-1.5 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white ${
                             isMine ? "-left-9" : "-right-9"
+                          } ${
+                            longPressedId === message.id
+                              ? "opacity-100"
+                              : "opacity-0 group-hover/msg:opacity-100"
                           }`}
                           aria-label="Reply"
                         >
@@ -1423,7 +1466,7 @@ export default function ChatPage() {
                   Replying to {replyingTo.sender_id === currentProfileId ? "yourself" : otherProfile?.display_name || "message"}
                 </p>
                 <p className="text-xs text-zinc-400 truncate">
-                  {replyingTo.text || (extractPostIdFromUrl(replyingTo.text) ? "Shared post" : "Attachment")}
+                  {extractPostIdFromUrl(replyingTo.text) ? "Shared post" : (replyingTo.text || "Attachment")}
                 </p>
               </div>
               <button
