@@ -1,7 +1,9 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ChangeEvent,
@@ -25,6 +27,9 @@ import {
 
 import { firebaseAuth } from "@/lib/firebase";
 import { linkHashtagsToPost } from "@/lib/hashtags";
+import { extractVideoFrame } from "@/lib/videoThumbnail";
+import { compressImage } from "@/lib/imageCompression";
+import { compressVideo } from "@/lib/videoCompression";
 
 export default function FeedPage() {
   const router = useRouter();
@@ -61,6 +66,8 @@ export default function FeedPage() {
 
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
+  const [videoThumbnail, setVideoThumbnail] = useState<string | null>(null);
+  const [thumbnailSeeking, setThumbnailSeeking] = useState(false);
 
   // ==========================================
   // CAMERA & RECORDING
@@ -398,6 +405,11 @@ export default function FeedPage() {
       setSelectedVideo(file);
       setSelectedImage(null);
       closeCamera();
+
+      // Auto-extract a thumbnail from the recorded video
+      extractVideoFrame(file, 0.5).then((frame) => {
+        if (frame) setVideoThumbnail(frame);
+      });
     };
 
     mediaRecorderRef.current = mediaRecorder;
@@ -438,6 +450,7 @@ export default function FeedPage() {
 
     setSelectedImage(file);
     setSelectedVideo(null);
+    setVideoThumbnail(null);
     event.target.value = "";
   };
 
@@ -448,6 +461,11 @@ export default function FeedPage() {
     setSelectedVideo(file);
     setSelectedImage(null);
     event.target.value = "";
+
+    // Auto-extract a thumbnail frame
+    extractVideoFrame(file, 0.5).then((frame) => {
+      if (frame) setVideoThumbnail(frame);
+    });
   };
 
   // ==========================================
@@ -470,12 +488,29 @@ export default function FeedPage() {
       let videoUrl: string | null = null;
 
       if (selectedImage) {
-        const fileExtension = selectedImage.name.split(".").pop() || "jpg";
+        // Compress the image before uploading
+        let imageToUpload: Blob = selectedImage;
+        if (selectedImage.type !== "image/gif") {
+          try {
+            imageToUpload = await compressImage(selectedImage, 1600, 0.85);
+            console.log("POST IMAGE COMPRESSED:", {
+              originalSize: selectedImage.size,
+              compressedSize: imageToUpload.size,
+            });
+          } catch (compressionError) {
+            console.warn("Compression failed, using original:", compressionError);
+            imageToUpload = selectedImage;
+          }
+        }
+
+        const fileExtension = imageToUpload.type === "image/webp" ? "webp" : imageToUpload.type === "image/png" ? "png" : "jpg";
         const filePath = `${profile.id}/${crypto.randomUUID()}.${fileExtension}`;
 
         const { error: imageUploadError } = await supabase.storage
           .from("post-images")
-          .upload(filePath, selectedImage);
+          .upload(filePath, imageToUpload, {
+            contentType: imageToUpload.type || "image/jpeg",
+          });
 
         if (imageUploadError) throw imageUploadError;
 
@@ -487,12 +522,27 @@ export default function FeedPage() {
       }
 
       if (selectedVideo) {
-        const fileExtension = selectedVideo.name.split(".").pop() || "mp4";
+        // Compress the video before uploading
+        let videoToUpload: Blob = selectedVideo;
+        try {
+          videoToUpload = await compressVideo(selectedVideo, 720, 8, 30);
+          console.log("POST VIDEO COMPRESSED:", {
+            originalSize: selectedVideo.size,
+            compressedSize: videoToUpload.size,
+          });
+        } catch (compressionError) {
+          console.warn("Video compression failed, using original:", compressionError);
+          videoToUpload = selectedVideo;
+        }
+
+        const fileExtension = videoToUpload.type === "video/webm" ? "webm" : selectedVideo.name.split(".").pop() || "mp4";
         const filePath = `${profile.id}/${crypto.randomUUID()}.${fileExtension}`;
 
         const { error: videoUploadError } = await supabase.storage
           .from("post-videos")
-          .upload(filePath, selectedVideo);
+          .upload(filePath, videoToUpload, {
+            contentType: videoToUpload.type || "video/mp4",
+          });
 
         if (videoUploadError) throw videoUploadError;
 
@@ -686,14 +736,38 @@ export default function FeedPage() {
               {/* VIDEO PREVIEW */}
               {selectedVideo && (
                 <div className="mt-3 relative rounded-xl overflow-hidden border border-zinc-800">
-                  <video
-                    src={URL.createObjectURL(selectedVideo)}
-                    controls
-                    className="w-full max-h-80"
-                  />
+                  {thumbnailSeeking ? (
+                    <VideoFramePicker
+                      file={selectedVideo}
+                      onFramePick={(frame) => {
+                        setVideoThumbnail(frame);
+                        setThumbnailSeeking(false);
+                      }}
+                      onCancel={() => setThumbnailSeeking(false)}
+                    />
+                  ) : videoThumbnail ? (
+                    <div className="relative">
+                      <img
+                        src={videoThumbnail}
+                        alt="Video thumbnail"
+                        className="w-full max-h-80 object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setThumbnailSeeking(true)}
+                        className="absolute bottom-2 left-2 px-2.5 py-1 rounded-lg bg-black/70 text-white text-[11px] font-medium backdrop-blur-sm hover:bg-black/80 transition-colors"
+                      >
+                        🎬 Pick thumbnail
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-full max-h-80 bg-zinc-900 flex items-center justify-center py-12">
+                      <span className="text-sm text-zinc-500 animate-pulse">Loading preview...</span>
+                    </div>
+                  )}
                   <button
                     type="button"
-                    onClick={() => setSelectedVideo(null)}
+                    onClick={() => { setSelectedVideo(null); setVideoThumbnail(null); }}
                     disabled={posting}
                     className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/80 text-white flex items-center justify-center text-sm"
                   >
@@ -960,5 +1034,132 @@ export default function FeedPage() {
 
       <BottomNav />
     </main>
+  );
+}
+
+// =====================================================
+// VIDEO FRAME PICKER — lets user scrub through video to pick a thumbnail
+// =====================================================
+
+function VideoFramePicker({
+  file,
+  onFramePick,
+  onCancel,
+}: {
+  file: File;
+  onFramePick: (dataUrl: string) => void;
+  onCancel: () => void;
+}) {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [duration, setDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [previewFrame, setPreviewFrame] = useState<string | null>(null);
+  const [extracting, setExtracting] = useState(false);
+
+  const videoUrl = useMemo(() => URL.createObjectURL(file), [file]);
+
+  useEffect(() => {
+    return () => URL.revokeObjectURL(videoUrl);
+  }, [videoUrl]);
+
+  const captureCurrentFrame = useCallback(() => {
+    const video = videoRef.current;
+    if (!video || video.videoWidth === 0) return null;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL("image/jpeg", 0.85);
+  }, []);
+
+  const handleSeek = useCallback(() => {
+    const frame = captureCurrentFrame();
+    if (frame) setPreviewFrame(frame);
+  }, [captureCurrentFrame]);
+
+  const handleConfirm = useCallback(() => {
+    const frame = captureCurrentFrame();
+    if (frame) onFramePick(frame);
+  }, [captureCurrentFrame, onFramePick]);
+
+  return (
+    <div className="bg-zinc-900 rounded-xl overflow-hidden">
+      {/* Video preview area */}
+      <div className="relative">
+        {previewFrame ? (
+          <img
+            src={previewFrame}
+            alt="Selected frame"
+            className="w-full max-h-80 object-cover"
+          />
+        ) : (
+          <div className="w-full max-h-80 bg-zinc-950 flex items-center justify-center py-12">
+            <span className="text-sm text-zinc-500 animate-pulse">Loading...</span>
+          </div>
+        )}
+      </div>
+
+      {/* Hidden video for seeking */}
+      <video
+        ref={videoRef}
+        src={videoUrl}
+        muted
+        preload="auto"
+        onLoadedData={() => {
+          const v = videoRef.current;
+          if (v) {
+            setDuration(v.duration);
+            v.currentTime = 0.5;
+          }
+        }}
+        onSeeked={handleSeek}
+        className="hidden"
+      />
+
+      {/* Seek slider */}
+      <div className="px-3 pt-3 pb-2">
+        <input
+          type="range"
+          min={0}
+          max={duration || 1}
+          step={0.1}
+          value={currentTime}
+          onChange={(e) => {
+            const t = parseFloat(e.target.value);
+            setCurrentTime(t);
+            if (videoRef.current) videoRef.current.currentTime = t;
+          }}
+          className="w-full h-1 bg-zinc-700 rounded-full appearance-none cursor-pointer accent-cyan-400"
+        />
+        <div className="flex items-center justify-between mt-1">
+          <span className="text-[10px] text-zinc-500 font-medium tabular-nums">
+            {Math.floor(currentTime)}s / {Math.floor(duration)}s
+          </span>
+          <span className="text-[10px] text-zinc-600">Drag to pick a frame</span>
+        </div>
+      </div>
+
+      {/* Action buttons */}
+      <div className="flex items-center gap-2 px-3 pb-3">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="flex-1 px-3 py-2 rounded-xl border border-zinc-700 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={handleConfirm}
+          className="flex-1 px-3 py-2 rounded-xl bg-white text-black text-xs font-bold hover:bg-zinc-200 transition-colors"
+        >
+          Use this frame
+        </button>
+      </div>
+    </div>
   );
 }
