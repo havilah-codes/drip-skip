@@ -17,7 +17,7 @@ import { ArrowLeft, Send, Image as ImageIcon, Smile, MoreVertical, Share2, Reply
 
 import SharedPostCard, { extractPostIdFromUrl } from "@/components/SharedPostCard";
 import PostPicker from "@/components/PostPicker";
-import LoadingScreen from "@/components/LoadingScreen";
+import { MessageSkeleton } from "@/components/skeletons/SkeletonPulse";
 
 import {
   onAuthStateChanged,
@@ -1211,7 +1211,20 @@ export default function ChatPage() {
   // ======================================================
 
   if (loading) {
-    return <LoadingScreen message="Loading chat..." />;
+    return (
+      <div className="h-screen w-full bg-black text-white flex flex-col overflow-hidden">
+        <header className="sticky top-0 z-50 border-b border-zinc-900 bg-black/90 backdrop-blur">
+          <div className="max-w-2xl mx-auto h-14 flex items-center px-4 gap-3">
+            <div className="skeleton-bone w-10 h-10 rounded-full" />
+            <div className="space-y-1.5">
+              <div className="skeleton-bone h-3.5 w-28" />
+              <div className="skeleton-bone h-2.5 w-16" />
+            </div>
+          </div>
+        </header>
+        <MessageSkeleton count={6} />
+      </div>
+    );
   }
 
   const avatar =

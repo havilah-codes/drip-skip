@@ -8,7 +8,7 @@ import {
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
-import LoadingScreen from "@/components/LoadingScreen";
+import { ChatListSkeleton } from "@/components/skeletons/SkeletonPulse";
 import {
   ArrowLeft,
   Search,
@@ -566,7 +566,26 @@ export default function MessagesPage() {
   // ==========================================
 
   if (loading) {
-    return <LoadingScreen message="Loading chats..." />;
+    return (
+      <main className="min-h-screen bg-black text-white">
+        <header className="sticky top-0 z-40 border-b border-zinc-900 bg-black/85 backdrop-blur-xl">
+          <div className="max-w-2xl mx-auto px-4 h-14 flex items-center gap-3">
+            <button type="button" onClick={() => router.back()} className="w-9 h-9 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-900 transition-all" aria-label="Go back">
+              <ArrowLeft size={19} />
+            </button>
+            <h1 className="text-lg font-bold font-display">Chats</h1>
+          </div>
+        </header>
+        <div className="max-w-2xl mx-auto px-4 py-5 pb-28">
+          <div className="relative mb-5">
+            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" />
+            <div className="w-full h-12 pl-11 pr-4 rounded-2xl border border-zinc-900 bg-zinc-950" />
+          </div>
+          <ChatListSkeleton count={6} />
+        </div>
+        <BottomNav />
+      </main>
+    );
   }
 
   // ==========================================

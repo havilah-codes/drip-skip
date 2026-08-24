@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { syncProfile } from "@/lib/syncProfile";
 import BottomNav from "@/components/BottomNav";
-import LoadingScreen from "@/components/LoadingScreen";
+import { FeedSkeleton } from "@/components/skeletons/SkeletonPulse";
 import NotificationPrompt from "@/components/NotificationPrompt";
 import PostCard from "@/components/PostCard";
 
@@ -566,7 +566,19 @@ export default function FeedPage() {
   };
 
   if (authLoading) {
-    return <LoadingScreen message="Loading your feed..." />;
+    return (
+      <main className="min-h-screen bg-black text-white pb-20">
+        <header className="sticky top-0 z-50 border-b border-zinc-900 bg-black/90 backdrop-blur">
+          <div className="max-w-5xl mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between">
+            <span className="text-xl font-black tracking-tight font-display">Drip or Skip</span>
+          </div>
+        </header>
+        <div className="max-w-2xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
+          <FeedSkeleton count={3} />
+        </div>
+        <BottomNav />
+      </main>
+    );
   }
 
   if (!user) return null;
@@ -764,9 +776,7 @@ export default function FeedPage() {
         {/* FEED POSTS */}
         <section>
           {feedLoading ? (
-            <div className="py-10 text-center text-zinc-500">
-              Loading your feed...
-            </div>
+            <FeedSkeleton count={2} />
           ) : posts.length === 0 ? (
             <div className="rounded-2xl border border-zinc-900 bg-zinc-950 p-8 text-center">
               <h2 className="font-semibold font-display">Your feed is empty</h2>

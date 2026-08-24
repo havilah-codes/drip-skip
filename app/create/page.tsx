@@ -4,7 +4,7 @@ import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
-import LoadingScreen from "@/components/LoadingScreen";
+import { CreateSkeleton } from "@/components/skeletons/CreateSkeleton";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const MAX_CAPTION_LENGTH = 150;
@@ -459,7 +459,7 @@ export default function CreatePage() {
   // ------------------------------------------
 
   if (isLoading) {
-    return <LoadingScreen message="Loading..." />;
+    return <CreateSkeleton />;
   }
 
   // ------------------------------------------

@@ -9,7 +9,7 @@ import { supabase } from "@/lib/supabase";
 import { syncProfile } from "@/lib/syncProfile";
 import UserCard from "@/components/UserCard";
 import BottomNav from "@/components/BottomNav";
-import LoadingScreen from "@/components/LoadingScreen";
+import { ExploreSkeleton } from "@/components/skeletons/SkeletonPulse";
 import Link from "next/link";
 import { Hash } from "lucide-react";
 
@@ -334,7 +334,12 @@ export default function ExplorePage() {
   // ==========================================
 
   if (loading) {
-    return <LoadingScreen message="Loading Explore..." />;
+    return (
+      <main className="min-h-screen bg-black text-white pb-28">
+        <ExploreSkeleton />
+        <BottomNav />
+      </main>
+    );
   }
 
   // ==========================================

@@ -11,6 +11,7 @@ import { firebaseAuth } from "@/lib/firebase";
 import { supabase } from "@/lib/supabase";
 import { syncProfile } from "@/lib/syncProfile";
 import PostCard, { type Post } from "@/components/PostCard";
+import { ProfileSkeleton } from "@/components/skeletons/SkeletonPulse";
 
 type Profile = {
   id: string;
@@ -129,8 +130,8 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-black text-white flex items-center justify-center">
-        <p className="text-sm text-zinc-500">Loading profile...</p>
+      <main className="min-h-screen bg-black text-white pb-20">
+        <ProfileSkeleton />
       </main>
     );
   }

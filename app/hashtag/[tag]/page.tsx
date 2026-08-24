@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Hash } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import PostCard, { type Post } from "@/components/PostCard";
-import LoadingScreen from "@/components/LoadingScreen";
+import { FeedSkeleton } from "@/components/skeletons/SkeletonPulse";
 
 export default function HashtagPage() {
   const params = useParams();
@@ -90,7 +90,21 @@ export default function HashtagPage() {
   }, [tag]);
 
   if (loading) {
-    return <LoadingScreen message={`Loading #${tag}...`} />;
+    return (
+      <main className="min-h-screen bg-black text-white pb-20">
+        <header className="sticky top-0 z-40 border-b border-zinc-900 bg-black/85 backdrop-blur-xl">
+          <div className="max-w-2xl mx-auto px-4 h-14 flex items-center gap-3">
+            <button type="button" onClick={() => router.back()} className="w-9 h-9 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-900 transition-all" aria-label="Go back">
+              <ArrowLeft size={19} />
+            </button>
+            <div className="skeleton-bone h-5 w-32" />
+          </div>
+        </header>
+        <div className="max-w-2xl mx-auto px-4 py-5 pb-28">
+          <FeedSkeleton count={3} />
+        </div>
+      </main>
+    );
   }
 
   return (
