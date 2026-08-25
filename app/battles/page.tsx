@@ -99,9 +99,21 @@ function computeEngagementScore(post: {
   return volumeScore + qualityScore + recencyBonus;
 }
 
+function seededShuffle<T>(arr: T[], seed: number): T[] {
+  const result = [...arr];
+  let s = seed;
+  for (let i = result.length - 1; i > 0; i--) {
+    s = (s * 1103515245 + 12345) & 0x7fffffff;
+    const j = s % (i + 1);
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
 function matchBattlePairs(
   candidates: PostWithStats[],
-  activeBattlePostIds: Set<string>
+  activeBattlePostIds: Set<string>,
+  seed: number = Date.now()
 ): [PostWithStats, PostWithStats][] {
   // Filter: must have media, different users, not already in a battle
   const eligible = candidates.filter(
@@ -112,22 +124,25 @@ function matchBattlePairs(
 
   if (eligible.length < MIN_POSTS_FOR_BATTLES) return [];
 
-  // Sort by engagement score for consistent ordering
-  eligible.sort((a, b) => b.engagement_score - a.engagement_score);
+  // Shuffle with seed so refresh produces different matchups
+  const shuffled = seededShuffle(eligible, seed);
+
+  // Sort by engagement score for consistent ordering within the shuffled set
+  shuffled.sort((a, b) => b.engagement_score - a.engagement_score);
 
   const pairs: [PostWithStats, PostWithStats][] = [];
   const used = new Set<string>();
 
-  // Greedy matching: walk through sorted list, find closest unused neighbor
-  for (let i = 0; i < eligible.length && pairs.length < 5; i++) {
-    const a = eligible[i];
+  // Greedy matching: walk through shuffled list, find closest unused neighbor
+  for (let i = 0; i < shuffled.length && pairs.length < 5; i++) {
+    const a = shuffled[i];
     if (used.has(a.id)) continue;
 
     let bestMatch: PostWithStats | null = null;
     let bestScore = Infinity;
 
-    for (let j = i + 1; j < eligible.length; j++) {
-      const b = eligible[j];
+    for (let j = i + 1; j < shuffled.length; j++) {
+      const b = shuffled[j];
       if (used.has(b.id)) continue;
       if (a.user_id === b.user_id) continue;
 
@@ -565,7 +580,7 @@ export default function BattlesPage() {
       }
 
       // Step 4: Generate new matchups from unmatched posts
-      const newPairs = matchBattlePairs(enriched, activeBattlePostIds);
+      const newPairs = matchBattlePairs(enriched, activeBattlePostIds, battleSeedRef.current);
 
       const generatedBattles: Battle[] = newPairs.map(([a, b], index) => ({
         id: `gen-${battleSeedRef.current}-${index}`,
@@ -798,12 +813,12 @@ export default function BattlesPage() {
               type="button"
               onClick={handleRefresh}
               disabled={generating}
-              className="w-10 h-10 rounded-xl border border-border-s bg-bg-raised flex items-center justify-center text-text-s hover:text-text-p hover:bg-bg-sunken transition-all disabled:opacity-50"
+              className="w-10 h-10 rounded-full flex items-center justify-center text-text-s hover:text-amber-400 hover:bg-amber-400/10 transition-all disabled:opacity-50"
               aria-label="Generate new matchups"
             >
               <RefreshCw
                 size={16}
-                className={generating ? "animate-spin" : ""}
+                className={generating ? "animate-spin text-amber-400" : ""}
               />
             </button>
           )}
