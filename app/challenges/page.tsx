@@ -613,7 +613,7 @@ export default function ChallengesPage() {
                         type="button"
                         onClick={() => handleVoteEntry(entry.id, "drip")}
                         disabled={entryLoading === entry.id}
-                        className="flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-semibold text-cyan-400 hover:bg-cyan-400/10 transition-colors"
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-semibold text-cyan-400 hover:text-cyan-300 transition-colors"
                       >
                         <Flame size={14} />
                         <span>Drip {entry.drip_count > 0 ? entry.drip_count : ""}</span>
@@ -623,7 +623,7 @@ export default function ChallengesPage() {
                         type="button"
                         onClick={() => handleVoteEntry(entry.id, "skip")}
                         disabled={entryLoading === entry.id}
-                        className="flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-semibold text-rose-400 hover:bg-rose-400/10 transition-colors"
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-semibold text-rose-400 hover:text-rose-300 transition-colors"
                       >
                         <span>Skip {entry.skip_count > 0 ? entry.skip_count : ""}</span>
                       </button>

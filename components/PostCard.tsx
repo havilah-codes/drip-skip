@@ -334,10 +334,10 @@ export default function PostCard({
               relative flex items-center justify-center gap-2 min-h-14 rounded-2xl border transition-all active:scale-[0.97]
               ${
                 userVote === "drip"
-                  ? "border-cyan-500 bg-cyan-500/20 text-cyan-600 dark:text-cyan-300"
+                  ? "border-cyan-500 bg-transparent text-cyan-600 dark:text-cyan-300"
                   : userVote === "skip"
-                  ? "border-border-s bg-bg-sunken/40 text-text-m"
-                  : "border-cyan-300 bg-cyan-50 text-cyan-600 hover:bg-cyan-100 hover:border-cyan-400 dark:border-cyan-400/30 dark:bg-cyan-400/10 dark:text-cyan-300 dark:hover:bg-cyan-400/20 dark:hover:border-cyan-400/60"
+                  ? "border-border-s bg-transparent text-text-m"
+                  : "border-cyan-400/50 bg-transparent text-cyan-600 hover:border-cyan-400 dark:border-cyan-400/40 dark:text-cyan-300 dark:hover:border-cyan-400/70"
               }
               disabled:cursor-not-allowed
             `}
@@ -370,10 +370,10 @@ export default function PostCard({
               relative flex items-center justify-center gap-2 min-h-14 rounded-2xl border transition-all active:scale-[0.97]
               ${
                 userVote === "skip"
-                  ? "border-rose-500 bg-rose-500/20 text-rose-600 dark:text-rose-300"
+                  ? "border-rose-500 bg-transparent text-rose-600 dark:text-rose-300"
                   : userVote === "drip"
-                  ? "border-border-s bg-bg-sunken/40 text-text-m"
-                  : "border-rose-300 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:border-rose-400 dark:border-rose-400/30 dark:bg-rose-400/10 dark:text-rose-300 dark:hover:bg-rose-400/20 dark:hover:border-rose-400/60"
+                  ? "border-border-s bg-transparent text-text-m"
+                  : "border-rose-400/50 bg-transparent text-rose-600 hover:border-rose-400 dark:border-rose-400/40 dark:text-rose-300 dark:hover:border-rose-400/70"
               }
               disabled:cursor-not-allowed
             `}

@@ -23,33 +23,27 @@ CREATE TABLE IF NOT EXISTS theme_votes (
 );
 
 -- ==========================================
--- RLS POLICIES
+-- RLS POLICIES (drop existing first to be idempotent)
 -- ==========================================
 
 ALTER TABLE challenge_themes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE theme_votes ENABLE ROW LEVEL SECURITY;
 
--- Themes: everyone can read
+DROP POLICY IF EXISTS "Themes are viewable by everyone" ON challenge_themes;
+DROP POLICY IF EXISTS "Theme votes are viewable by everyone" ON theme_votes;
+DROP POLICY IF EXISTS "Anyone can submit themes" ON challenge_themes;
+DROP POLICY IF EXISTS "Anyone can vote on themes" ON theme_votes;
+DROP POLICY IF EXISTS "Anyone can update votes" ON theme_votes;
+DROP POLICY IF EXISTS "Anyone can delete votes" ON theme_votes;
+DROP POLICY IF EXISTS "Anyone can delete themes" ON challenge_themes;
+
 CREATE POLICY "Themes are viewable by everyone" ON challenge_themes FOR SELECT USING (true);
-
--- Theme votes: everyone can read
 CREATE POLICY "Theme votes are viewable by everyone" ON theme_votes FOR SELECT USING (true);
-
--- Authenticated users can submit themes
-CREATE POLICY "Authenticated users can submit themes" ON challenge_themes FOR INSERT
-  WITH CHECK (auth.uid()::text = (SELECT firebase_uid FROM profiles WHERE id = user_id));
-
--- Authenticated users can vote on themes
-CREATE POLICY "Authenticated users can vote on themes" ON theme_votes FOR INSERT
-  WITH CHECK (auth.uid()::text = (SELECT firebase_uid FROM profiles WHERE id = user_id));
-
--- Users can update their own votes
-CREATE POLICY "Users can update their own votes" ON theme_votes FOR UPDATE
-  USING (auth.uid()::text = (SELECT firebase_uid FROM profiles WHERE id = user_id));
-
--- Users can delete their own votes
-CREATE POLICY "Users can delete their own votes" ON theme_votes FOR DELETE
-  USING (auth.uid()::text = (SELECT firebase_uid FROM profiles WHERE id = user_id));
+CREATE POLICY "Anyone can submit themes" ON challenge_themes FOR INSERT WITH CHECK (true);
+CREATE POLICY "Anyone can vote on themes" ON theme_votes FOR INSERT WITH CHECK (true);
+CREATE POLICY "Anyone can update votes" ON theme_votes FOR UPDATE USING (true);
+CREATE POLICY "Anyone can delete votes" ON theme_votes FOR DELETE USING (true);
+CREATE POLICY "Anyone can delete themes" ON challenge_themes FOR DELETE USING (true);
 
 -- ==========================================
 -- INDEXES
