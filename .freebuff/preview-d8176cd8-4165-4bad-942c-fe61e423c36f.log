@@ -1,0 +1,11 @@
+
+> drip-or-skip@0.1.0 dev
+> next dev
+
+▲ Next.js 16.3.0 (Turbopack)
+- Local:         http://localhost:57335
+- Network:       http://192.168.1.35:57335
+- Environments: .env.local
+✓ Ready in 20.3s
+✓ Running next.config.ts took 1076ms
+

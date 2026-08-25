@@ -320,8 +320,8 @@ export default function LeaderboardPage() {
                 alt=""
                 className="w-16 h-16 rounded-full object-cover mx-auto border-[3px] border-zinc-200 mb-2"
               />
-              <p className="text-xs font-semibold text-white truncate">{entries[1].display_name}</p>
-              <p className="text-[10px] text-white/60 mb-2">@{entries[1].username}</p>
+              <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">{entries[1].display_name}</p>
+              <p className="text-[10px] text-gray-900 dark:text-white mb-2">@{entries[1].username}</p>
               <div className="rounded-t-xl bg-gradient-to-b from-zinc-300 to-zinc-400 pt-3 pb-2 px-2">
                 <Medal size={18} className="mx-auto text-white mb-1" />
                 <p className="text-lg font-black text-white">#2</p>
@@ -352,8 +352,8 @@ export default function LeaderboardPage() {
                 alt=""
                 className="w-16 h-16 rounded-full object-cover mx-auto border-[3px] border-amber-700 mb-2"
               />
-              <p className="text-xs font-semibold text-white truncate">{entries[2].display_name}</p>
-              <p className="text-[10px] text-white/60 mb-2">@{entries[2].username}</p>
+              <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">{entries[2].display_name}</p>
+              <p className="text-[10px] text-gray-900 dark:text-white mb-2">@{entries[2].username}</p>
               <div className="rounded-t-xl bg-gradient-to-b from-amber-700 to-amber-900 pt-3 pb-2 px-2">
                 <Award size={18} className="mx-auto text-white mb-1" />
                 <p className="text-lg font-black text-white">#3</p>
