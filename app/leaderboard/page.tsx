@@ -316,9 +316,9 @@ export default function LeaderboardPage() {
               <p className="text-xs font-semibold truncate">{entries[1].display_name}</p>
               <p className="text-[10px] text-text-t mb-2">@{entries[1].username}</p>
               <div className="rounded-t-xl bg-zinc-800 border border-zinc-700 pt-3 pb-2 px-2">
-                <Medal size={18} className="mx-auto text-zinc-300 mb-1" />
+                <Medal size={18} className="mx-auto text-white mb-1" />
                 <p className="text-lg font-black">#2</p>
-                <p className="text-[11px] text-cyan-400 font-bold flex items-center gap-1"><Flame size={10} /> {entries[1].drip_count}</p>
+                <p className="text-[11px] text-white font-bold flex items-center gap-1"><Flame size={10} /> {entries[1].drip_count}</p>
               </div>
             </div>
 
@@ -332,9 +332,9 @@ export default function LeaderboardPage() {
               <p className="text-sm font-bold truncate">{entries[0].display_name}</p>
               <p className="text-[10px] text-text-t mb-2">@{entries[0].username}</p>
               <div className="rounded-t-xl bg-gradient-to-b from-amber-900/40 to-amber-950/60 border border-amber-700/50 pt-4 pb-2 px-2">
-                <Crown size={22} className="mx-auto text-amber-400 mb-1" />
-                <p className="text-xl font-black text-amber-400">#1</p>
-                <p className="text-xs text-amber-300 font-bold flex items-center gap-1"><Flame size={12} /> {entries[0].drip_count}</p>
+                <Crown size={22} className="mx-auto text-white mb-1" />
+                <p className="text-xl font-black text-white">#1</p>
+                <p className="text-xs text-white font-bold flex items-center gap-1"><Flame size={12} /> {entries[0].drip_count}</p>
               </div>
             </div>
 
@@ -348,9 +348,9 @@ export default function LeaderboardPage() {
               <p className="text-xs font-semibold truncate">{entries[2].display_name}</p>
               <p className="text-[10px] text-text-t mb-2">@{entries[2].username}</p>
               <div className="rounded-t-xl bg-amber-950/40 border border-amber-900/40 pt-3 pb-2 px-2">
-                <Award size={18} className="mx-auto text-amber-600 mb-1" />
+                <Award size={18} className="mx-auto text-white mb-1" />
                 <p className="text-lg font-black">#3</p>
-                <p className="text-[11px] text-cyan-400 font-bold flex items-center gap-1"><Flame size={10} /> {entries[2].drip_count}</p>
+                <p className="text-[11px] text-white font-bold flex items-center gap-1"><Flame size={10} /> {entries[2].drip_count}</p>
               </div>
             </div>
           </div>
