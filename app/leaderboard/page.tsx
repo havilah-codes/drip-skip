@@ -306,50 +306,50 @@ export default function LeaderboardPage() {
         {/* TOP 3 PODIUM */}
         {entries.length >= 3 && (
           <div className="flex items-end justify-center gap-3 mb-8 px-4">
-            {/* #2 */}
+            {/* #2 — Silver */}
             <div className="flex-1 max-w-[120px] text-center">
               <img
                 src={entries[1].avatar_url || "/default-avatar.png"}
                 alt=""
-                className="w-16 h-16 rounded-full object-cover mx-auto border-2 border-zinc-300 mb-2"
+                className="w-16 h-16 rounded-full object-cover mx-auto border-[3px] border-zinc-200 mb-2"
               />
-              <p className="text-xs font-semibold truncate">{entries[1].display_name}</p>
-              <p className="text-[10px] text-text-t mb-2">@{entries[1].username}</p>
-              <div className="rounded-t-xl bg-zinc-800 border border-zinc-700 pt-3 pb-2 px-2">
+              <p className="text-xs font-semibold text-white truncate">{entries[1].display_name}</p>
+              <p className="text-[10px] text-white/60 mb-2">@{entries[1].username}</p>
+              <div className="rounded-t-xl bg-gradient-to-b from-zinc-300 to-zinc-400 pt-3 pb-2 px-2">
                 <Medal size={18} className="mx-auto text-white mb-1" />
-                <p className="text-lg font-black">#2</p>
+                <p className="text-lg font-black text-white">#2</p>
                 <p className="text-[11px] text-white font-bold flex items-center gap-1"><Flame size={10} /> {entries[1].drip_count}</p>
               </div>
             </div>
 
-            {/* #1 */}
+            {/* #1 — Gold */}
             <div className="flex-1 max-w-[130px] text-center">
               <img
                 src={entries[0].avatar_url || "/default-avatar.png"}
                 alt=""
-                className="w-20 h-20 rounded-full object-cover mx-auto border-2 border-amber-400 mb-2 shadow-lg shadow-amber-400/20"
+                className="w-20 h-20 rounded-full object-cover mx-auto border-[4px] border-yellow-300 mb-2 shadow-lg shadow-yellow-400/30"
               />
-              <p className="text-sm font-bold truncate">{entries[0].display_name}</p>
-              <p className="text-[10px] text-text-t mb-2">@{entries[0].username}</p>
-              <div className="rounded-t-xl bg-gradient-to-b from-amber-900/40 to-amber-950/60 border border-amber-700/50 pt-4 pb-2 px-2">
+              <p className="text-sm font-bold text-white truncate">{entries[0].display_name}</p>
+              <p className="text-[10px] text-white/60 mb-2">@{entries[0].username}</p>
+              <div className="rounded-t-xl bg-gradient-to-b from-yellow-400 to-yellow-600 pt-4 pb-2 px-2">
                 <Crown size={22} className="mx-auto text-white mb-1" />
                 <p className="text-xl font-black text-white">#1</p>
                 <p className="text-xs text-white font-bold flex items-center gap-1"><Flame size={12} /> {entries[0].drip_count}</p>
               </div>
             </div>
 
-            {/* #3 */}
+            {/* #3 — Bronze */}
             <div className="flex-1 max-w-[120px] text-center">
               <img
                 src={entries[2].avatar_url || "/default-avatar.png"}
                 alt=""
-                className="w-16 h-16 rounded-full object-cover mx-auto border-2 border-amber-600 mb-2"
+                className="w-16 h-16 rounded-full object-cover mx-auto border-[3px] border-amber-700 mb-2"
               />
-              <p className="text-xs font-semibold truncate">{entries[2].display_name}</p>
-              <p className="text-[10px] text-text-t mb-2">@{entries[2].username}</p>
-              <div className="rounded-t-xl bg-amber-950/40 border border-amber-900/40 pt-3 pb-2 px-2">
+              <p className="text-xs font-semibold text-white truncate">{entries[2].display_name}</p>
+              <p className="text-[10px] text-white/60 mb-2">@{entries[2].username}</p>
+              <div className="rounded-t-xl bg-gradient-to-b from-amber-700 to-amber-900 pt-3 pb-2 px-2">
                 <Award size={18} className="mx-auto text-white mb-1" />
-                <p className="text-lg font-black">#3</p>
+                <p className="text-lg font-black text-white">#3</p>
                 <p className="text-[11px] text-white font-bold flex items-center gap-1"><Flame size={10} /> {entries[2].drip_count}</p>
               </div>
             </div>
