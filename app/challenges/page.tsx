@@ -13,6 +13,15 @@ import {
   Check,
   Users,
   Sparkles,
+  Shirt,
+  Bike,
+  Recycle,
+  Briefcase,
+  Coffee,
+  Dumbbell,
+  Clock3,
+  Palette,
+  Sparkle,
 } from "lucide-react";
 import { onAuthStateChanged, type User } from "firebase/auth";
 
@@ -99,16 +108,16 @@ const MOCK_CHALLENGES: Challenge[] = [
   },
 ];
 
-const THEME_EMOJIS: Record<string, string> = {
-  monochrome: "🖤",
-  streetwear: "🔥",
-  sustainable: "♻️",
-  formal: "👔",
-  casual: "😎",
-  athletic: "🏃",
-  vintage: "🕰️",
-  avantgarde: "🎨",
-  default: "👗",
+const THEME_ICONS: Record<string, string> = {
+  monochrome: "Circle",
+  streetwear: "Flame",
+  sustainable: "Recycle",
+  formal: "Briefcase",
+  casual: "Coffee",
+  athletic: "Dumbbell",
+  vintage: "Clock3",
+  avantgarde: "Palette",
+  default: "Shirt",
 };
 
 export default function ChallengesPage() {
@@ -338,9 +347,9 @@ export default function ChallengesPage() {
           {/* CHALLENGE INFO */}
           <div className="rounded-2xl border border-border-s bg-bg-raised p-5 mb-6">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-2xl">
-                {THEME_EMOJIS[selectedChallenge.theme] || THEME_EMOJIS.default}
-              </span>
+              <div className="w-10 h-10 rounded-xl bg-bg-sunken flex items-center justify-center">
+                <Shirt size={20} className="text-purple-400" />
+              </div>
               <h2 className="text-lg font-bold font-display">{selectedChallenge.title}</h2>
             </div>
             {selectedChallenge.description && (
@@ -483,7 +492,7 @@ export default function ChallengesPage() {
                   : "text-text-t hover:text-text-p"
               }`}
             >
-              {tab === "active" ? "🎯 Active" : "🏆 Past"}
+              {tab === "active" ? "Active" : "Past"}
             </button>
           ))}
         </div>
@@ -499,9 +508,7 @@ export default function ChallengesPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {challenges.map((challenge) => {
-              const emoji = THEME_EMOJIS[challenge.theme] || THEME_EMOJIS.default;
-              const isActive = challenge.status === "active";
+            {challenges.map((challenge) => {                  const isActive = challenge.status === "active";
 
               return (
                 <button
@@ -511,8 +518,8 @@ export default function ChallengesPage() {
                   className="w-full text-left rounded-2xl border border-border-s bg-bg-raised p-4 hover:bg-bg-sunken/30 transition-all active:scale-[0.99]"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-bg-sunken flex items-center justify-center text-2xl shrink-0">
-                      {emoji}
+                    <div className="w-12 h-12 rounded-xl bg-bg-sunken flex items-center justify-center shrink-0">
+                      <Sparkles size={20} className="text-purple-400" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
@@ -552,7 +559,7 @@ export default function ChallengesPage() {
         {useMock && (
           <div className="mt-6 rounded-xl border border-purple-900/30 bg-purple-950/20 p-4 text-center">
             <p className="text-xs text-purple-400/80">
-              🏆 Challenges database tables not set up yet. Running in demo mode.
+              Challenges database tables not set up yet. Running in demo mode.
             </p>
             <p className="text-[10px] text-text-m mt-1">
               Run the SQL migration in supabase/migrations/create_competitions_tables.sql to enable real challenges.

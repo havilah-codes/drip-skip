@@ -318,7 +318,7 @@ export default function LeaderboardPage() {
               <div className="rounded-t-xl bg-zinc-800 border border-zinc-700 pt-3 pb-2 px-2">
                 <Medal size={18} className="mx-auto text-zinc-300 mb-1" />
                 <p className="text-lg font-black">#2</p>
-                <p className="text-[11px] text-cyan-400 font-bold">{entries[1].drip_count} 🔥</p>
+                <p className="text-[11px] text-cyan-400 font-bold flex items-center gap-1"><Flame size={10} /> {entries[1].drip_count}</p>
               </div>
             </div>
 
@@ -334,7 +334,7 @@ export default function LeaderboardPage() {
               <div className="rounded-t-xl bg-gradient-to-b from-amber-900/40 to-amber-950/60 border border-amber-700/50 pt-4 pb-2 px-2">
                 <Crown size={22} className="mx-auto text-amber-400 mb-1" />
                 <p className="text-xl font-black text-amber-400">#1</p>
-                <p className="text-xs text-amber-300 font-bold">{entries[0].drip_count} 🔥</p>
+                <p className="text-xs text-amber-300 font-bold flex items-center gap-1"><Flame size={12} /> {entries[0].drip_count}</p>
               </div>
             </div>
 
@@ -350,7 +350,7 @@ export default function LeaderboardPage() {
               <div className="rounded-t-xl bg-amber-950/40 border border-amber-900/40 pt-3 pb-2 px-2">
                 <Award size={18} className="mx-auto text-amber-600 mb-1" />
                 <p className="text-lg font-black">#3</p>
-                <p className="text-[11px] text-cyan-400 font-bold">{entries[2].drip_count} 🔥</p>
+                <p className="text-[11px] text-cyan-400 font-bold flex items-center gap-1"><Flame size={10} /> {entries[2].drip_count}</p>
               </div>
             </div>
           </div>
@@ -434,7 +434,7 @@ export default function LeaderboardPage() {
         {useMock && (
           <div className="mt-6 rounded-xl border border-amber-900/30 bg-amber-950/20 p-4 text-center">
             <p className="text-xs text-amber-400/80">
-              🏆 Leaderboard database tables not set up yet. Running in demo mode.
+              Leaderboard database tables not set up yet. Running in demo mode.
             </p>
             <p className="text-[10px] text-text-m mt-1">
               Run the SQL migration in supabase/migrations/create_competitions_tables.sql to enable real leaderboards.
