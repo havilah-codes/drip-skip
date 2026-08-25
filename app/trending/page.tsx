@@ -11,6 +11,7 @@ import {
   Crown,
   Medal,
   Award,
+  ArrowLeft,
 } from "lucide-react";
 import { onAuthStateChanged, type User } from "firebase/auth";
 
@@ -171,6 +172,9 @@ export default function TrendingPage() {
       <main className="min-h-screen bg-bg text-text-p pb-28">
         <header className="sticky top-0 z-50 border-b border-border-s bg-bg/90 backdrop-blur">
           <div className="max-w-5xl mx-auto px-4 h-14 flex items-center gap-3">
+            <Link href="/explore" className="w-9 h-9 rounded-full flex items-center justify-center text-text-s hover:text-text-p hover:bg-bg-sunken transition-colors">
+              <ArrowLeft size={19} />
+            </Link>
             <TrendingUp size={20} className="text-cyan-400" />
             <h1 className="text-lg font-bold font-display">Trending Fits</h1>
           </div>
@@ -188,6 +192,9 @@ export default function TrendingPage() {
       {/* HEADER */}
       <header className="sticky top-0 z-50 border-b border-border-s bg-bg/90 backdrop-blur">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center gap-3">
+          <Link href="/explore" className="w-9 h-9 rounded-full flex items-center justify-center text-text-s hover:text-text-p hover:bg-bg-sunken transition-colors">
+            <ArrowLeft size={19} />
+          </Link>
           <TrendingUp size={20} className="text-cyan-400" />
           <h1 className="text-lg font-bold font-display">Trending Fits</h1>
         </div>
