@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, Sparkles } from "lucide-react";
+import { Search, Sparkles, Swords, TrendingUp, Trophy, Flame } from "lucide-react";
 import { onAuthStateChanged, type User } from "firebase/auth";
 
 import { firebaseAuth } from "@/lib/firebase";
@@ -368,6 +368,64 @@ export default function ExplorePage() {
             Discover people and find your council.
           </p>
         </div>
+
+        {/* COMPETITIVE SECTIONS */}
+
+        {!search.trim() && (
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            <Link
+              href="/battles"
+              className="flex items-center gap-3 p-4 rounded-2xl border border-amber-900/30 bg-gradient-to-br from-amber-950/30 to-rose-950/20 hover:from-amber-950/50 hover:to-rose-950/30 transition-all active:scale-[0.98]"
+            >
+              <div className="w-10 h-10 rounded-xl bg-amber-950/60 flex items-center justify-center">
+                <Swords size={20} className="text-amber-400" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold font-display">Fit Battles</p>
+                <p className="text-[10px] text-text-t">Head-to-head</p>
+              </div>
+            </Link>
+
+            <Link
+              href="/trending"
+              className="flex items-center gap-3 p-4 rounded-2xl border border-cyan-900/30 bg-gradient-to-br from-cyan-950/30 to-emerald-950/20 hover:from-cyan-950/50 hover:to-emerald-950/30 transition-all active:scale-[0.98]"
+            >
+              <div className="w-10 h-10 rounded-xl bg-cyan-950/60 flex items-center justify-center">
+                <TrendingUp size={20} className="text-cyan-400" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold font-display">Trending</p>
+                <p className="text-[10px] text-text-t">Hot fits</p>
+              </div>
+            </Link>
+
+            <Link
+              href="/challenges"
+              className="flex items-center gap-3 p-4 rounded-2xl border border-purple-900/30 bg-gradient-to-br from-purple-950/30 to-indigo-950/20 hover:from-purple-950/50 hover:to-indigo-950/30 transition-all active:scale-[0.98]"
+            >
+              <div className="w-10 h-10 rounded-xl bg-purple-950/60 flex items-center justify-center">
+                <Flame size={20} className="text-purple-400" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold font-display">Challenges</p>
+                <p className="text-[10px] text-text-t">Themed contests</p>
+              </div>
+            </Link>
+
+            <Link
+              href="/leaderboard"
+              className="flex items-center gap-3 p-4 rounded-2xl border border-amber-900/30 bg-gradient-to-br from-amber-950/30 to-yellow-950/20 hover:from-amber-950/50 hover:to-yellow-950/30 transition-all active:scale-[0.98]"
+            >
+              <div className="w-10 h-10 rounded-xl bg-amber-950/60 flex items-center justify-center">
+                <Trophy size={20} className="text-amber-400" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold font-display">Leaderboard</p>
+                <p className="text-[10px] text-text-t">Weekly ranks</p>
+              </div>
+            </Link>
+          </div>
+        )}
 
         {/* SEARCH */}
 
