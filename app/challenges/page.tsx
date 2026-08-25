@@ -14,15 +14,13 @@ import {
   Users,
   Sparkles,
   Shirt,
-  Bike,
-  Recycle,
-  Briefcase,
-  Coffee,
-  Dumbbell,
-  Clock3,
-  Palette,
-  Sparkle,
   ArrowLeft,
+  ArrowBigUp,
+  ArrowBigDown,
+  TrendingUp,
+  Lightbulb,
+  Send,
+  X,
 } from "lucide-react";
 import { onAuthStateChanged, type User } from "firebase/auth";
 
@@ -30,7 +28,6 @@ import { firebaseAuth } from "@/lib/firebase";
 import { supabase } from "@/lib/supabase";
 import { syncProfile } from "@/lib/syncProfile";
 import BottomNav from "@/components/BottomNav";
-import PostCard from "@/components/PostCard";
 import VideoPlayer from "@/components/VideoPlayer";
 
 type Profile = {
@@ -67,6 +64,22 @@ type Challenge = {
   ends_at: string;
   entry_count: number;
   entries: ChallengeEntry[];
+};
+
+type TrendingTheme = {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string | null;
+  status: string;
+  created_at: string;
+  username: string;
+  display_name: string;
+  avatar_url: string | null;
+  upvotes: number;
+  downvotes: number;
+  score: number;
+  user_vote?: "up" | "down" | null;
 };
 
 // ==========================================
@@ -109,27 +122,32 @@ const MOCK_CHALLENGES: Challenge[] = [
   },
 ];
 
-const THEME_ICONS: Record<string, string> = {
-  monochrome: "Circle",
-  streetwear: "Flame",
-  sustainable: "Recycle",
-  formal: "Briefcase",
-  casual: "Coffee",
-  athletic: "Dumbbell",
-  vintage: "Clock3",
-  avantgarde: "Palette",
-  default: "Shirt",
-};
-
 export default function ChallengesPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [profileId, setProfileId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(null);
   const [activeTab, setActiveTab] = useState<"active" | "completed">("active");
   const [useMock, setUseMock] = useState(false);
   const [entryLoading, setEntryLoading] = useState<string | null>(null);
+
+  // ==========================================
+  // TRENDING THEMES STATE
+  // ==========================================
+
+  const [trendingThemes, setTrendingThemes] = useState<TrendingTheme[]>([]);
+  const [themesLoading, setThemesLoading] = useState(true);
+  const [showThemeForm, setShowThemeForm] = useState(false);
+  const [newThemeTitle, setNewThemeTitle] = useState("");
+  const [newThemeDesc, setNewThemeDesc] = useState("");
+  const [submittingTheme, setSubmittingTheme] = useState(false);
+  const [votingThemeId, setVotingThemeId] = useState<string | null>(null);
+
+  // ==========================================
+  // AUTH
+  // ==========================================
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(firebaseAuth, async (currentUser) => {
@@ -138,10 +156,15 @@ export default function ChallengesPage() {
         return;
       }
       setUser(currentUser);
-      await syncProfile(currentUser);
+      const profile = await syncProfile(currentUser);
+      setProfileId(profile?.id || null);
     });
     return () => unsubscribe();
   }, [router]);
+
+  // ==========================================
+  // LOAD CHALLENGES
+  // ==========================================
 
   const loadChallenges = useCallback(async () => {
     try {
@@ -159,7 +182,6 @@ export default function ChallengesPage() {
         return;
       }
 
-      // Fetch entry counts
       const enriched = await Promise.all(
         data.map(async (ch) => {
           const { count } = await supabase
@@ -190,6 +212,167 @@ export default function ChallengesPage() {
       loadChallenges();
     }
   }, [user, loadChallenges]);
+
+  // ==========================================
+  // LOAD TRENDING THEMES
+  // ==========================================
+
+  const loadTrendingThemes = useCallback(async () => {
+    try {
+      setThemesLoading(true);
+
+      // Try loading from the view first
+      const { data: themesData, error } = await supabase
+        .from("challenge_themes")
+        .select(`
+          *,
+          profiles:user_id (username, display_name, avatar_url)
+        `)
+        .in("status", ["pending", "approved"])
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      if (error) {
+        console.error("Themes table not found:", error);
+        setTrendingThemes([]);
+        return;
+      }
+
+      // Get vote counts for each theme
+      const themes: TrendingTheme[] = await Promise.all(
+        (themesData || []).map(async (theme: any) => {
+          const { data: votes } = await supabase
+            .from("theme_votes")
+            .select("vote, user_id")
+            .eq("theme_id", theme.id);
+
+          const upvotes = votes?.filter((v) => v.vote === "up").length || 0;
+          const downvotes = votes?.filter((v) => v.vote === "down").length || 0;
+          const userVote = votes?.find((v) => v.user_id === profileId)?.vote as "up" | "down" | undefined;
+
+          const profile = theme.profiles;
+          const p = Array.isArray(profile) ? profile[0] : profile;
+
+          return {
+            ...theme,
+            username: p?.username || "anon",
+            display_name: p?.display_name || "Anonymous",
+            avatar_url: p?.avatar_url || null,
+            upvotes,
+            downvotes,
+            score: upvotes - downvotes,
+            user_vote: userVote || null,
+          };
+        })
+      );
+
+      // Sort by score descending
+      themes.sort((a, b) => b.score - a.score);
+      setTrendingThemes(themes);
+    } catch (err) {
+      console.error("Failed to load trending themes:", err);
+      setTrendingThemes([]);
+    } finally {
+      setThemesLoading(false);
+    }
+  }, [profileId]);
+
+  useEffect(() => {
+    if (user) {
+      loadTrendingThemes();
+    }
+  }, [user, loadTrendingThemes]);
+
+  // ==========================================
+  // SUBMIT NEW THEME
+  // ==========================================
+
+  const handleSubmitTheme = async () => {
+    if (!newThemeTitle.trim() || !user || !profileId || submittingTheme) return;
+
+    setSubmittingTheme(true);
+    try {
+      const { error } = await supabase.from("challenge_themes").insert({
+        user_id: profileId,
+        title: newThemeTitle.trim(),
+        description: newThemeDesc.trim() || null,
+        status: "pending",
+      });
+
+      if (error) {
+        if (error.code === "23505") {
+          alert("That theme already exists!");
+        } else {
+          throw error;
+        }
+        return;
+      }
+
+      setNewThemeTitle("");
+      setNewThemeDesc("");
+      setShowThemeForm(false);
+      loadTrendingThemes();
+    } catch (err) {
+      console.error("Failed to submit theme:", err);
+      alert("Could not submit theme. Please try again.");
+    } finally {
+      setSubmittingTheme(false);
+    }
+  };
+
+  // ==========================================
+  // VOTE ON THEME
+  // ==========================================
+
+  const handleVoteTheme = async (themeId: string, vote: "up" | "down") => {
+    if (!user || !profileId || votingThemeId) return;
+
+    setVotingThemeId(themeId);
+    try {
+      // Check for existing vote
+      const existing = trendingThemes.find((t) => t.id === themeId);
+      const currentVote = existing?.user_vote;
+
+      if (currentVote === vote) {
+        // Remove vote (toggle off)
+        const { error } = await supabase
+          .from("theme_votes")
+          .delete()
+          .eq("theme_id", themeId)
+          .eq("user_id", profileId);
+
+        if (error) throw error;
+      } else if (currentVote) {
+        // Change vote
+        const { error } = await supabase
+          .from("theme_votes")
+          .update({ vote })
+          .eq("theme_id", themeId)
+          .eq("user_id", profileId);
+
+        if (error) throw error;
+      } else {
+        // New vote
+        const { error } = await supabase.from("theme_votes").insert({
+          theme_id: themeId,
+          user_id: profileId,
+          vote,
+        });
+
+        if (error) throw error;
+      }
+
+      loadTrendingThemes();
+    } catch (err) {
+      console.error("Vote failed:", err);
+    } finally {
+      setVotingThemeId(null);
+    }
+  };
+
+  // ==========================================
+  // LOAD CHALLENGE ENTRIES
+  // ==========================================
 
   const loadChallengeEntries = async (challenge: Challenge) => {
     setSelectedChallenge(challenge);
@@ -222,7 +405,6 @@ export default function ChallengesPage() {
 
       if (!entriesData) return;
 
-      // Fetch votes for entries
       const entryIds = entriesData.map((e) => e.id);
       const { data: votesData } = await supabase
         .from("challenge_votes")
@@ -243,7 +425,6 @@ export default function ChallengesPage() {
         skip_count: voteMap[e.id]?.skip || 0,
       }));
 
-      // Sort by drip count
       enriched.sort((a, b) => b.drip_count - a.drip_count);
 
       setSelectedChallenge((prev) =>
@@ -253,6 +434,10 @@ export default function ChallengesPage() {
       console.error("Failed to load entries:", err);
     }
   };
+
+  // ==========================================
+  // VOTE ON ENTRY
+  // ==========================================
 
   const handleVoteEntry = async (entryId: string, vote: "drip" | "skip") => {
     if (!user || entryLoading) return;
@@ -270,7 +455,6 @@ export default function ChallengesPage() {
 
       if (error && error.code !== "23505") throw error;
 
-      // Update local state
       setSelectedChallenge((prev) => {
         if (!prev) return prev;
         return {
@@ -292,6 +476,10 @@ export default function ChallengesPage() {
     }
   };
 
+  // ==========================================
+  // HELPERS
+  // ==========================================
+
   const getTimeLeft = (endsAt: string) => {
     const diff = new Date(endsAt).getTime() - Date.now();
     if (diff <= 0) return "Ended";
@@ -307,6 +495,10 @@ export default function ChallengesPage() {
     const prof = Array.isArray(p) ? p[0] : p;
     return prof || { id: "", username: "anon", display_name: "Anonymous", avatar_url: null };
   };
+
+  // ==========================================
+  // LOADING STATE
+  // ==========================================
 
   if (loading) {
     return (
@@ -328,7 +520,10 @@ export default function ChallengesPage() {
     );
   }
 
+  // ==========================================
   // ENTRY DETAIL VIEW
+  // ==========================================
+
   if (selectedChallenge) {
     return (
       <main className="min-h-screen bg-bg text-text-p pb-28">
@@ -376,7 +571,6 @@ export default function ChallengesPage() {
             <div className="space-y-4">
               {selectedChallenge.entries.map((entry, index) => {
                 const profile = getProfile(entry.post);
-                const totalVotes = entry.drip_count + entry.skip_count;
                 return (
                   <div
                     key={entry.id}
@@ -460,7 +654,10 @@ export default function ChallengesPage() {
     );
   }
 
+  // ==========================================
   // CHALLENGE LIST VIEW
+  // ==========================================
+
   return (
     <main className="min-h-screen bg-bg text-text-p pb-28">
       {/* HEADER */}
@@ -486,6 +683,152 @@ export default function ChallengesPage() {
           </p>
         </section>
 
+        {/* ==========================================
+            TRENDING THEMES SECTION
+            ========================================== */}
+
+        <section className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <TrendingUp size={18} className="text-cyan-400" />
+              <h2 className="text-base font-bold font-display">Trending Themes</h2>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowThemeForm(!showThemeForm)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-btn text-btn-text transition-all active:scale-95"
+            >
+              {showThemeForm ? <X size={14} /> : <Lightbulb size={14} />}
+              <span>{showThemeForm ? "Cancel" : "Suggest"}</span>
+            </button>
+          </div>
+
+          {/* SUGGEST THEME FORM */}
+          {showThemeForm && (
+            <div className="rounded-2xl border border-border-s bg-bg-raised p-4 mb-4">
+              <p className="text-xs text-text-t mb-3">
+                Suggest a theme for the next challenge. Top-voted themes get featured!
+              </p>
+              <input
+                type="text"
+                value={newThemeTitle}
+                onChange={(e) => setNewThemeTitle(e.target.value.slice(0, 60))}
+                placeholder="Theme title (e.g. Neon Nights)"
+                maxLength={60}
+                className="w-full px-3 py-2.5 rounded-xl bg-bg-sunken border border-border-s text-sm text-text-p placeholder:text-text-m outline-none focus:border-purple-500/50 transition-colors mb-2"
+              />
+              <textarea
+                value={newThemeDesc}
+                onChange={(e) => setNewThemeDesc(e.target.value.slice(0, 200))}
+                placeholder="Description (optional)"
+                rows={2}
+                maxLength={200}
+                className="w-full px-3 py-2.5 rounded-xl bg-bg-sunken border border-border-s text-sm text-text-p placeholder:text-text-m outline-none focus:border-purple-500/50 transition-colors resize-none mb-3"
+              />
+              <button
+                type="button"
+                onClick={handleSubmitTheme}
+                disabled={!newThemeTitle.trim() || submittingTheme}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-btn text-btn-text text-sm font-bold transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {submittingTheme ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Send size={14} />
+                )}
+                <span>{submittingTheme ? "Submitting..." : "Submit Theme"}</span>
+              </button>
+            </div>
+          )}
+
+          {/* THEMES LIST */}
+          {themesLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 size={20} className="animate-spin text-text-t" />
+            </div>
+          ) : trendingThemes.length === 0 ? (
+            <div className="rounded-2xl border border-border-s bg-bg-raised p-6 text-center">
+              <Lightbulb size={24} className="mx-auto text-text-m mb-3" />
+              <p className="text-sm text-text-t">
+                No themes yet. Be the first to suggest one!
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {trendingThemes.map((theme) => (
+                <div
+                  key={theme.id}
+                  className="flex items-center gap-3 rounded-2xl border border-border-s bg-bg-raised p-3"
+                >
+                  {/* VOTE BUTTONS */}
+                  <div className="flex flex-col items-center gap-0.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleVoteTheme(theme.id, "up")}
+                      disabled={votingThemeId === theme.id}
+                      className={`p-1 rounded-lg transition-all ${
+                        theme.user_vote === "up"
+                          ? "text-cyan-400 bg-cyan-400/10"
+                          : "text-text-m hover:text-cyan-400 hover:bg-cyan-400/10"
+                      }`}
+                    >
+                      <ArrowBigUp size={20} strokeWidth={theme.user_vote === "up" ? 2.5 : 1.5} />
+                    </button>
+                    <span className={`text-xs font-bold tabular-nums ${
+                      theme.score > 0 ? "text-cyan-400" : theme.score < 0 ? "text-rose-400" : "text-text-m"
+                    }`}>
+                      {theme.score}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleVoteTheme(theme.id, "down")}
+                      disabled={votingThemeId === theme.id}
+                      className={`p-1 rounded-lg transition-all ${
+                        theme.user_vote === "down"
+                          ? "text-rose-400 bg-rose-400/10"
+                          : "text-text-m hover:text-rose-400 hover:bg-rose-400/10"
+                      }`}
+                    >
+                      <ArrowBigDown size={20} strokeWidth={theme.user_vote === "down" ? 2.5 : 1.5} />
+                    </button>
+                  </div>
+
+                  {/* THEME INFO */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold font-display truncate">{theme.title}</p>
+                    {theme.description && (
+                      <p className="text-xs text-text-t mt-0.5 line-clamp-1">{theme.description}</p>
+                    )}
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <img
+                        src={theme.avatar_url || "/default-avatar.png"}
+                        alt=""
+                        className="w-4 h-4 rounded-full object-cover"
+                      />
+                      <span className="text-[10px] text-text-m">@{theme.username}</span>
+                      <span className="text-[10px] text-text-m">·</span>
+                      <span className="text-[10px] text-text-m">
+                        {theme.upvotes + theme.downvotes} vote{(theme.upvotes + theme.downvotes) !== 1 ? "s" : ""}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* STATUS BADGE */}
+                  {theme.status === "approved" && (
+                    <span className="shrink-0 px-2 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-900/40 text-[10px] font-bold text-emerald-400">
+                      APPROVED
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* ==========================================
+            CHALLENGES SECTION
+            ========================================== */}
+
         {/* TABS */}
         <div className="flex items-center gap-1 mb-6 bg-bg-raised border border-border-s rounded-xl p-1">
           {(["active", "completed"] as const).map((tab) => (
@@ -510,12 +853,13 @@ export default function ChallengesPage() {
             <Trophy size={32} className="mx-auto text-text-m mb-4" />
             <h3 className="font-semibold font-display">No challenges yet</h3>
             <p className="text-sm text-text-t mt-2">
-              Challenges will appear here when created by the community.
+              Vote on trending themes above to help pick the next challenge!
             </p>
           </div>
         ) : (
           <div className="space-y-4">
-            {challenges.map((challenge) => {                  const isActive = challenge.status === "active";
+            {challenges.map((challenge) => {
+              const isActive = challenge.status === "active";
 
               return (
                 <button
@@ -569,7 +913,7 @@ export default function ChallengesPage() {
               Challenges database tables not set up yet. Running in demo mode.
             </p>
             <p className="text-[10px] text-text-m mt-1">
-              Run the SQL migration in supabase/migrations/create_competitions_tables.sql to enable real challenges.
+              Run the SQL migrations in supabase/migrations/ to enable real challenges and themes.
             </p>
           </div>
         )}
