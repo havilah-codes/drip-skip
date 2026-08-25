@@ -259,16 +259,20 @@ function BattleCard({
           </div>
         )}
 
-        <button
-          type="button"
+        <div
+          role="button"
+          tabIndex={0}
           onClick={() => !countdown.expired && onVote(battle.id, side)}
-          disabled={!!battle.userVote || isVotingThis || countdown.expired || isLocked}
+          onKeyDown={(e) => {
+            if ((e.key === "Enter" || e.key === " ") && !countdown.expired)
+              onVote(battle.id, side);
+          }}
           className={`w-full text-left transition-all active:scale-[0.98] ${
             isWinner
               ? "ring-2 ring-amber-500"
               : isLoser
               ? "opacity-40"
-              : "hover:bg-bg-sunken/30"
+              : "hover:bg-bg-sunken/30 cursor-pointer"
           }`}
         >
           <div className="p-3">
@@ -316,7 +320,7 @@ function BattleCard({
               <p className="text-xs text-text-s line-clamp-2">{post.text}</p>
             )}
           </div>
-        </button>
+        </div>
 
         {/* Vote bar */}
         <div className="px-3 pb-3">
