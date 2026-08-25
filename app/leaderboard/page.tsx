@@ -314,7 +314,7 @@ export default function LeaderboardPage() {
         {entries.length >= 3 && (
           <div className="flex items-end justify-center gap-3 mb-8 px-4">
             {/* #2 — Silver */}
-            <div className="flex-1 max-w-[120px] text-center">
+            <div className="w-[115px] text-center">
               <img
                 src={entries[1].avatar_url || "/default-avatar.png"}
                 alt=""
@@ -330,7 +330,7 @@ export default function LeaderboardPage() {
             </div>
 
             {/* #1 — Gold */}
-            <div className="flex-1 max-w-[130px] text-center">
+            <div className="w-[130px] text-center">
               <img
                 src={entries[0].avatar_url || "/default-avatar.png"}
                 alt=""
@@ -346,7 +346,7 @@ export default function LeaderboardPage() {
             </div>
 
             {/* #3 — Bronze */}
-            <div className="flex-1 max-w-[120px] text-center">
+            <div className="w-[115px] text-center">
               <img
                 src={entries[2].avatar_url || "/default-avatar.png"}
                 alt=""
