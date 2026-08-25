@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { syncProfile } from "@/lib/syncProfile";
 import BottomNav from "@/components/BottomNav";
+import CreatePostFAB from "@/components/CreatePostFAB";
 import { FeedSkeleton } from "@/components/skeletons/SkeletonPulse";
 import NotificationPrompt from "@/components/NotificationPrompt";
 import PostCard from "@/components/PostCard";
@@ -626,6 +627,7 @@ export default function FeedPage() {
         <div className="max-w-2xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
           <FeedSkeleton count={3} />
         </div>
+        <CreatePostFAB />
         <BottomNav />
       </main>
     );
@@ -1032,6 +1034,7 @@ export default function FeedPage() {
         </div>
       )}
 
+      <CreatePostFAB />
       <BottomNav />
     </main>
   );

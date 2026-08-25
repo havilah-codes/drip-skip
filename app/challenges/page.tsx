@@ -446,7 +446,7 @@ export default function ChallengesPage() {
                 Be the first to submit a fit to this challenge!
               </p>
               <Link
-                href="/feed"
+                href="/create-post"
                 className="inline-flex mt-4 px-5 py-2.5 rounded-xl bg-btn text-btn-text text-sm font-bold active:scale-95 transition-all"
               >
                 Create a post
