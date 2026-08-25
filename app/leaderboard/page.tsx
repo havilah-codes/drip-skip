@@ -336,8 +336,8 @@ export default function LeaderboardPage() {
                 alt=""
                 className="w-20 h-20 rounded-full object-cover mx-auto border-[4px] border-yellow-300 mb-2 shadow-lg shadow-yellow-400/30"
               />
-              <p className="text-sm font-bold text-white truncate">{entries[0].display_name}</p>
-              <p className="text-[10px] text-white/60 mb-2">@{entries[0].username}</p>
+              <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{entries[0].display_name}</p>
+              <p className="text-[10px] text-gray-900/60 dark:text-white/60 mb-2">@{entries[0].username}</p>
               <div className="rounded-t-xl bg-gradient-to-b from-yellow-400 to-yellow-600 pt-4 pb-2 px-2">
                 <Crown size={22} className="mx-auto text-white mb-1" />
                 <p className="text-xl font-black text-white">#1</p>
