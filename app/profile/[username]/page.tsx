@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, UserCheck, UserPlus } from "lucide-react";
+import { ArrowLeft, UserCheck, UserPlus, Share2 } from "lucide-react";
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { getOrCreateChat } from "@/lib/chat";
 
@@ -12,6 +12,8 @@ import { supabase } from "@/lib/supabase";
 import { syncProfile } from "@/lib/syncProfile";
 import PostCard, { type Post } from "@/components/PostCard";
 import { ProfileSkeleton } from "@/components/skeletons/SkeletonPulse";
+import AvatarViewer from "@/components/AvatarViewer";
+import ProfileShareSheet from "@/components/ProfileShareSheet";
 
 type Profile = {
   id: string;
@@ -40,6 +42,8 @@ export default function PublicProfilePage() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [messageLoading, setMessageLoading] = useState(false);
+  const [avatarViewerOpen, setAvatarViewerOpen] = useState(false);
+  const [shareSheetOpen, setShareSheetOpen] = useState(false);
 
 
   const [loading, setLoading] = useState(true);
@@ -441,12 +445,19 @@ export default function PublicProfilePage() {
           {/* PROFILE INFO & ACTIONS */}
           <div className="px-5 pb-5">
             <div className="-mt-12 flex items-end justify-between">
-              <img
-                src={avatarSrc}
-                alt={profile.display_name}
-                onError={() => setAvatarError(true)}
-                className="w-24 h-24 rounded-full object-cover border-4 border-black bg-bg-sunken"
-              />
+              <button
+                type="button"
+                onClick={() => setAvatarViewerOpen(true)}
+                className="shrink-0 focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-transparent rounded-full"
+                aria-label="View profile picture"
+              >
+                <img
+                  src={avatarSrc}
+                  alt={profile.display_name}
+                  onError={() => setAvatarError(true)}
+                  className="w-24 h-24 rounded-full object-cover border-4 border-black bg-bg-sunken"
+                />
+              </button>
 
               {/* ACTION BUTTON */}
               {isSelf ? (
@@ -458,6 +469,16 @@ export default function PublicProfilePage() {
                 </Link>
               ) : (
                 <div className="flex items-center gap-2">
+                    {/* SHARE */}
+                    <button
+                      type="button"
+                      onClick={() => setShareSheetOpen(true)}
+                      className="w-10 h-10 rounded-xl border border-border-d flex items-center justify-center text-text-p hover:bg-bg-sunken active:scale-95 transition-all"
+                      aria-label="Share profile"
+                    >
+                      <Share2 size={18} />
+                    </button>
+
                     {/* MESSAGE */}
                     <button
                       type="button"
@@ -549,6 +570,25 @@ export default function PublicProfilePage() {
         </section>
 
       </div>
+
+      {/* AVATAR VIEWER */}
+      <AvatarViewer
+        src={avatarSrc}
+        alt={profile.display_name}
+        isOpen={avatarViewerOpen}
+        onClose={() => setAvatarViewerOpen(false)}
+        username={profile.username}
+      />
+
+      {/* PROFILE SHARE SHEET */}
+      <ProfileShareSheet
+        username={profile.username}
+        displayName={profile.display_name}
+        avatarUrl={profile.avatar_url}
+        currentProfileId={currentProfileId}
+        isOpen={shareSheetOpen}
+        onClose={() => setShareSheetOpen(false)}
+      />
     </main>
   );
 }
