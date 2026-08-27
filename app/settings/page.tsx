@@ -19,7 +19,9 @@ import {
   Eye,
   EyeOff,
   Shield,
+  Palette,
 } from "lucide-react";
+import { GRADIENT_PRESETS, generateRandomGradient } from "@/components/ProfileCard";
 
 import {
   onAuthStateChanged,
@@ -57,6 +59,8 @@ export default function SettingsPage() {
 
   // Appearance
   const [theme, setTheme] = useState<Theme>("dark");
+  const [cardGradient, setCardGradient] = useState<string>("");
+  const [profileId, setProfileId] = useState<string | null>(null);
 
   // Delete account
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -73,7 +77,11 @@ export default function SettingsPage() {
         return;
       }
       setUser(currentUser);
-      await syncProfile(currentUser);
+      const profile = await syncProfile(currentUser);
+      if (profile?.id) {
+        setProfileId(profile.id);
+        setCardGradient(profile.card_gradient || generateRandomGradient(profile.id));
+      }
       setLoading(false);
     });
     return () => unsubscribe();
@@ -441,6 +449,64 @@ export default function SettingsPage() {
                     >
                       <Icon size={18} />
                       {option.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ==================================== */}
+        {/* CARD GRADIENT */}
+        {/* ==================================== */}
+
+        <section>
+          <h2 className="text-xs font-semibold text-text-t uppercase tracking-wider mb-3 px-1">
+            Card Gradient
+          </h2>
+
+          <div className="rounded-2xl border border-border-s bg-bg-raised overflow-hidden">
+            <div className="p-4">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-9 h-9 rounded-xl bg-bg-sunken flex items-center justify-center shrink-0">
+                  <Palette size={17} className="text-text-s" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Profile card color</p>
+                  <p className="text-xs text-text-t">Choose the gradient that appears when people find you on Explore</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-4 gap-2 ml-12">
+                {GRADIENT_PRESETS.map((preset) => {
+                  const active = cardGradient === preset.id;
+                  return (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={async () => {
+                        setCardGradient(preset.id);
+                        if (profileId) {
+                          await supabase
+                            .from("profiles")
+                            .update({ card_gradient: preset.id })
+                            .eq("id", profileId);
+                        }
+                      }}
+                      className={`
+                        relative h-10 rounded-xl bg-gradient-to-r ${preset.classes} border-2 transition-all
+                        ${active
+                          ? "border-white scale-105 shadow-lg"
+                          : "border-transparent hover:border-white/30 hover:scale-105"
+                        }
+                      `}
+                    >
+                      {active && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Check size={14} className="text-white drop-shadow-md" strokeWidth={3} />
+                        </div>
+                      )}
                     </button>
                   );
                 })}
