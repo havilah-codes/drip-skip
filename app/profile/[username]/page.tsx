@@ -303,6 +303,15 @@ export default function PublicProfilePage() {
           (prev) => prev + 1
         );
 
+        // Notify followed user (fire-and-forget)
+        try {
+          const { socket, connectSocket } = await import("@/lib/socket");
+          if (!socket.connected) await connectSocket();
+          socket.emit("user_followed", {
+            followed_user_id: profile.id,
+          });
+        } catch { /* ignore */ }
+
         console.log("✅ FOLLOW SUCCESS");
       }
     } catch (error) {

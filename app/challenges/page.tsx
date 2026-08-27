@@ -362,6 +362,18 @@ export default function ChallengesPage() {
         if (error) throw error;
       }
 
+      // Notify theme owner on new or changed votes (fire-and-forget)
+      if (existing && existing.user_id !== profileId) {
+        try {
+          const { socket, connectSocket } = await import("@/lib/socket");
+          if (!socket.connected) await connectSocket();
+          socket.emit("theme_vote_cast", {
+            theme_owner_id: existing.user_id,
+            vote_type: vote,
+          });
+        } catch { /* ignore */ }
+      }
+
       loadTrendingThemes();
     } catch (err) {
       console.error("Vote failed:", err);

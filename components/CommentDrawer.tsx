@@ -4,6 +4,7 @@ import { useState, useEffect, type FormEvent } from 'react';
 import Link from 'next/link';
 import { MessageCircle, Send, X, Loader2, Trash2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { socket, connectSocket } from '@/lib/socket';
 
 interface Comment {
   id: string;
@@ -19,6 +20,7 @@ interface Comment {
 
 interface CommentDrawerProps {
   postId: string;
+  postOwnerId?: string;
   currentProfileId: string | null;
   isOpen: boolean;
   onClose: () => void;
@@ -27,6 +29,7 @@ interface CommentDrawerProps {
 
 export default function CommentDrawer({
   postId,
+  postOwnerId,
   currentProfileId,
   isOpen,
   onClose,
@@ -138,6 +141,17 @@ export default function CommentDrawer({
       }
       setNewComment('');
       if (onCommentAdded) onCommentAdded();
+
+      // Notify post owner (fire-and-forget)
+      if (postOwnerId && postOwnerId !== currentProfileId) {
+        try {
+          if (!socket.connected) await connectSocket();
+          socket.emit('comment_added', {
+            post_owner_id: postOwnerId,
+            comment_text: textToInsert,
+          });
+        } catch { /* ignore */ }
+      }
     } catch (err) {
       console.error('Error posting comment:', err);
       alert('Could not post comment.');

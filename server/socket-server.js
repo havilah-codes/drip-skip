@@ -737,6 +737,103 @@ io.on("connection", (socket) => {
   );
 
   // ====================================================
+  // FOLLOW — send push to followed user if offline
+  // ====================================================
+
+  socket.on(
+    "user_followed",
+    async (payload) => {
+      try {
+        const { followed_user_id } = payload || {};
+
+        if (!followed_user_id) return;
+        if (followed_user_id === profileId) return;
+
+        const followerName = await getProfileDisplayName(profileId);
+
+        const online = isProfileOnline(followed_user_id);
+        if (online) return;
+
+        sendPushToProfile(followed_user_id, {
+          title: followerName || "Someone",
+          body: "started following you",
+          data: { type: "follow" },
+        }).catch((err) => {
+          console.error(`❌ FOLLOW PUSH FAILED for profile ${followed_user_id}:`, err.message || err);
+        });
+      } catch (err) {
+        console.error("❌ USER_FOLLOWED ERROR:", err.message || err);
+      }
+    }
+  );
+
+  // ====================================================
+  // COMMENT — send push to post owner if offline
+  // ====================================================
+
+  socket.on(
+    "comment_added",
+    async (payload) => {
+      try {
+        const { post_owner_id, comment_text } = payload || {};
+
+        if (!post_owner_id) return;
+        if (post_owner_id === profileId) return;
+
+        const commenterName = await getProfileDisplayName(profileId);
+        const preview = comment_text
+          ? (comment_text.length > 80 ? comment_text.slice(0, 80) + "…" : comment_text)
+          : "";
+
+        const online = isProfileOnline(post_owner_id);
+        if (online) return;
+
+        sendPushToProfile(post_owner_id, {
+          title: commenterName || "Someone",
+          body: preview ? `commented: ${preview}` : "commented on your fit",
+          data: { type: "comment" },
+        }).catch((err) => {
+          console.error(`❌ COMMENT PUSH FAILED for profile ${post_owner_id}:`, err.message || err);
+        });
+      } catch (err) {
+        console.error("❌ COMMENT_ADDED ERROR:", err.message || err);
+      }
+    }
+  );
+
+  // ====================================================
+  // THEME VOTE — send push to theme owner if offline
+  // ====================================================
+
+  socket.on(
+    "theme_vote_cast",
+    async (payload) => {
+      try {
+        const { theme_owner_id, vote_type } = payload || {};
+
+        if (!theme_owner_id) return;
+        if (theme_owner_id === profileId) return;
+
+        const voterName = await getProfileDisplayName(profileId);
+        const voteLabel = vote_type === "up" ? "upvoted" : "downvoted";
+
+        const online = isProfileOnline(theme_owner_id);
+        if (online) return;
+
+        sendPushToProfile(theme_owner_id, {
+          title: voterName || "Someone",
+          body: `${voteLabel} your challenge theme`,
+          data: { type: "theme_vote" },
+        }).catch((err) => {
+          console.error(`❌ THEME VOTE PUSH FAILED for profile ${theme_owner_id}:`, err.message || err);
+        });
+      } catch (err) {
+        console.error("❌ THEME_VOTE_CAST ERROR:", err.message || err);
+      }
+    }
+  );
+
+  // ====================================================
   // DISCONNECT
   // ====================================================
 

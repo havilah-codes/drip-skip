@@ -453,6 +453,7 @@ export default function PostCard({
 
       <CommentDrawer
         postId={post.id}
+        postOwnerId={post.user_id}
         currentProfileId={currentProfileId}
         isOpen={commentsOpen}
         onClose={() => setCommentsOpen(false)}
