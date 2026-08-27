@@ -250,6 +250,21 @@ export default function EditProfilePage() {
           "✅ NEW AVATAR:",
           newAvatarUrl
         );
+
+        // Extract dominant colors from new avatar (fire-and-forget)
+        try {
+          const { extractColorsServer } = await import("@/lib/colors");
+          const colors = await extractColorsServer(newAvatarUrl);
+          if (colors.length > 0) {
+            await supabase
+              .from("profiles")
+              .update({ dominant_colors: JSON.stringify(colors) })
+              .eq("id", profileId);
+            console.log("🎨 EXTRACTED COLORS:", colors);
+          }
+        } catch (err) {
+          console.error("❌ COLOR EXTRACTION FAILED:", err);
+        }
       }
 
       // ==========================================

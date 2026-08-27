@@ -1,9 +1,11 @@
 "use client";
 
+import { useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import { UserPlus, UserCheck, MessageCircle } from "lucide-react";
+import { extractColorsClient, colorsToGradient, isLightColor } from "@/lib/colors";
 
-// All available gradient presets
+// All available gradient presets (fallback when no colors available)
 export const GRADIENT_PRESETS = [
   { id: "violet", label: "Violet", classes: "from-violet-600 via-fuchsia-500 to-cyan-400" },
   { id: "ocean", label: "Ocean", classes: "from-blue-600 via-indigo-500 to-purple-400" },
@@ -21,7 +23,7 @@ export const GRADIENT_PRESETS = [
 
 type GradientId = (typeof GRADIENT_PRESETS)[number]["id"];
 
-function getGradientClasses(id: string | null | undefined): string {
+export function getGradientClasses(id: string | null | undefined): string {
   if (!id) return GRADIENT_PRESETS[0].classes;
   const preset = GRADIENT_PRESETS.find((p) => p.id === id);
   return preset ? preset.classes : GRADIENT_PRESETS[0].classes;
@@ -42,6 +44,7 @@ type Profile = {
   display_name: string;
   avatar_url: string | null;
   card_gradient?: string | null;
+  dominant_colors?: string | null; // JSON array of hex strings
   bio?: string | null;
 };
 
@@ -61,14 +64,81 @@ export default function ProfileCard({
   onFollow,
 }: ProfileCardProps) {
   const avatar = profile.avatar_url || "/default-avatar.png";
-  const gradientId = profile.card_gradient || generateRandomGradient(profile.id);
-  const gradient = getGradientClasses(gradientId);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const [extractedColors, setExtractedColors] = useState<string[]>([]);
+  const [colorMode, setColorMode] = useState<"loading" | "extracted" | "failed">("loading");
+
+  // Parse stored colors from DB
+  let storedColors: string[] = [];
+  try {
+    if (profile.dominant_colors) {
+      storedColors = JSON.parse(profile.dominant_colors);
+    }
+  } catch {
+    // ignore parse error
+  }
+
+  // Determine if we have colors from DB
+  const hasStoredColors = storedColors.length > 0;
+
+  // ColorThief fallback: extract colors from avatar when no stored colors
+  const handleImageLoad = useCallback(() => {
+    if (hasStoredColors) {
+      // Already have stored colors, no need to extract
+      setColorMode("extracted");
+      return;
+    }
+
+    const img = imgRef.current;
+    if (!img) return;
+
+    try {
+      const colors = extractColorsClient(img);
+      if (colors.length > 0) {
+        setExtractedColors(colors);
+        setColorMode("extracted");
+      } else {
+        setColorMode("failed");
+      }
+    } catch {
+      setColorMode("failed");
+    }
+  }, [hasStoredColors]);
+
+  // Determine final colors: stored > extracted > fallback preset
+  const finalColors = hasStoredColors ? storedColors : extractedColors;
+  const useGradientImage = finalColors.length >= 2;
+  const gradientStyle = useGradientImage ? {
+    background: colorsToGradient(finalColors),
+    color: isLightColor(finalColors[0]) ? "#000000" : "#ffffff",
+  } : undefined;
+
+  // Fallback gradient class
+  const fallbackGradient = getGradientClasses(
+    profile.card_gradient || generateRandomGradient(profile.id)
+  );
 
   return (
     <div className="relative rounded-2xl overflow-hidden bg-bg-raised border border-border-s">
       {/* GRADIENT BACKGROUND */}
-      <div className={`absolute inset-0 bg-gradient-to-r ${gradient}`} />
+      {useGradientImage ? (
+        <div className="absolute inset-0" style={gradientStyle} />
+      ) : (
+        <div className={`absolute inset-0 bg-gradient-to-r ${fallbackGradient}`} />
+      )}
       <div className="absolute inset-0 bg-black/10" />
+
+      {/* HIDDEN IMG FOR COLORTHIEF */}
+      {!hasStoredColors && (
+        <img
+          ref={imgRef}
+          src={avatar}
+          crossOrigin="anonymous"
+          onLoad={handleImageLoad}
+          className="hidden"
+          alt=""
+        />
+      )}
 
       {/* CONTENT — horizontal layout */}
       <div className="relative flex items-center gap-3 p-3 pr-3">
