@@ -2,11 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import sharp from "sharp";
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 /**
  * POST /api/migrate-colors
  * One-time endpoint: extracts dominant colors for all profiles with avatars
@@ -14,6 +9,11 @@ const supabaseAdmin = createClient(
  */
 export async function POST(req: NextRequest) {
   try {
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
     // Find profiles with avatars but no stored colors
     const { data: profiles, error } = await supabaseAdmin
       .from("profiles")
