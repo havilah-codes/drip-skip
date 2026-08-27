@@ -4,7 +4,7 @@ import { useState, useEffect, type FormEvent } from 'react';
 import Link from 'next/link';
 import { MessageCircle, Send, X, Loader2, Trash2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { socket, connectSocket } from '@/lib/socket';
+import { sendNotification } from '@/lib/notifications';
 
 interface Comment {
   id: string;
@@ -144,13 +144,12 @@ export default function CommentDrawer({
 
       // Notify post owner (fire-and-forget)
       if (postOwnerId && postOwnerId !== currentProfileId) {
-        try {
-          if (!socket.connected) await connectSocket();
-          socket.emit('comment_added', {
-            post_owner_id: postOwnerId,
-            comment_text: textToInsert,
-          });
-        } catch { /* ignore */ }
+        sendNotification({
+          recipientId: postOwnerId,
+          type: 'comment',
+          postId,
+          text: textToInsert,
+        });
       }
     } catch (err) {
       console.error('Error posting comment:', err);

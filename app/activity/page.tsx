@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Flame, SkipForward, UserPlus, Loader2, Bell } from 'lucide-react';
+import { Flame, SkipForward, UserPlus, Loader2, Bell, MessageCircle, ThumbsUp } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { firebaseAuth as auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -12,7 +12,7 @@ import BottomNav from '@/components/BottomNav';
 
 interface ActivityItem {
   id: string;
-  type: 'follow' | 'drip' | 'skip';
+  type: 'follow' | 'drip' | 'skip' | 'comment' | 'theme_vote';
   createdAt: string;
   actor: {
     username: string;
@@ -21,6 +21,7 @@ interface ActivityItem {
   };
   postId?: string;
   postText?: string;
+  themeId?: string;
 }
 
 export default function ActivityPage() {
@@ -41,99 +42,65 @@ export default function ActivityPage() {
 
         const profileId = currentProfile.id;
 
-        // 1. Fetch Follows targeting current user
-        const { data: followsData, error: followsErr } = await supabase
-          .from('follows')
-          .select('id, follower_id, created_at')
-          .eq('following_id', profileId);
+        // Fetch notifications from the notifications table
+        const { data: notificationsData, error: notifErr } = await supabase
+          .from('notifications')
+          .select('id, type, actor_id, post_id, theme_id, text, created_at')
+          .eq('user_id', profileId)
+          .order('created_at', { ascending: false })
+          .limit(50);
 
-        if (followsErr) console.error('Follows fetch error:', followsErr);
+        if (notifErr) console.error('Notifications fetch error:', notifErr);
 
-        // 2. Fetch User's Posts
-        const { data: myPosts, error: postsErr } = await supabase
-          .from('posts')
-          .select('id, text')
-          .eq('user_id', profileId);
-
-        if (postsErr) console.error('Posts fetch error:', postsErr);
-
-        let votesData: any[] = [];
-        const postMap = new Map((myPosts || []).map((p) => [p.id, p.text]));
-
-        if (myPosts && myPosts.length > 0) {
-          const postIds = myPosts.map((p) => p.id);
-
-          // Fetch Votes on user's posts
-          const { data: vData, error: votesErr } = await supabase
-            .from('votes')
-            .select('id, user_id, fit_id, vote, created_at')
-            .in('fit_id', postIds)
-            .neq('user_id', profileId);
-
-          if (votesErr) console.error('Votes fetch error:', votesErr);
-          if (vData) votesData = vData;
-        }
-
-        // 3. Collect all user IDs that acted on current user
+        // Fetch actor profiles in bulk
         const actorIds = Array.from(
-          new Set([
-            ...(followsData || []).map((f) => f.follower_id),
-            ...votesData.map((v) => v.user_id),
-          ])
+          new Set((notificationsData || []).map((n) => n.actor_id).filter(Boolean))
         );
 
-        // 4. Fetch actor profiles in bulk
         let profileMap = new Map<string, any>();
         if (actorIds.length > 0) {
-          const { data: actorProfiles, error: profilesErr } = await supabase
+          const { data: actorProfiles } = await supabase
             .from('profiles')
             .select('id, username, display_name, avatar_url')
             .in('id', actorIds);
-
-          if (profilesErr) console.error('Profiles fetch error:', profilesErr);
 
           if (actorProfiles) {
             actorProfiles.forEach((p) => profileMap.set(p.id, p));
           }
         }
 
-        // 5. Construct activity objects
-        const followActivities: ActivityItem[] = (followsData || []).map((f) => {
-          const actor = profileMap.get(f.follower_id) || {};
-          return {
-            id: `follow-${f.id}`,
-            type: 'follow',
-            createdAt: f.created_at,
-            actor: {
-              username: actor.username || 'someone',
-              displayName: actor.display_name || 'Someone',
-              avatarUrl: actor.avatar_url,
-            },
-          };
-        });
-
-        const voteActivities: ActivityItem[] = votesData.map((v) => {
-          const actor = profileMap.get(v.user_id) || {};
-          return {
-            id: `vote-${v.id}`,
-            type: v.vote?.toLowerCase() === 'drip' ? 'drip' : 'skip',
-            createdAt: v.created_at,
-            actor: {
-              username: actor.username || 'someone',
-              displayName: actor.display_name || 'Someone',
-              avatarUrl: actor.avatar_url,
-            },
-            postId: v.fit_id,
-            postText: postMap.get(v.fit_id) || '',
-          };
-        });
-
-        // Combine and sort (newest first)
-        const combined = [...followActivities, ...voteActivities].sort(
-          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        // Fetch post texts for comment notifications
+        const postIds = Array.from(
+          new Set((notificationsData || []).map((n) => n.post_id).filter(Boolean))
         );
+        let postMap = new Map<string, string>();
+        if (postIds.length > 0) {
+          const { data: posts } = await supabase
+            .from('posts')
+            .select('id, text')
+            .in('id', postIds);
+          if (posts) posts.forEach((p) => postMap.set(p.id, p.text || ''));
+        }
 
-        setActivities(combined);
+        // Construct activity objects
+        const activities: ActivityItem[] = (notificationsData || []).map((n) => {
+          const actor = profileMap.get(n.actor_id) || {};
+          return {
+            id: n.id,
+            type: n.type,
+            createdAt: n.created_at,
+            actor: {
+              username: actor.username || 'someone',
+              displayName: actor.display_name || 'Someone',
+              avatarUrl: actor.avatar_url,
+            },
+            postId: n.post_id || undefined,
+            postText: n.post_id ? (postMap.get(n.post_id) || n.text || '') : undefined,
+            themeId: n.theme_id || undefined,
+          };
+        });
+
+        setActivities(activities);
       } catch (err) {
         console.error('Error fetching activity:', err);
       } finally {
@@ -208,6 +175,12 @@ export default function ActivityPage() {
                     {item.type === 'follow' && (
                       <UserPlus className="w-3.5 h-3.5 text-blue-400" />
                     )}
+                    {item.type === 'comment' && (
+                      <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                    )}
+                    {item.type === 'theme_vote' && (
+                      <ThumbsUp className="w-3.5 h-3.5 text-purple-400" />
+                    )}
                   </div>
                 </div>
 
@@ -220,6 +193,8 @@ export default function ActivityPage() {
                     {item.type === 'drip' && 'dripped your post 🔥'}
                     {item.type === 'skip' && 'skipped your post ⏭️'}
                     {item.type === 'follow' && 'started following you'}
+                    {item.type === 'comment' && 'commented on your post'}
+                    {item.type === 'theme_vote' && 'voted on your challenge theme'}
                   </p>
                   {item.postText && (
                     <p className="text-xs text-neutral-500 truncate mt-1 italic">
