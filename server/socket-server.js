@@ -705,6 +705,38 @@ io.on("connection", (socket) => {
   );
 
   // ====================================================
+  // VOTE CAST — send push to post owner if offline
+  // ====================================================
+
+  socket.on(
+    "vote_cast",
+    async (payload) => {
+      try {
+        const { post_owner_id, vote_type } = payload || {};
+
+        if (!post_owner_id || !vote_type) return;
+        if (post_owner_id === profileId) return; // don't notify yourself
+
+        const voterName = await getProfileDisplayName(profileId);
+        const voteLabel = vote_type === "drip" ? "🔥 dripped" : "⏭️ skipped";
+
+        const online = isProfileOnline(post_owner_id);
+        if (online) return; // user is in-app, no push needed
+
+        sendPushToProfile(post_owner_id, {
+          title: voterName || "Someone",
+          body: `${voteLabel} your fit`,
+          data: { type: "vote", vote_type },
+        }).catch((err) => {
+          console.error(`❌ VOTE PUSH FAILED for profile ${post_owner_id}:`, err.message || err);
+        });
+      } catch (err) {
+        console.error("❌ VOTE_CAST ERROR:", err.message || err);
+      }
+    }
+  );
+
+  // ====================================================
   // DISCONNECT
   // ====================================================
 

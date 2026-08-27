@@ -20,6 +20,7 @@ import HashtagText from "@/components/HashtagText";
 import { supabase } from "@/lib/supabase";
 import { syncProfile } from "@/lib/syncProfile";
 import { firebaseAuth } from "@/lib/firebase";
+import { socket, connectSocket } from "@/lib/socket";
 
 type Profile = {
   id: string;
@@ -248,6 +249,15 @@ export default function PostCard({
 
         throw error;
       }
+
+      // Notify post owner (fire-and-forget)
+      try {
+        if (!socket.connected) await connectSocket();
+        socket.emit("vote_cast", {
+          post_owner_id: post.user_id,
+          vote_type: voteType,
+        });
+      } catch { /* ignore */ }
     } catch (error) {
       console.error("❌ VOTE FAILED:", error);
       alert("Could not save your vote. Please try again.");
