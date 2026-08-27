@@ -7,7 +7,7 @@ import { onAuthStateChanged, type User } from "firebase/auth";
 import { firebaseAuth } from "@/lib/firebase";
 import { supabase } from "@/lib/supabase";
 import { syncProfile } from "@/lib/syncProfile";
-import UserCard from "@/components/UserCard";
+import ProfileCard from "@/components/ProfileCard";
 import BottomNav from "@/components/BottomNav";
 import { ExploreSkeleton } from "@/components/skeletons/SkeletonPulse";
 import Link from "next/link";
@@ -529,9 +529,9 @@ export default function ExplorePage() {
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {profiles.map((profile) => (
-              <UserCard
+              <ProfileCard
                 key={profile.id}
                 profile={profile}
                 isFollowing={following.has(

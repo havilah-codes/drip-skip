@@ -104,18 +104,30 @@ export function ChatListSkeleton({ count = 6 }: { count?: number }) {
 
 export function UserCardSkeleton({ count = 4 }: { count?: number }) {
   return (
-    <div className="space-y-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className="flex items-center gap-3 p-3 rounded-2xl border border-border-s bg-bg-raised"
+          className="rounded-3xl border border-border-s bg-bg-raised overflow-hidden"
         >
-          <Bone className="w-12 h-12 shrink-0" rounded />
-          <div className="flex-1 space-y-2">
-            <Bone className="h-3.5 w-36" />
-            <Bone className="h-3 w-24" />
+          <Bone className="h-28 w-full" />
+          <div className="px-5 pb-5">
+            <div className="-mt-10 mb-3 flex items-end gap-3.5">
+              <Bone className="w-20 h-20 rounded-2xl shrink-0" />
+              <Bone className="h-9 w-24 rounded-xl mb-1" />
+            </div>
+            <Bone className="h-4 w-32 mb-1" />
+            <Bone className="h-3 w-24 mb-3" />
+            <div className="flex gap-1 mb-4">
+              <Bone className="flex-1 h-14 rounded-xl" />
+              <Bone className="flex-1 h-14 rounded-xl" />
+              <Bone className="flex-1 h-14 rounded-xl" />
+            </div>
+            <div className="flex gap-2">
+              <Bone className="flex-1 h-10 rounded-xl" />
+              <Bone className="flex-1 h-10 rounded-xl" />
+            </div>
           </div>
-          <Bone className="h-9 w-20 rounded-xl" />
         </div>
       ))}
     </div>
