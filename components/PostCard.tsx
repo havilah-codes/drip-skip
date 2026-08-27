@@ -21,6 +21,7 @@ import { supabase } from "@/lib/supabase";
 import { syncProfile } from "@/lib/syncProfile";
 import { firebaseAuth } from "@/lib/firebase";
 import { sendNotification } from "@/lib/notifications";
+import { squircleClipPath } from "@/lib/squircle";
 
 type Profile = {
   id: string;
@@ -269,7 +270,7 @@ export default function PostCard({
 
 
   return (
-    <article className="rounded-2xl border border-border-s bg-bg-raised overflow-hidden">
+    <article className="squircle border border-border-s bg-bg-raised overflow-hidden">
       {isRepost && (
         <div className="flex items-center gap-2 px-4 py-2 border-b border-border-s/50">
           <Repeat2 size={14} className="text-green-500" />
@@ -282,7 +283,7 @@ export default function PostCard({
             src={avatar}
             alt={displayName}
             onError={() => setAvatarError(true)}
-            className="w-10 h-10 rounded-full object-cover border border-border-d shrink-0"
+            className="w-10 h-10 object-cover border border-border-d shrink-0 squircle-avatar"
           />
         </Link>
 
@@ -299,7 +300,7 @@ export default function PostCard({
 
         <button
           type="button"
-          className="w-8 h-8 flex items-center justify-center rounded-full text-text-t hover:text-text-p hover:bg-bg-sunken transition-colors"
+          className="w-8 h-8 flex items-center justify-center squircle-avatar text-text-t hover:text-text-p hover:bg-bg-sunken transition-colors"
           aria-label="More options"
         >
           <MoreHorizontal size={18} />
@@ -341,7 +342,7 @@ export default function PostCard({
             onClick={() => handleVote("drip")}
             disabled={voting || !!userVote}
             className={`
-              relative flex items-center justify-center gap-2 min-h-14 rounded-2xl border transition-all active:scale-[0.97]
+              relative flex items-center justify-center gap-2 min-h-14 squircle border transition-all active:scale-[0.97]
               ${
                 userVote === "drip"
                   ? "border-cyan-500 bg-transparent text-cyan-600 dark:text-cyan-300"
@@ -377,7 +378,7 @@ export default function PostCard({
             onClick={() => handleVote("skip")}
             disabled={voting || !!userVote}
             className={`
-              relative flex items-center justify-center gap-2 min-h-14 rounded-2xl border transition-all active:scale-[0.97]
+              relative flex items-center justify-center gap-2 min-h-14 squircle border transition-all active:scale-[0.97]
               ${
                 userVote === "skip"
                   ? "border-rose-500 bg-transparent text-rose-600 dark:text-rose-300"
@@ -414,7 +415,7 @@ export default function PostCard({
         <button
           type="button"
           onClick={() => setCommentsOpen(true)}
-          className="flex items-center gap-2 px-3 py-2 rounded-xl text-text-s hover:text-text-p hover:bg-bg-sunken active:scale-95 transition-all"
+          className="flex items-center gap-2 px-3 py-2 squircle text-text-s hover:text-text-p hover:bg-bg-sunken active:scale-95 transition-all"
         >
           <MessageCircle size={17} />
           <span className="text-xs font-medium">
@@ -427,7 +428,7 @@ export default function PostCard({
         <button
           type="button"
           onClick={handleRepost}
-          className={`flex items-center gap-2 px-3 py-2 rounded-xl active:scale-95 transition-all ${
+          className={`flex items-center gap-2 px-3 py-2 squircle active:scale-95 transition-all ${
             userReposted
               ? "text-green-400 hover:text-green-300 hover:bg-green-400/10"
               : "text-text-t hover:text-text-p hover:bg-bg-sunken"
@@ -443,7 +444,7 @@ export default function PostCard({
         <button
           type="button"
           onClick={() => setShareOpen(true)}
-          className="flex items-center gap-2 px-3 py-2 rounded-xl text-text-t hover:text-text-p hover:bg-bg-sunken active:scale-95 transition-all"
+          className="flex items-center gap-2 px-3 py-2 squircle text-text-t hover:text-text-p hover:bg-bg-sunken active:scale-95 transition-all"
           aria-label="Share"
         >
           <Share2 size={17} />
