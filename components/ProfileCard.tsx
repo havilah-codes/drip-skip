@@ -1,10 +1,9 @@
 "use client";
 
-import { useRef, useState, useCallback, useEffect } from "react";
+import { useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import { UserPlus, UserCheck, MessageCircle } from "lucide-react";
 import { extractColorsClient, colorsToGradient, isLightColor } from "@/lib/colors";
-import { squircleClipPath } from "@/lib/squircle";
 
 // All available gradient presets (fallback when no colors available)
 export const GRADIENT_PRESETS = [
@@ -66,8 +65,7 @@ export default function ProfileCard({
 }: ProfileCardProps) {
   const avatar = profile.avatar_url || "/default-avatar.png";
   const imgRef = useRef<HTMLImageElement>(null);
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [cardDimensions, setCardDimensions] = useState<{w: number; h: number}>({w: 500, h: 120});
+
   const [extractedColors, setExtractedColors] = useState<string[]>([]);
   const [colorMode, setColorMode] = useState<"loading" | "extracted" | "failed">("loading");
 
@@ -121,24 +119,8 @@ export default function ProfileCard({
     profile.card_gradient || generateRandomGradient(profile.id)
   );
 
-  // Measure card for dynamic squircle
-  useEffect(() => {
-    const el = cardRef.current;
-    if (!el) return;
-    const observer = new ResizeObserver(([entry]) => {
-      const { width, height } = entry.contentRect;
-      if (width > 0 && height > 0) {
-        setCardDimensions({ w: Math.round(width), h: Math.round(height) });
-      }
-    });
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  const squircle = squircleClipPath(cardDimensions.w, cardDimensions.h);
-
   return (
-    <div ref={cardRef} className="relative overflow-hidden bg-bg-raised" style={{ clipPath: squircle }}>
+    <div className="relative rounded-2xl overflow-hidden bg-bg-raised border border-border-s">
       {/* GRADIENT BACKGROUND */}
       {useGradientImage ? (
         <div className="absolute inset-0" style={gradientStyle} />
@@ -167,8 +149,7 @@ export default function ProfileCard({
           <img
             src={avatar}
             alt={profile.display_name}
-            className="w-16 h-16 object-cover border-2 border-white/20 shadow-lg"
-            style={{ clipPath: squircleClipPath(64, 64) }}
+            className="w-16 h-16 rounded-xl object-cover border-2 border-white/20 shadow-lg"
           />
         </Link>
 
@@ -197,12 +178,11 @@ export default function ProfileCard({
               type="button"
               onClick={onFollow}
               disabled={loading}
-              className={`flex items-center justify-center gap-1 px-3 py-2 text-xs font-bold transition-all active:scale-95 disabled:opacity-50 ${
+              className={`flex items-center justify-center gap-1 px-3 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 disabled:opacity-50 ${
                 isFollowing
                   ? "bg-white/15 text-white hover:bg-white/25 backdrop-blur-sm"
                   : "bg-white text-gray-900 hover:bg-white/90"
-              }`}
-              style={{ clipPath: squircleClipPath(80, 36) }}
+              }`              }
             >
               {isFollowing ? (
                 <UserCheck size={14} />
@@ -214,8 +194,7 @@ export default function ProfileCard({
           {!isCurrentUser && (
             <Link
               href={`/messages/new?user=${profile.username}`}
-              className="flex items-center justify-center w-9 h-9 bg-white/15 text-white hover:bg-white/25 backdrop-blur-sm transition-colors"
-              style={{ clipPath: squircleClipPath(36, 36) }}
+              className="flex items-center justify-center w-9 h-9 rounded-xl bg-white/15 text-white hover:bg-white/25 backdrop-blur-sm transition-colors"
             >
               <MessageCircle size={15} />
             </Link>

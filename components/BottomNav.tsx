@@ -52,7 +52,7 @@ export default function BottomNav() {
         z-50
         w-[calc(100%-2.5rem)]
         max-w-[380px]
-        squircle
+        rounded-full
         border
         border-white/15
         bg-bg/40
@@ -91,7 +91,7 @@ export default function BottomNav() {
                   className="
                     w-20
                     h-12
-                    squircle
+                    rounded-full
                     bg-btn
                     text-btn-text
                     flex
@@ -124,7 +124,7 @@ export default function BottomNav() {
                 gap-[3px]
                 w-12
                 h-12
-                squircle-avatar
+                rounded-full
                 transition-all
                 duration-200
                 ease-out
@@ -142,7 +142,7 @@ export default function BottomNav() {
                   className="
                     absolute
                     inset-0
-                    squircle-avatar
+                    rounded-full
                     bg-white/10
                     border
                     border-white/10
