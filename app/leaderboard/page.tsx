@@ -350,7 +350,7 @@ export default function LeaderboardPage() {
               <img
                 src={entries[2].avatar_url || "/default-avatar.png"}
                 alt=""
-                className="w-16 h-16 rounded-full object-cover mx-auto border-[3px] border-amber-700 mb-2"
+                className="w-16 h-14 rounded-full object-cover mx-auto border-[3px] border-amber-700 mb-2"
               />
               <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">{entries[2].display_name}</p>
               <p className="text-[10px] text-gray-900 dark:text-white mb-2">@{entries[2].username}</p>
