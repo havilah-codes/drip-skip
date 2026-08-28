@@ -19,6 +19,7 @@ import { compressImage } from "@/lib/imageCompression";
 import { compressVideo } from "@/lib/videoCompression";
 import { savePostTags } from "@/lib/tags";
 import { sendNotification } from "@/lib/notifications";
+import MentionAutocomplete from "@/components/MentionAutocomplete";
 
 import {
   onAuthStateChanged,
@@ -69,6 +70,13 @@ export default function CreatePostPage() {
 
   const [text, setText] = useState("");
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
+
+  // Autocomplete state
+  const [autocompleteOpen, setAutocompleteOpen] = useState(false);
+  const [autocompleteQuery, setAutocompleteQuery] = useState("");
+  const [autocompleteType, setAutocompleteType] = useState<"mention" | "hashtag" | null>(null);
+  const [autocompleteStartPos, setAutocompleteStartPos] = useState(0);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
   const [videoThumbnail, setVideoThumbnail] = useState<string | null>(null);
   const [posting, setPosting] = useState(false);
@@ -260,6 +268,91 @@ export default function CreatePostPage() {
   };
 
   // ==========================================
+  // AUTOCOMPLETE
+  // ==========================================
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value.slice(0, MAX_CAPTION_LENGTH);
+    setText(newValue);
+
+    // Detect if user is typing a mention or hashtag
+    const cursorPos = e.target.selectionStart;
+    const textBeforeCursor = newValue.slice(0, cursorPos);
+
+    // Find the last @ or # that wasn't followed by a space before the cursor
+    const lastAtIndex = textBeforeCursor.lastIndexOf("@");
+    const lastHashIndex = textBeforeCursor.lastIndexOf("#");
+
+    let triggerIndex = -1;
+    let triggerType: "mention" | "hashtag" | null = null;
+
+    if (lastAtIndex > lastHashIndex) {
+      triggerIndex = lastAtIndex;
+      triggerType = "mention";
+    } else if (lastHashIndex > lastAtIndex) {
+      triggerIndex = lastHashIndex;
+      triggerType = "hashtag";
+    }
+
+    if (triggerIndex >= 0 && triggerType) {
+      const textAfterTrigger = textBeforeCursor.slice(triggerIndex + 1);
+
+      // Check if there's a space after the trigger (means user finished the tag)
+      if (!textAfterTrigger.includes(" ") && textAfterTrigger.length <= 30) {
+        setAutocompleteQuery(textAfterTrigger);
+        setAutocompleteType(triggerType);
+        setAutocompleteStartPos(triggerIndex);
+        setAutocompleteOpen(true);
+        return;
+      }
+    }
+
+    // No trigger found, close autocomplete
+    setAutocompleteOpen(false);
+  };
+
+  const handleAutocompleteSelect = (suggestion: { id: string; name: string; type: "mention" | "hashtag" }) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const cursorPos = textarea.selectionStart;
+    const textBeforeCursor = text.slice(0, cursorPos);
+    const textAfterCursor = text.slice(cursorPos);
+
+    // Find the trigger position
+    const lastAtIndex = textBeforeCursor.lastIndexOf("@");
+    const lastHashIndex = textBeforeCursor.lastIndexOf("#");
+    const triggerIndex = Math.max(lastAtIndex, lastHashIndex);
+
+    if (triggerIndex < 0) return;
+
+    // Replace from trigger to cursor with the selected suggestion
+    const prefix = text.slice(0, triggerIndex);
+    const suffix = textAfterCursor;
+    const newValue = `${prefix}@${suggestion.name} ${suffix}`;
+
+    setText(newValue);
+    setAutocompleteOpen(false);
+
+    // Focus and set cursor position
+    setTimeout(() => {
+      const newPos = triggerIndex + suggestion.name.length + 2;
+      textarea.focus();
+      textarea.setSelectionRange(newPos, newPos);
+    }, 0);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Let autocomplete handle keyboard events when open
+    if (autocompleteOpen) {
+      if (["ArrowDown", "ArrowUp", "Enter", "Tab", "Escape"].includes(e.key)) {
+        // These are handled by MentionAutocomplete
+        return;
+      }
+    }
+  };
+
+  // ==========================================
   // FILE HANDLERS
   // ==========================================
 
@@ -433,15 +526,26 @@ export default function CreatePostPage() {
       {/* FORM */}
       <form id="create-post-form" onSubmit={handleSubmit} className="max-w-2xl mx-auto px-4 pt-4">
         {/* TEXT INPUT */}
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value.slice(0, MAX_CAPTION_LENGTH))}
-          placeholder="What's on your mind?"
-          rows={4}
-          disabled={posting}
-          autoFocus
-          className="w-full resize-none bg-transparent outline-none text-base text-text-p placeholder:text-text-m disabled:opacity-50"
-        />
+        <div className="relative">
+          <textarea
+            ref={textareaRef}
+            value={text}
+            onChange={handleTextChange}
+            onKeyDown={handleKeyDown}
+            placeholder="What's on your mind?"
+            rows={4}
+            disabled={posting}
+            autoFocus
+            className="w-full resize-none bg-transparent outline-none text-base text-text-p placeholder:text-text-m disabled:opacity-50"
+          />
+          <MentionAutocomplete
+            query={autocompleteQuery}
+            type={autocompleteType}
+            isOpen={autocompleteOpen}
+            onSelect={handleAutocompleteSelect}
+            onClose={() => setAutocompleteOpen(false)}
+          />
+        </div>
 
         <div className="text-right text-xs text-text-m mb-4">
           {text.length}/{MAX_CAPTION_LENGTH}
