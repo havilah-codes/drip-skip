@@ -10,6 +10,8 @@ import {
   Share2,
   Check,
   Repeat2,
+  Bookmark,
+  BookmarkCheck,
 } from "lucide-react";
 import { onAuthStateChanged } from "firebase/auth";
 
@@ -70,6 +72,7 @@ export default function PostCard({
   const [shareOpen, setShareOpen] = useState(false);
   const [repostCount, setRepostCount] = useState(0);
   const [userReposted, setUserReposted] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
 
   const profile = Array.isArray(post.profiles)
     ? post.profiles[0]
@@ -148,6 +151,19 @@ export default function PostCard({
             );
           }
         }
+
+        // Load saved status
+        if (resolvedProfileId) {
+          const { data: savedData } = await supabase
+            .from("saved_posts")
+            .select("id")
+            .eq("user_id", resolvedProfileId)
+            .eq("post_id", post.id)
+            .maybeSingle();
+          if (isMounted && savedData) {
+            setIsSaved(true);
+          }
+        }
       } catch (error) {
         console.error("❌ UNEXPECTED VOTE LOAD ERROR:", error);
       }
@@ -205,6 +221,47 @@ export default function PostCard({
       // Revert optimistic update
       setUserReposted(!userReposted);
       setRepostCount((prev) => (userReposted ? prev + 1 : Math.max(0, prev - 1)));
+    }
+  };
+
+  const handleSave = async () => {
+    const firebaseUser = firebaseAuth.currentUser;
+    if (!firebaseUser) {
+      alert("Please log in to save posts.");
+      return;
+    }
+
+    const saveProfileId = currentProfileId;
+    if (!saveProfileId) return;
+
+    try {
+      if (isSaved) {
+        // Unsave
+        setIsSaved(false);
+        const { error } = await supabase
+          .from("saved_posts")
+          .delete()
+          .eq("user_id", saveProfileId)
+          .eq("post_id", post.id);
+        if (error) throw error;
+      } else {
+        // Save
+        setIsSaved(true);
+        const { error } = await supabase.from("saved_posts").insert({
+          user_id: saveProfileId,
+          post_id: post.id,
+        });
+        if (error) {
+          if (error.code === "23505") {
+            // Already saved
+            return;
+          }
+          throw error;
+        }
+      }
+    } catch (error) {
+      console.error("❌ SAVE FAILED:", error);
+      setIsSaved(!isSaved);
     }
   };
 
@@ -438,6 +495,24 @@ export default function PostCard({
           <span className="text-xs font-medium">
             {repostCount > 0 ? repostCount : "Repost"}
           </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={handleSave}
+          className={`flex items-center gap-2 px-3 py-2 rounded-xl active:scale-95 transition-all ${
+            isSaved
+              ? "text-amber-400 hover:text-amber-300 hover:bg-amber-400/10"
+              : "text-text-t hover:text-text-p hover:bg-bg-sunken"
+          }`}
+          aria-label={isSaved ? "Unsave" : "Save"}
+        >
+          {isSaved ? (
+            <BookmarkCheck size={17} className="fill-amber-400" />
+          ) : (
+            <Bookmark size={17} />
+          )}
+          <span className="text-xs font-medium">{isSaved ? "Saved" : "Save"}</span>
         </button>
 
         <button

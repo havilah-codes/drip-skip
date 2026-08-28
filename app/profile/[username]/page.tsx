@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, UserCheck, UserPlus, Share2 } from "lucide-react";
+import { ArrowLeft, UserCheck, UserPlus, Share2, Bookmark } from "lucide-react";
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { getOrCreateChat } from "@/lib/chat";
 
@@ -461,12 +461,21 @@ export default function PublicProfilePage() {
 
               {/* ACTION BUTTON */}
               {isSelf ? (
-                <Link
-                  href="/profile/edit"
-                  className="px-5 py-2.5 rounded-xl border border-border-d text-text-p text-sm font-bold hover:bg-bg-sunken transition-colors"
-                >
-                  Edit Profile
-                </Link>
+                <div className="flex items-center gap-2">
+                  <Link
+                    href="/saved"
+                    className="w-10 h-10 rounded-xl border border-border-d flex items-center justify-center text-text-p hover:bg-bg-sunken transition-colors"
+                    aria-label="Saved posts"
+                  >
+                    <Bookmark size={18} />
+                  </Link>
+                  <Link
+                    href="/profile/edit"
+                    className="px-5 py-2.5 rounded-xl border border-border-d text-text-p text-sm font-bold hover:bg-bg-sunken transition-colors"
+                  >
+                    Edit Profile
+                  </Link>
+                </div>
               ) : (
                 <div className="flex items-center gap-2">
                     {/* SHARE */}
