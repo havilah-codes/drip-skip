@@ -802,6 +802,37 @@ io.on("connection", (socket) => {
   );
 
   // ====================================================
+  // USER TAGGED — send push to tagged user if offline
+  // ====================================================
+
+  socket.on(
+    "user_tagged",
+    async (payload) => {
+      try {
+        const { tagged_user_id, post_id } = payload || {};
+
+        if (!tagged_user_id || !post_id) return;
+        if (tagged_user_id === profileId) return;
+
+        const taggerName = await getProfileDisplayName(profileId);
+
+        const online = isProfileOnline(tagged_user_id);
+        if (online) return;
+
+        sendPushToProfile(tagged_user_id, {
+          title: taggerName || "Someone",
+          body: "mentioned you in a post",
+          data: { type: "tag", post_id },
+        }).catch((err) => {
+          console.error(`❌ TAG PUSH FAILED for profile ${tagged_user_id}:`, err.message || err);
+        });
+      } catch (err) {
+        console.error("❌ USER_TAGGED ERROR:", err.message || err);
+      }
+    }
+  );
+
+  // ====================================================
   // THEME VOTE — send push to theme owner if offline
   // ====================================================
 

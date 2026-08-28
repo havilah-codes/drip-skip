@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Flame, SkipForward, UserPlus, Loader2, Bell, MessageCircle, ThumbsUp } from 'lucide-react';
+import { Flame, SkipForward, UserPlus, Loader2, Bell, MessageCircle, ThumbsUp, AtSign } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { firebaseAuth as auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -12,7 +12,7 @@ import BottomNav from '@/components/BottomNav';
 
 interface ActivityItem {
   id: string;
-  type: 'follow' | 'drip' | 'skip' | 'comment' | 'theme_vote';
+  type: 'follow' | 'drip' | 'skip' | 'comment' | 'theme_vote' | 'tag';
   createdAt: string;
   actor: {
     username: string;
@@ -181,6 +181,9 @@ export default function ActivityPage() {
                     {item.type === 'theme_vote' && (
                       <ThumbsUp className="w-3.5 h-3.5 text-purple-400" />
                     )}
+                    {item.type === 'tag' && (
+                      <AtSign className="w-3.5 h-3.5 text-cyan-400" />
+                    )}
                   </div>
                 </div>
 
@@ -195,6 +198,7 @@ export default function ActivityPage() {
                     {item.type === 'follow' && 'started following you'}
                     {item.type === 'comment' && 'commented on your post'}
                     {item.type === 'theme_vote' && 'voted on your challenge theme'}
+                    {item.type === 'tag' && 'mentioned you in a post'}
                   </p>
                   {item.postText && (
                     <p className="text-xs text-neutral-500 truncate mt-1 italic">

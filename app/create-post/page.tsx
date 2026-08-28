@@ -17,6 +17,8 @@ import { linkHashtagsToPost } from "@/lib/hashtags";
 import { extractVideoFrame } from "@/lib/videoThumbnail";
 import { compressImage } from "@/lib/imageCompression";
 import { compressVideo } from "@/lib/videoCompression";
+import { savePostTags } from "@/lib/tags";
+import { sendNotification } from "@/lib/notifications";
 
 import {
   onAuthStateChanged,
@@ -359,6 +361,19 @@ export default function CreatePostPage() {
       if (newPost && text.trim()) {
         linkHashtagsToPost(newPost.id, text.trim()).catch((err) =>
           console.error("HASHTAG LINKING FAILED:", err)
+        );
+
+        // Save tags and notify tagged users
+        savePostTags(newPost.id, text.trim(), profileId).then((taggedIds) => {
+          taggedIds.forEach((taggedId) => {
+            sendNotification({
+              recipientId: taggedId,
+              type: "tag",
+              postId: newPost.id,
+            });
+          });
+        }).catch((err) =>
+          console.error("TAG SAVE FAILED:", err)
         );
       }
 

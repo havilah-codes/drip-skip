@@ -1,7 +1,7 @@
 import { supabase } from "./supabase";
 import { socket, connectSocket } from "./socket";
 
-type NotificationType = "drip" | "skip" | "follow" | "comment" | "theme_vote";
+type NotificationType = "drip" | "skip" | "follow" | "comment" | "theme_vote" | "tag";
 
 interface NotifyOptions {
   recipientId: string;
@@ -50,6 +50,7 @@ export async function sendNotification({
       follow: "user_followed",
       comment: "comment_added",
       theme_vote: "theme_vote_cast",
+      tag: "user_tagged",
     };
 
     const event = eventMap[type];
@@ -69,6 +70,9 @@ export async function sendNotification({
     } else if (type === "theme_vote") {
       payload.theme_owner_id = recipientId;
       payload.vote_type = text || "up";
+    } else if (type === "tag") {
+      payload.tagged_user_id = recipientId;
+      payload.post_id = postId || "";
     }
 
     socket.emit(event, payload);

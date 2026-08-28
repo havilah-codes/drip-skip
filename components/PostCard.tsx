@@ -19,6 +19,7 @@ import CommentDrawer from "@/components/CommentDrawer";
 import ShareSheet from "@/components/ShareSheet";
 import VideoPlayer from "@/components/VideoPlayer";
 import HashtagText from "@/components/HashtagText";
+import RichText from "@/components/RichText";
 import { supabase } from "@/lib/supabase";
 import { syncProfile } from "@/lib/syncProfile";
 import { firebaseAuth } from "@/lib/firebase";
@@ -366,7 +367,7 @@ export default function PostCard({
       {post.text && (
         <div className="px-4 pb-4">
           <p className="text-sm sm:text-[15px] leading-6 text-text-p whitespace-pre-wrap break-words">
-            <HashtagText text={post.text} />
+            <RichText text={post.text} />
           </p>
         </div>
       )}
