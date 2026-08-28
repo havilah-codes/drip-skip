@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Settings, Grid3X3 } from "lucide-react";
+import { ArrowLeft, Settings, Grid3X3, Bookmark } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
 
 import { onAuthStateChanged, type User } from "firebase/auth";
@@ -213,6 +213,15 @@ export default function ProfilePage() {
           className="mt-5 w-full h-11 rounded-xl border border-border-d flex items-center justify-center text-sm font-semibold hover:bg-bg-sunken transition-colors"
         >
           Edit Profile
+        </Link>
+
+        {/* SAVED POSTS */}
+        <Link
+          href="/saved"
+          className="mt-3 w-full h-11 rounded-xl border border-border-s bg-bg-raised flex items-center justify-center gap-2 text-sm font-semibold hover:bg-bg-hover transition-colors"
+        >
+          <Bookmark size={16} className="text-amber-400" />
+          Saved Posts
         </Link>
       </section>
 
