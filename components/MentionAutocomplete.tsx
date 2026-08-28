@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { Hash, AtSign, TrendingUp } from "lucide-react";
@@ -19,7 +19,48 @@ type MentionAutocompleteProps = {
   isOpen: boolean;
   onSelect: (suggestion: Suggestion) => void;
   onClose: () => void;
+  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
 };
+
+// Get cursor position in a textarea
+function getCaretCoordinates(textarea: HTMLTextAreaElement) {
+  const { selectionStart } = textarea;
+  const text = textarea.value.substring(0, selectionStart);
+  
+  // Create a mirror div to measure
+  const mirror = document.createElement("div");
+  const style = getComputedStyle(textarea);
+  
+  // Copy textarea styles
+  mirror.style.position = "absolute";
+  mirror.style.visibility = "hidden";
+  mirror.style.whiteSpace = "pre-wrap";
+  mirror.style.wordWrap = "break-word";
+  mirror.style.width = style.width;
+  mirror.style.fontSize = style.fontSize;
+  mirror.style.fontFamily = style.fontFamily;
+  mirror.style.padding = style.padding;
+  mirror.style.lineHeight = style.lineHeight;
+  mirror.style.border = style.border;
+  mirror.style.letterSpacing = style.letterSpacing;
+  
+  // Add text up to cursor
+  mirror.textContent = text;
+  
+  // Add a span at the end to mark cursor position
+  const span = document.createElement("span");
+  span.textContent = "|";
+  mirror.appendChild(span);
+  
+  document.body.appendChild(mirror);
+  const coordinates = {
+    top: span.offsetTop - textarea.scrollTop,
+    left: span.offsetLeft,
+  };
+  document.body.removeChild(mirror);
+  
+  return coordinates;
+}
 
 export default function MentionAutocomplete({
   query,
@@ -27,11 +68,38 @@ export default function MentionAutocomplete({
   isOpen,
   onSelect,
   onClose,
+  textareaRef,
 }: MentionAutocompleteProps) {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [cursorPos, setCursorPos] = useState({ top: 0, left: 0 });
   const listRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Update cursor position when query changes
+  useEffect(() => {
+    if (textareaRef?.current && isOpen) {
+      const coords = getCaretCoordinates(textareaRef.current);
+      setCursorPos(coords);
+    }
+  }, [query, isOpen, textareaRef]);
+
+  // Also update on textarea scroll
+  useEffect(() => {
+    const textarea = textareaRef?.current;
+    if (!textarea) return;
+
+    const handleScroll = () => {
+      if (isOpen) {
+        const coords = getCaretCoordinates(textarea);
+        setCursorPos(coords);
+      }
+    };
+
+    textarea.addEventListener("scroll", handleScroll);
+    return () => textarea.removeEventListener("scroll", handleScroll);
+  }, [isOpen, textareaRef]);
 
   // Fetch suggestions based on query and type
   useEffect(() => {
@@ -177,10 +245,21 @@ export default function MentionAutocomplete({
 
   if (!isOpen || suggestions.length === 0) return null;
 
+  const textareaRect = textareaRef?.current?.getBoundingClientRect();
+  const dropdownTop = textareaRect ? textareaRect.top + cursorPos.top + 24 : 0;
+  const dropdownLeft = textareaRect 
+    ? Math.min(textareaRect.left + cursorPos.left, window.innerWidth - 280)
+    : 0;
+
   return (
     <div
       ref={listRef}
-      className="absolute top-full left-0 right-0 mt-2 bg-bg-raised border border-border-d rounded-2xl overflow-hidden shadow-xl max-h-64 overflow-y-auto z-50"
+      className="fixed bg-bg-raised border border-border-d rounded-2xl overflow-hidden shadow-xl max-h-64 overflow-y-auto z-[100]"
+      style={{
+        top: `${dropdownTop}px`,
+        left: `${dropdownLeft}px`,
+        width: "280px",
+      }}
       role="listbox"
       onKeyDown={handleKeyDown}
     >

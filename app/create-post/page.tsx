@@ -544,6 +544,7 @@ export default function CreatePostPage() {
             isOpen={autocompleteOpen}
             onSelect={handleAutocompleteSelect}
             onClose={() => setAutocompleteOpen(false)}
+            textareaRef={textareaRef}
           />
         </div>
 
