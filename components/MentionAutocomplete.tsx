@@ -44,53 +44,87 @@ export default function MentionAutocomplete({
       setLoading(true);
       try {
         if (type === "mention") {
-          // Search usernames
-          const { data, error } = await supabase
+          // Search usernames AND display names
+          const { data: usernameData, error: usernameError } = await supabase
             .from("profiles")
             .select("id, username, display_name, avatar_url")
-            .ilike("username", `${query}%`)
+            .ilike("username", `%${query}%`)
             .limit(5);
 
-          if (error) throw error;
+          if (usernameError) throw usernameError;
 
-          setSuggestions(
-            (data || []).map((p) => ({
-              id: p.id,
-              name: p.username,
-              subtitle: p.display_name,
-              avatarUrl: p.avatar_url,
-              type: "mention" as const,
-            }))
-          );
+          const seen = new Set<string>();
+          const results: Suggestion[] = [];
+
+          // Add username matches first
+          for (const p of usernameData || []) {
+            if (!seen.has(p.id) && results.length < 5) {
+              seen.add(p.id);
+              results.push({
+                id: p.id,
+                name: p.username,
+                subtitle: p.display_name,
+                avatarUrl: p.avatar_url,
+                type: "mention" as const,
+              });
+            }
+          }
+
+          // If less than 5, also search display_name
+          if (results.length < 5) {
+            const { data: nameData } = await supabase
+              .from("profiles")
+              .select("id, username, display_name, avatar_url")
+              .ilike("display_name", `%${query}%`)
+              .limit(5);
+
+            for (const p of nameData || []) {
+              if (!seen.has(p.id) && results.length < 5) {
+                seen.add(p.id);
+                results.push({
+                  id: p.id,
+                  name: p.username,
+                  subtitle: p.display_name,
+                  avatarUrl: p.avatar_url,
+                  type: "mention" as const,
+                });
+              }
+            }
+          }
+
+          setSuggestions(results);
         } else if (type === "hashtag") {
           // Search hashtags
           const { data, error } = await supabase
             .from("hashtags")
             .select("id, name")
-            .ilike("name", `${query}%`)
+            .ilike("name", `%${query}%`)
             .limit(5);
 
           if (error) throw error;
 
-          setSuggestions(
-            (data || []).map((h) => ({
-              id: h.id,
-              name: h.name,
-              type: "hashtag" as const,
-            }))
-          );
+          const results: Suggestion[] = (data || []).map((h) => ({
+            id: h.id,
+            name: h.name,
+            type: "hashtag" as const,
+          }));
 
-          // If no results, show "create hashtag" option
-          if (data?.length === 0 && query.length > 0) {
-            setSuggestions([
-              {
+          // If less than 5 results, add "create hashtag" option
+          if (results.length < 5 && query.length > 0) {
+            const alreadyExists = results.some(
+              (r) => r.name.toLowerCase() === query.toLowerCase()
+            );
+            if (!alreadyExists) {
+              results.push({
                 id: "create",
                 name: query.toLowerCase(),
                 subtitle: "Create new hashtag",
                 type: "hashtag",
-              },
-            ]);
+              });
+            }
           }
+
+          setSuggestions(results);
         }
       } catch (error) {
         console.error("❌ FETCH SUGGESTIONS ERROR:", error);
