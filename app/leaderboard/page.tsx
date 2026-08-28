@@ -354,10 +354,10 @@ export default function LeaderboardPage() {
               />
               <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">{entries[2].display_name}</p>
               <p className="text-[10px] text-gray-900 dark:text-white mb-2">@{entries[2].username}</p>
-              <div className="rounded-t-xl bg-gradient-to-b from-amber-700 to-amber-900 pt-3 pb-2 px-2">
-                <Award size={18} className="mx-auto text-white mb-1" />
-                <p className="text-lg font-black text-white">#3</p>
-                <p className="text-[11px] text-white font-bold flex items-center gap-1"><Flame size={10} /> {entries[2].drip_count}</p>
+              <div className="rounded-t-xl bg-gradient-to-b from-amber-700 to-amber-900 pt-2 pb-2 px-2">
+                <Award size={16} className="mx-auto text-white mb-1" />
+                <p className="text-base font-black text-white">#3</p>
+                <p className="text-[10px] text-white font-bold flex items-center gap-1"><Flame size={9} /> {entries[2].drip_count}</p>
               </div>
             </div>
           </div>
