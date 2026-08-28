@@ -180,7 +180,7 @@ export default function MentionAutocomplete({
   return (
     <div
       ref={listRef}
-      className="absolute bottom-full left-0 right-0 mb-2 bg-bg-raised border border-border-d rounded-2xl overflow-hidden shadow-xl max-h-64 overflow-y-auto z-50"
+      className="absolute top-full left-0 right-0 mt-2 bg-bg-raised border border-border-d rounded-2xl overflow-hidden shadow-xl max-h-64 overflow-y-auto z-50"
       role="listbox"
       onKeyDown={handleKeyDown}
     >
@@ -249,8 +249,7 @@ export default function MentionAutocomplete({
       )}
 
       {/* Trending section for hashtags when empty query */}
-      {type === "hashtag" && query.length === 0 && !loading && (
-        <div className="p-3 border-t border-border-s">
+      {type === "hashtag" && query.length === 0 && !loading && (          <div className="p-3 border-t border-border-s">
           <div className="flex items-center gap-2 text-xs text-text-m mb-2">
             <TrendingUp size={12} />
             <span>Trending hashtags</span>
