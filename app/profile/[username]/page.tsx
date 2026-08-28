@@ -463,13 +463,6 @@ export default function PublicProfilePage() {
               {isSelf ? (
                 <div className="flex items-center gap-2">
                   <Link
-                    href="/saved"
-                    className="w-10 h-10 rounded-xl border border-border-d flex items-center justify-center text-text-p hover:bg-bg-sunken transition-colors"
-                    aria-label="Saved posts"
-                  >
-                    <Bookmark size={18} />
-                  </Link>
-                  <Link
                     href="/profile/edit"
                     className="px-5 py-2.5 rounded-xl border border-border-d text-text-p text-sm font-bold hover:bg-bg-sunken transition-colors"
                   >
@@ -548,6 +541,23 @@ export default function PublicProfilePage() {
             </div>
           </div>
         </section>
+
+        {/* SAVED POSTS LINK (only on own profile) */}
+        {isSelf && (
+          <Link
+            href="/saved"
+            className="mt-4 flex items-center gap-3 p-4 rounded-2xl border border-border-s bg-bg-raised hover:bg-bg-hover transition-colors"
+          >
+            <div className="w-10 h-10 rounded-xl bg-amber-400/10 flex items-center justify-center">
+              <Bookmark size={20} className="text-amber-400" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold">Saved Posts</p>
+              <p className="text-xs text-text-t">Posts you&apos;ve bookmarked</p>
+            </div>
+            <span className="text-text-t">→</span>
+          </Link>
+        )}
 
         {/* POSTS LIST */}
         <section className="mt-6">
