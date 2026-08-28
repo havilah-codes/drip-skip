@@ -319,9 +319,10 @@ export default function CreatePostPage() {
     const textBeforeCursor = text.slice(0, cursorPos);
     const textAfterCursor = text.slice(cursorPos);
 
-    // Find the trigger position
+    // Find the trigger position and character
     const lastAtIndex = textBeforeCursor.lastIndexOf("@");
     const lastHashIndex = textBeforeCursor.lastIndexOf("#");
+    const triggerChar = lastAtIndex > lastHashIndex ? "@" : "#";
     const triggerIndex = Math.max(lastAtIndex, lastHashIndex);
 
     if (triggerIndex < 0) return;
@@ -329,7 +330,7 @@ export default function CreatePostPage() {
     // Replace from trigger to cursor with the selected suggestion
     const prefix = text.slice(0, triggerIndex);
     const suffix = textAfterCursor;
-    const newValue = `${prefix}@${suggestion.name} ${suffix}`;
+    const newValue = `${prefix}${triggerChar}${suggestion.name} ${suffix}`;
 
     setText(newValue);
     setAutocompleteOpen(false);
