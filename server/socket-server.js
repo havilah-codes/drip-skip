@@ -672,8 +672,7 @@ io.on("connection", (socket) => {
           const online = isProfileOnline(participantId);
           console.log(`📱 PUSH CHECK: profile ${participantId} online=${online}`);
 
-          if (online) continue;
-
+          // Send notification to ALL recipients (online or offline)
           sendPushToProfile(participantId, {
             title: senderName || "New message",
             body: text.length > 120 ? text.slice(0, 120) + "…" : text,
