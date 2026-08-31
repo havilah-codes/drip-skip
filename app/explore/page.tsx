@@ -39,6 +39,11 @@ export default function ExplorePage() {
   const [trending, setTrending] = useState<
     { id: string; name: string; post_count: number }[]
   >([]);
+  const [hashtagSearch, setHashtagSearch] = useState("");
+  const [searchedHashtags, setSearchedHashtags] = useState<
+    { id: string; name: string; post_count: number }[]
+  >([]);
+  const [hashtagSearching, setHashtagSearching] = useState(false);
 
   // ==========================================
   // AUTH
@@ -337,6 +342,53 @@ export default function ExplorePage() {
   }, []);
 
   // ==========================================
+  // SEARCH HASHTAGS
+  // ==========================================
+
+  useEffect(() => {
+    if (!hashtagSearch.trim()) {
+      setSearchedHashtags([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setHashtagSearching(true);
+      try {
+        // Search hashtags
+        const { data: hashtagData } = await supabase
+          .from("hashtags")
+          .select("id, name")
+          .ilike("name", `%${hashtagSearch.trim()}%`)
+          .limit(10);
+
+        if (!hashtagData || hashtagData.length === 0) {
+          setSearchedHashtags([]);
+          return;
+        }
+
+        // Get post counts for each hashtag
+        const results = await Promise.all(
+          hashtagData.map(async (h) => {
+            const { count } = await supabase
+              .from("post_hashtags")
+              .select("id", { count: "exact", head: true })
+              .eq("hashtag_id", h.id);
+            return { id: h.id, name: h.name, post_count: count || 0 };
+          })
+        );
+
+        setSearchedHashtags(results);
+      } catch {
+        setSearchedHashtags([]);
+      } finally {
+        setHashtagSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [hashtagSearch]);
+
+  // ==========================================
   // LOADING
   // ==========================================
 
@@ -469,28 +521,83 @@ export default function ExplorePage() {
         </div>
 
         {/* TRENDING HASHTAGS (when no search) */}
-        {!search.trim() && trending.length > 0 && (
+        {!search.trim() && (
           <div className="mb-6">
-            <h2 className="font-semibold mb-3 font-display">
-              Trending Now
-            </h2>
-            <div className="flex flex-wrap gap-2">
-              {trending.map((tag) => (
-                <Link
-                  key={tag.id}
-                  href={`/hashtag/${tag.name}`}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border-d bg-bg-raised hover:bg-bg-sunken hover:border-zinc-700 transition-colors"
-                >
-                  <Hash size={14} className="text-cyan-400" />
-                  <span className="text-sm font-medium">
-                    {tag.name}
-                  </span>
-                  <span className="text-[10px] text-text-m">
-                    {tag.post_count}
-                  </span>
-                </Link>
-              ))}
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-semibold font-display">
+                {hashtagSearch.trim() ? "Search Results" : "Trending Now"}
+              </h2>
+              {hashtagSearching && (
+                <span className="text-xs text-text-m">Searching...</span>
+              )}
             </div>
+
+            {/* HASHTAG SEARCH BAR */}
+            <div className="relative mb-3">
+              <Hash
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-text-t"
+              />
+              <input
+                type="text"
+                value={hashtagSearch}
+                onChange={(e) => setHashtagSearch(e.target.value)}
+                placeholder="Search hashtags..."
+                className="
+                  w-full
+                  h-10
+                  rounded-xl
+                  border
+                  border-border-d
+                  bg-bg-raised
+                  pl-9
+                  pr-4
+                  text-sm
+                  text-text-p
+                  outline-none
+                  placeholder:text-text-m
+                  focus:border-cyan-500/50
+                  transition-colors
+                "
+              />
+              {hashtagSearch.trim() && (
+                <button
+                  type="button"
+                  onClick={() => setHashtagSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-m hover:text-text-p"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+
+            {/* HASHTAG RESULTS */}
+            {(hashtagSearch.trim() ? searchedHashtags : trending).length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {(hashtagSearch.trim() ? searchedHashtags : trending).map((tag) => (
+                  <Link
+                    key={tag.id}
+                    href={`/hashtag/${tag.name}`}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border-d bg-bg-raised hover:bg-bg-sunken hover:border-zinc-700 transition-colors"
+                  >
+                    <Hash size={14} className="text-cyan-400" />
+                    <span className="text-sm font-medium">
+                      {tag.name}
+                    </span>
+                    <span className="text-[10px] text-text-m">
+                      {tag.post_count}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            ) : hashtagSearch.trim() && !hashtagSearching ? (
+              <div className="rounded-xl border border-border-s bg-bg-raised p-6 text-center">
+                <Hash size={24} className="mx-auto text-text-m mb-2" />
+                <p className="text-sm text-text-t">
+                  No hashtags found. Try a different search.
+                </p>
+              </div>
+            ) : null}
           </div>
         )}
 

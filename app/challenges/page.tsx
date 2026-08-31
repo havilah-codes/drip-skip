@@ -21,6 +21,10 @@ import {
   Lightbulb,
   Send,
   X,
+  Settings,
+  Trash2,
+  Pause,
+  Play,
 } from "lucide-react";
 import { onAuthStateChanged, type User } from "firebase/auth";
 
@@ -62,6 +66,7 @@ type Challenge = {
   status: string;
   starts_at: string;
   ends_at: string;
+  created_by: string | null;
   entry_count: number;
   entries: ChallengeEntry[];
 };
@@ -95,6 +100,7 @@ const MOCK_CHALLENGES: Challenge[] = [
     status: "active",
     starts_at: new Date(Date.now() - 2 * 24 * 3600_000).toISOString(),
     ends_at: new Date(Date.now() + 5 * 24 * 3600_000).toISOString(),
+    created_by: null,
     entry_count: 47,
     entries: [],
   },
@@ -106,6 +112,7 @@ const MOCK_CHALLENGES: Challenge[] = [
     status: "active",
     starts_at: new Date(Date.now() - 1 * 24 * 3600_000).toISOString(),
     ends_at: new Date(Date.now() + 6 * 24 * 3600_000).toISOString(),
+    created_by: null,
     entry_count: 32,
     entries: [],
   },
@@ -117,6 +124,7 @@ const MOCK_CHALLENGES: Challenge[] = [
     status: "completed",
     starts_at: new Date(Date.now() - 14 * 24 * 3600_000).toISOString(),
     ends_at: new Date(Date.now() - 7 * 24 * 3600_000).toISOString(),
+    created_by: null,
     entry_count: 89,
     entries: [],
   },
@@ -144,6 +152,15 @@ export default function ChallengesPage() {
   const [newThemeDesc, setNewThemeDesc] = useState("");
   const [submittingTheme, setSubmittingTheme] = useState(false);
   const [votingThemeId, setVotingThemeId] = useState<string | null>(null);
+
+  // ==========================================
+  // ADMIN STATE
+  // ==========================================
+
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const [adminLoading, setAdminLoading] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
 
   // ==========================================
   // AUTH
@@ -508,6 +525,94 @@ export default function ChallengesPage() {
   };
 
   // ==========================================
+  // ADMIN FUNCTIONS
+  // ==========================================
+
+  const isCreator = selectedChallenge?.created_by === profileId;
+
+  const handleUpdateChallenge = async () => {
+    if (!selectedChallenge || !isCreator || adminLoading) return;
+
+    setAdminLoading(true);
+    try {
+      const { error } = await supabase
+        .from("challenges")
+        .update({
+          title: editTitle.trim() || selectedChallenge.title,
+          description: editDescription.trim() || null,
+        })
+        .eq("id", selectedChallenge.id);
+
+      if (error) throw error;
+
+      setSelectedChallenge((prev) =>
+        prev
+          ? {
+              ...prev,
+              title: editTitle.trim() || prev.title,
+              description: editDescription.trim() || null,
+            }
+          : null
+      );
+
+      setShowAdminPanel(false);
+    } catch (err) {
+      console.error("Failed to update challenge:", err);
+      alert("Could not update challenge.");
+    } finally {
+      setAdminLoading(false);
+    }
+  };
+
+  const handleToggleChallengeStatus = async () => {
+    if (!selectedChallenge || !isCreator || adminLoading) return;
+
+    const newStatus = selectedChallenge.status === "active" ? "completed" : "active";
+    setAdminLoading(true);
+
+    try {
+      const { error } = await supabase
+        .from("challenges")
+        .update({ status: newStatus })
+        .eq("id", selectedChallenge.id);
+
+      if (error) throw error;
+
+      setSelectedChallenge((prev) =>
+        prev ? { ...prev, status: newStatus } : null
+      );
+    } catch (err) {
+      console.error("Failed to toggle status:", err);
+      alert("Could not update status.");
+    } finally {
+      setAdminLoading(false);
+    }
+  };
+
+  const handleDeleteChallenge = async () => {
+    if (!selectedChallenge || !isCreator || adminLoading) return;
+    if (!confirm("Are you sure you want to delete this challenge?")) return;
+
+    setAdminLoading(true);
+    try {
+      const { error } = await supabase
+        .from("challenges")
+        .delete()
+        .eq("id", selectedChallenge.id);
+
+      if (error) throw error;
+
+      setSelectedChallenge(null);
+      loadChallenges();
+    } catch (err) {
+      console.error("Failed to delete challenge:", err);
+      alert("Could not delete challenge.");
+    } finally {
+      setAdminLoading(false);
+    }
+  };
+
+  // ==========================================
   // LOADING STATE
   // ==========================================
 
@@ -576,6 +681,76 @@ export default function ChallengesPage() {
               </div>
             </div>
           </div>
+
+          {/* ADMIN PANEL (only for creators) */}
+          {isCreator && (
+            <div className="mb-6">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAdminPanel(!showAdminPanel);
+                  setEditTitle(selectedChallenge.title);
+                  setEditDescription(selectedChallenge.description || "");
+                }}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-purple-500/30 bg-purple-950/30 text-sm font-semibold text-purple-400 hover:bg-purple-950/50 transition-colors mb-3"
+              >
+                <Settings size={16} />
+                <span>Admin Controls</span>
+              </button>
+
+              {showAdminPanel && (
+                <div className="rounded-2xl border border-purple-500/20 bg-bg-raised p-4">
+                  <h3 className="text-sm font-semibold mb-3">Edit Challenge</h3>
+                  <input
+                    type="text"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    placeholder="Title"
+                    className="w-full px-3 py-2.5 rounded-xl bg-bg-sunken border border-border-s text-sm text-text-p placeholder:text-text-m outline-none focus:border-purple-500/50 transition-colors mb-2"
+                  />
+                  <textarea
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    placeholder="Description"
+                    rows={2}
+                    className="w-full px-3 py-2.5 rounded-xl bg-bg-sunken border border-border-s text-sm text-text-p placeholder:text-text-m outline-none focus:border-purple-500/50 transition-colors resize-none mb-3"
+                  />
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleUpdateChallenge}
+                      disabled={adminLoading}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-btn text-btn-text text-sm font-bold transition-all active:scale-[0.98] disabled:opacity-40"
+                    >
+                      {adminLoading ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                      <span>Save Changes</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleToggleChallengeStatus}
+                      disabled={adminLoading}
+                      className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-[0.98] disabled:opacity-40 ${
+                        selectedChallenge.status === "active"
+                          ? "bg-amber-950/50 border border-amber-700/30 text-amber-400"
+                          : "bg-emerald-950/50 border border-emerald-700/30 text-emerald-400"
+                      }`}
+                    >
+                      {selectedChallenge.status === "active" ? <Pause size={14} /> : <Play size={14} />}
+                      <span>{selectedChallenge.status === "active" ? "End" : "Reactivate"}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDeleteChallenge}
+                      disabled={adminLoading}
+                      className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-red-950/50 border border-red-700/30 text-red-400 text-sm font-bold transition-all active:scale-[0.98] disabled:opacity-40"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* ENTRIES */}
           {selectedChallenge.entries && selectedChallenge.entries.length > 0 ? (
