@@ -171,8 +171,11 @@ export default function PublicLeaderboardPage() {
           };
         });
 
+        // Filter to only entries with at least 5 drips
+        const qualifiedEntries = allEntries.filter((e) => e.drip_count >= 5);
+
         // Sort by drip count, then ratio, then post count
-        allEntries.sort(
+        qualifiedEntries.sort(
           (a, b) =>
             b.drip_count - a.drip_count ||
             b.drip_ratio - a.drip_ratio ||
@@ -180,7 +183,7 @@ export default function PublicLeaderboardPage() {
         );
 
         // Assign ranks
-        allEntries.forEach((entry, i) => (entry.rank = i + 1));
+        qualifiedEntries.forEach((entry, i) => (entry.rank = i + 1));
 
         // Event date range
         const dates = posts.map((p) => new Date(p.created_at).getTime());
@@ -195,7 +198,7 @@ export default function PublicLeaderboardPage() {
           ends_at: endsAt,
         });
 
-        setEntries(allEntries);
+        setEntries(qualifiedEntries);
       } catch (err) {
         console.error("Failed to load leaderboard:", err);
         setError("Failed to load leaderboard. Please try again.");
