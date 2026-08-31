@@ -28,6 +28,7 @@ import {
 
 import { firebaseAuth } from "@/lib/firebase";
 import { linkHashtagsToPost } from "@/lib/hashtags";
+import { autoRegisterChallengeEntry } from "@/lib/challenges";
 import { extractVideoFrame } from "@/lib/videoThumbnail";
 import { compressImage } from "@/lib/imageCompression";
 import { compressVideo } from "@/lib/videoCompression";
@@ -587,6 +588,13 @@ export default function FeedPage() {
         linkHashtagsToPost(newPost.id, post.trim()).catch((err) =>
           console.error("❌ HASHTAG LINKING FAILED:", err)
         );
+
+        // Auto-register as challenge entry if hashtag matches
+        if (profile?.id) {
+          autoRegisterChallengeEntry(newPost.id, profile.id, post.trim()).catch(
+            (err) => console.error("CHALLENGE ENTRY FAILED:", err)
+          );
+        }
       }
 
       setPost("");

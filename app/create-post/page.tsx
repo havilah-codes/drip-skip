@@ -19,6 +19,7 @@ import { compressImage } from "@/lib/imageCompression";
 import { compressVideo } from "@/lib/videoCompression";
 import { savePostTags } from "@/lib/tags";
 import { sendNotification } from "@/lib/notifications";
+import { autoRegisterChallengeEntry } from "@/lib/challenges";
 import MentionAutocomplete from "@/components/MentionAutocomplete";
 
 import {
@@ -468,6 +469,11 @@ export default function CreatePostPage() {
           });
         }).catch((err) =>
           console.error("TAG SAVE FAILED:", err)
+        );
+
+        // Auto-register as challenge entry if hashtag matches
+        autoRegisterChallengeEntry(newPost.id, profileId, text.trim()).catch(
+          (err) => console.error("CHALLENGE ENTRY FAILED:", err)
         );
       }
 
