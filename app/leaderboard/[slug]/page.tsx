@@ -171,8 +171,8 @@ export default function PublicLeaderboardPage() {
           };
         });
 
-        // Filter to only entries with at least 5 drips
-        const qualifiedEntries = allEntries.filter((e) => e.drip_count >= 5);
+        // Filter to only entries with at least 3 drips
+        const qualifiedEntries = allEntries.filter((e) => e.drip_count >= 3);
 
         // Sort by drip count, then ratio, then post count
         qualifiedEntries.sort(
