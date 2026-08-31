@@ -544,7 +544,7 @@ export default function ChallengesPage() {
   // ADMIN FUNCTIONS
   // ==========================================
 
-  const isCreator = selectedChallenge?.created_by === profileId;
+  const isCreator = selectedChallenge?.created_by === user?.uid;
 
   const handleUpdateChallenge = async () => {
     if (!selectedChallenge || !isCreator || adminLoading) return;
@@ -637,15 +637,6 @@ export default function ChallengesPage() {
 
     setCreatingChallenge(true);
     try {
-      // Fetch the real Supabase UUID
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("firebase_uid", user.uid)
-        .single();
-
-      if (!profile?.id) throw new Error("Could not find your profile");
-
       const now = new Date();
       const endsAt = new Date(now.getTime() + newChallengeDuration * 24 * 60 * 60 * 1000);
 
@@ -658,7 +649,7 @@ export default function ChallengesPage() {
           status: "active",
           starts_at: now.toISOString(),
           ends_at: endsAt.toISOString(),
-          created_by: profile.id,
+          created_by: user.uid,
         })
         .select("id")
         .single();
@@ -1191,7 +1182,7 @@ export default function ChallengesPage() {
             {challenges.map((challenge) => {
               const isActive = challenge.status === "active";
 
-              const isMyChallenge = challenge.created_by === profileId;
+              const isMyChallenge = challenge.created_by === user?.uid;
 
               return (
                 <div
