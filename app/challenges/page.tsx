@@ -25,6 +25,7 @@ import {
   Trash2,
   Pause,
   Play,
+  Hash,
 } from "lucide-react";
 import { onAuthStateChanged, type User } from "firebase/auth";
 
@@ -724,7 +725,7 @@ export default function ChallengesPage() {
             {selectedChallenge.description && (
               <p className="text-sm text-text-s mb-3">{selectedChallenge.description}</p>
             )}
-            <div className="flex items-center gap-4 text-xs text-text-t">
+            <div className="flex items-center gap-4 text-xs text-text-t mb-3">
               <div className="flex items-center gap-1">
                 <Clock size={12} />
                 <span>{getTimeLeft(selectedChallenge.ends_at)}</span>
@@ -733,7 +734,14 @@ export default function ChallengesPage() {
                 <Users size={12} />
                 <span>{selectedChallenge.entries?.length || selectedChallenge.entry_count} entries</span>
               </div>
+              <div className="flex items-center gap-1">
+                <Hash size={12} className="text-purple-400" />
+                <span className="text-purple-400 font-medium">{selectedChallenge.theme}</span>
+              </div>
             </div>
+
+            {/* HASHTAG STATS */}
+            <ChallengeHashtagStats theme={selectedChallenge.theme} />
           </div>
 
           {/* ADMIN PANEL (only for creators) */}
@@ -1170,47 +1178,86 @@ export default function ChallengesPage() {
             {challenges.map((challenge) => {
               const isActive = challenge.status === "active";
 
+              const isMyChallenge = challenge.created_by === profileId;
+
               return (
-                <button
+                <div
                   key={challenge.id}
-                  type="button"
-                  onClick={() => loadChallengeEntries(challenge)}
-                  className="w-full text-left rounded-2xl border border-border-s bg-bg-raised p-4 hover:bg-bg-sunken/30 transition-all active:scale-[0.99]"
+                  className={`relative rounded-2xl border bg-bg-raised overflow-hidden transition-all ${
+                    isMyChallenge ? "border-purple-500/30" : "border-border-s"
+                  }`}
                 >
-                  <div className="flex items-start gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-bg-sunken flex items-center justify-center shrink-0">
-                      <Sparkles size={20} className="text-purple-400" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-sm font-display truncate">
-                          {challenge.title}
-                        </h3>
-                        {isActive && (
-                          <span className="shrink-0 px-2 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-900/40 text-[10px] font-bold text-emerald-400">
-                            LIVE
-                          </span>
+                  <button
+                    type="button"
+                    onClick={() => loadChallengeEntries(challenge)}
+                    className="w-full text-left p-4 hover:bg-bg-sunken/30 transition-all active:scale-[0.99]"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-bg-sunken flex items-center justify-center shrink-0">
+                        <Sparkles size={20} className="text-purple-400" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-sm font-display truncate">
+                            {challenge.title}
+                          </h3>
+                          {isActive && (
+                            <span className="shrink-0 px-2 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-900/40 text-[10px] font-bold text-emerald-400">
+                              LIVE
+                            </span>
+                          )}
+                          {isMyChallenge && (
+                            <span className="shrink-0 px-2 py-0.5 rounded-full bg-purple-950/60 border border-purple-900/40 text-[10px] font-bold text-purple-400">
+                              YOURS
+                            </span>
+                          )}
+                        </div>
+                        {challenge.description && (
+                          <p className="text-xs text-text-t mt-0.5 line-clamp-2">
+                            {challenge.description}
+                          </p>
                         )}
-                      </div>
-                      {challenge.description && (
-                        <p className="text-xs text-text-t mt-0.5 line-clamp-2">
-                          {challenge.description}
-                        </p>
-                      )}
-                      <div className="flex items-center gap-3 mt-2 text-xs text-text-m">
-                        <div className="flex items-center gap-1">
-                          <Clock size={12} />
-                          <span>{getTimeLeft(challenge.ends_at)}</span>
+                        <div className="flex items-center gap-3 mt-2 text-xs text-text-m">
+                          <div className="flex items-center gap-1">
+                            <Hash size={12} className="text-purple-400" />
+                            <span className="text-purple-400 font-medium">{challenge.theme}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Clock size={12} />
+                            <span>{getTimeLeft(challenge.ends_at)}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Users size={12} />
+                            <span>{challenge.entry_count} entries</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Users size={12} />
-                          <span>{challenge.entry_count} entries</span>
-                        </div>
                       </div>
+                      <ChevronRight size={16} className="text-text-m shrink-0 mt-1" />
                     </div>
-                    <ChevronRight size={16} className="text-text-m shrink-0 mt-1" />
-                  </div>
-                </button>
+                  </button>
+
+                  {/* ADMIN LINK (only for creator's challenges) */}
+                  {isMyChallenge && (
+                    <div className="px-4 pb-3 pt-0 flex gap-2">
+                      <Link
+                        href={`/leaderboard/${challenge.theme}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-950/50 border border-purple-900/30 text-[11px] font-semibold text-purple-400 hover:bg-purple-950/70 transition-colors"
+                      >
+                        <Trophy size={12} />
+                        <span>Leaderboard</span>
+                      </Link>
+                      <Link
+                        href={`/hashtag/${challenge.theme}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-bg-sunken text-[11px] font-semibold text-text-t hover:text-text-p transition-colors"
+                      >
+                        <Hash size={12} />
+                        <span>View posts</span>
+                      </Link>
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>
@@ -1230,5 +1277,86 @@ export default function ChallengesPage() {
 
       <BottomNav />
     </main>
+  );
+}
+
+// ==========================================
+// HASHTAG STATS COMPONENT
+// ==========================================
+
+function ChallengeHashtagStats({ theme }: { theme: string }) {
+  const [postCount, setPostCount] = useState(0);
+  const [totalDrips, setTotalDrips] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        // Find hashtag
+        const { data: hashtag } = await supabase
+          .from("hashtags")
+          .select("id")
+          .eq("name", theme)
+          .single();
+
+        if (!hashtag) {
+          setLoading(false);
+          return;
+        }
+
+        // Get posts with this hashtag
+        const { data: postHashtags } = await supabase
+          .from("post_hashtags")
+          .select("post_id")
+          .eq("hashtag_id", hashtag.id);
+
+        const postIds = postHashtags?.map((ph) => ph.post_id) || [];
+        setPostCount(postIds.length);
+
+        if (postIds.length === 0) {
+          setLoading(false);
+          return;
+        }
+
+        // Get drips for these posts
+        const { data: votes } = await supabase
+          .from("votes")
+          .select("vote")
+          .in("fit_id", postIds)
+          .eq("vote", "drip");
+
+        setTotalDrips(votes?.length || 0);
+      } catch {
+        // Stats not available
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadStats();
+  }, [theme]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-3 text-xs text-text-m">
+        <div className="h-3 w-16 rounded bg-bg-sunken animate-pulse" />
+        <div className="h-3 w-16 rounded bg-bg-sunken animate-pulse" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-4 text-xs">
+      <div className="flex items-center gap-1.5">
+        <Hash size={12} className="text-cyan-400" />
+        <span className="text-text-t">Posts:</span>
+        <span className="font-bold text-text-p">{postCount}</span>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <Flame size={12} className="text-cyan-400" />
+        <span className="text-text-t">Drips:</span>
+        <span className="font-bold text-cyan-400">{totalDrips}</span>
+      </div>
+    </div>
   );
 }
