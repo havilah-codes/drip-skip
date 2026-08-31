@@ -142,12 +142,19 @@ export default function CreateCompetitionModal({
           status: "active",
           starts_at: now.toISOString(),
           ends_at: endsAt.toISOString(),
-          created_by: user.uid,
         })
         .select("id")
         .single();
 
       if (error) throw error;
+
+      // Save ownership
+      if (data?.id) {
+        await supabase.from("challenge_ownership").insert({
+          challenge_id: data.id,
+          firebase_uid: user.uid,
+        });
+      }
 
       // Make sure hashtag exists
       await supabase

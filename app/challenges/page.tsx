@@ -68,6 +68,7 @@ type Challenge = {
   starts_at: string;
   ends_at: string;
   created_by: string | null;
+  owner_uid: string | null;
   entry_count: number;
   entries: ChallengeEntry[];
 };
@@ -102,6 +103,7 @@ const MOCK_CHALLENGES: Challenge[] = [
     starts_at: new Date(Date.now() - 2 * 24 * 3600_000).toISOString(),
     ends_at: new Date(Date.now() + 5 * 24 * 3600_000).toISOString(),
     created_by: null,
+    owner_uid: null,
     entry_count: 47,
     entries: [],
   },
@@ -114,6 +116,7 @@ const MOCK_CHALLENGES: Challenge[] = [
     starts_at: new Date(Date.now() - 1 * 24 * 3600_000).toISOString(),
     ends_at: new Date(Date.now() + 6 * 24 * 3600_000).toISOString(),
     created_by: null,
+    owner_uid: null,
     entry_count: 32,
     entries: [],
   },
@@ -126,6 +129,7 @@ const MOCK_CHALLENGES: Challenge[] = [
     starts_at: new Date(Date.now() - 14 * 24 * 3600_000).toISOString(),
     ends_at: new Date(Date.now() - 7 * 24 * 3600_000).toISOString(),
     created_by: null,
+    owner_uid: null,
     entry_count: 89,
     entries: [],
   },
@@ -215,6 +219,17 @@ export default function ChallengesPage() {
         return;
       }
 
+      // Fetch ownership for all challenges
+      const challengeIds = data.map((ch) => ch.id);
+      const { data: ownershipData } = await supabase
+        .from("challenge_ownership")
+        .select("challenge_id, firebase_uid")
+        .in("challenge_id", challengeIds);
+
+      const ownershipMap = new Map(
+        ownershipData?.map((o) => [o.challenge_id, o.firebase_uid]) || []
+      );
+
       const enriched = await Promise.all(
         data.map(async (ch) => {
           const { count } = await supabase
@@ -224,6 +239,7 @@ export default function ChallengesPage() {
 
           return {
             ...ch,
+            owner_uid: ownershipMap.get(ch.id) || null,
             entry_count: count || 0,
             entries: [],
           };
@@ -544,7 +560,7 @@ export default function ChallengesPage() {
   // ADMIN FUNCTIONS
   // ==========================================
 
-  const isCreator = selectedChallenge?.created_by === user?.uid;
+  const isCreator = selectedChallenge?.owner_uid === user?.uid;
 
   const handleUpdateChallenge = async () => {
     if (!selectedChallenge || !isCreator || adminLoading) return;
@@ -649,12 +665,19 @@ export default function ChallengesPage() {
           status: "active",
           starts_at: now.toISOString(),
           ends_at: endsAt.toISOString(),
-          created_by: user.uid,
         })
         .select("id")
         .single();
 
       if (error) throw error;
+
+      // Save ownership
+      if (data?.id) {
+        await supabase.from("challenge_ownership").insert({
+          challenge_id: data.id,
+          firebase_uid: user.uid,
+        });
+      }
 
       // Reset form
       setNewChallengeTitle("");
@@ -1182,7 +1205,7 @@ export default function ChallengesPage() {
             {challenges.map((challenge) => {
               const isActive = challenge.status === "active";
 
-              const isMyChallenge = challenge.created_by === user?.uid;
+              const isMyChallenge = challenge.owner_uid === user?.uid;
 
               return (
                 <div
