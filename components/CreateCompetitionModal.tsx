@@ -43,7 +43,7 @@ export default function CreateCompetitionModal({
     SuggestedHashtag[]
   >([]);
   const [showHashtagDropdown, setShowHashtagDropdown] = useState(false);
-  const [duration, setDuration] = useState<7 | 14 | 30>(7);
+  const [duration, setDuration] = useState(7);
   const [creating, setCreating] = useState(false);
   const [created, setCreated] = useState(false);
   const [leaderboardUrl, setLeaderboardUrl] = useState("");
@@ -351,22 +351,21 @@ export default function CreateCompetitionModal({
                 <label className="text-xs font-semibold text-text-t mb-1.5 block">
                   Duration
                 </label>
-                <div className="flex gap-2">
-                  {([7, 14, 30] as const).map((days) => (
-                    <button
-                      key={days}
-                      type="button"
-                      onClick={() => setDuration(days)}
-                      className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                        duration === days
-                          ? "bg-purple-600 text-white"
-                          : "bg-bg-sunken text-text-t hover:text-text-p border border-border-s"
-                      }`}
-                    >
-                      {days} days
-                    </button>
-                  ))}
-                </div>
+                <select
+                  value={duration}
+                  onChange={(e) => setDuration(Number(e.target.value) as 7 | 14 | 30)}
+                  className="w-full px-3 py-2.5 rounded-xl bg-bg-sunken border border-border-s text-sm text-text-p outline-none focus:border-purple-500/50 transition-colors appearance-none cursor-pointer"
+                >
+                  {[...Array(14)].map((_, i) => {
+                    const days = i + 1;
+                    return (
+                      <option key={days} value={days}>
+                        {days} {days === 1 ? "day" : "days"}
+                        {days === 14 ? " (2 weeks)" : ""}
+                      </option>
+                    );
+                  })}
+                </select>
               </div>
 
               {/* PREVIEW */}

@@ -170,7 +170,7 @@ export default function ChallengesPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newChallengeTitle, setNewChallengeTitle] = useState("");
   const [newChallengeDesc, setNewChallengeDesc] = useState("");
-  const [newChallengeDuration, setNewChallengeDuration] = useState<7 | 14 | 30>(7);
+  const [newChallengeDuration, setNewChallengeDuration] = useState(7);
   const [creatingChallenge, setCreatingChallenge] = useState(false);
 
   // ==========================================
@@ -1108,22 +1108,21 @@ export default function ChallengesPage() {
               />
               <div className="mb-3">
                 <p className="text-xs text-text-t mb-2">Duration</p>
-                <div className="flex gap-2">
-                  {([7, 14, 30] as const).map((days) => (
-                    <button
-                      key={days}
-                      type="button"
-                      onClick={() => setNewChallengeDuration(days)}
-                      className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${
-                        newChallengeDuration === days
-                          ? "bg-purple-600 text-white"
-                          : "bg-bg-sunken text-text-t hover:text-text-p"
-                      }`}
-                    >
-                      {days} days
-                    </button>
-                  ))}
-                </div>
+                <select
+                  value={newChallengeDuration}
+                  onChange={(e) => setNewChallengeDuration(Number(e.target.value))}
+                  className="w-full px-3 py-2 rounded-xl bg-bg-sunken border border-border-s text-sm text-text-p outline-none focus:border-purple-500/50 transition-colors appearance-none cursor-pointer"
+                >
+                  {[...Array(14)].map((_, i) => {
+                    const days = i + 1;
+                    return (
+                      <option key={days} value={days}>
+                        {days} {days === 1 ? "day" : "days"}
+                        {days === 14 ? " (2 weeks)" : ""}
+                      </option>
+                    );
+                  })}
+                </select>
               </div>
               <button
                 type="button"
