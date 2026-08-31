@@ -185,7 +185,12 @@ export default function ChallengesPage() {
       }
       setUser(currentUser);
       const profile = await syncProfile(currentUser);
-      setProfileId(profile?.id || null);
+      const id = profile?.id;
+      if (id && id.includes('-')) {
+        setProfileId(id);
+      } else {
+        console.error('Invalid profile ID:', id);
+      }
     });
     return () => unsubscribe();
   }, [router]);
@@ -628,10 +633,19 @@ export default function ChallengesPage() {
   // ==========================================
 
   const handleCreateChallenge = async () => {
-    if (!newChallengeTitle.trim() || !profileId || creatingChallenge) return;
+    if (!newChallengeTitle.trim() || !user || creatingChallenge) return;
 
     setCreatingChallenge(true);
     try {
+      // Fetch the real Supabase UUID
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("firebase_uid", user.uid)
+        .single();
+
+      if (!profile?.id) throw new Error("Could not find your profile");
+
       const now = new Date();
       const endsAt = new Date(now.getTime() + newChallengeDuration * 24 * 60 * 60 * 1000);
 
@@ -644,7 +658,7 @@ export default function ChallengesPage() {
           status: "active",
           starts_at: now.toISOString(),
           ends_at: endsAt.toISOString(),
-          created_by: profileId,
+          created_by: profile.id,
         })
         .select("id")
         .single();

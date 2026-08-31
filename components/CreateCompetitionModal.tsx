@@ -58,7 +58,13 @@ export default function CreateCompetitionModal({
         setUser(currentUser);
         if (currentUser) {
           const profile = await syncProfile(currentUser);
-          setProfileId(profile?.id || null);
+          // Safety: ensure we have a valid Supabase UUID, not a Firebase UID
+          const id = profile?.id;
+          if (id && id.includes('-')) {
+            setProfileId(id);
+          } else {
+            console.error('Invalid profile ID received:', id);
+          }
         }
       }
     );
@@ -115,10 +121,21 @@ export default function CreateCompetitionModal({
   }, [hashtag]);
 
   const handleCreate = async () => {
-    if (!title.trim() || !hashtag.trim() || !profileId || creating) return;
+    if (!title.trim() || !hashtag.trim() || !user || creating) return;
 
     setCreating(true);
     try {
+      // Always fetch the real Supabase UUID from the profiles table
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("firebase_uid", user.uid)
+        .single();
+
+      if (!profile?.id) {
+        throw new Error("Could not find your profile");
+      }
+
       const now = new Date();
       const endsAt = new Date(
         now.getTime() + duration * 24 * 60 * 60 * 1000
@@ -136,7 +153,7 @@ export default function CreateCompetitionModal({
           status: "active",
           starts_at: now.toISOString(),
           ends_at: endsAt.toISOString(),
-          created_by: profileId,
+          created_by: profile.id,
         })
         .select("id")
         .single();
