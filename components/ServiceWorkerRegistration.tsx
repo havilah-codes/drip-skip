@@ -5,6 +5,25 @@ import { onAuthStateChanged } from "firebase/auth";
 import { firebaseAuth } from "@/lib/firebase";
 import { resubscribeIfGranted } from "@/lib/push";
 
+/**
+ * Send a test notification on app open to verify notifications are working.
+ * Only fires once per session to avoid spamming the user.
+ */
+function sendTestNotification() {
+  try {
+    if (Notification.permission !== "granted") return;
+
+    new Notification("Drip Skip 🔥", {
+      body: "Hello World — notifications are working!",
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      tag: "test-notification", // prevents duplicate stacking
+    });
+  } catch (err) {
+    console.warn("Test notification failed:", err);
+  }
+}
+
 export default function ServiceWorker() {
   useEffect(() => {
     if ("serviceWorker" in navigator) {
@@ -36,6 +55,8 @@ export default function ServiceWorker() {
       (user) => {
         if (user) {
           resubscribeIfGranted();
+          // Send test notification to verify push is working
+          setTimeout(sendTestNotification, 2000);
         }
       }
     );
