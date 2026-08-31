@@ -163,6 +163,16 @@ export default function ChallengesPage() {
   const [editDescription, setEditDescription] = useState("");
 
   // ==========================================
+  // CREATE CHALLENGE STATE
+  // ==========================================
+
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newChallengeTitle, setNewChallengeTitle] = useState("");
+  const [newChallengeDesc, setNewChallengeDesc] = useState("");
+  const [newChallengeDuration, setNewChallengeDuration] = useState<7 | 14 | 30>(7);
+  const [creatingChallenge, setCreatingChallenge] = useState(false);
+
+  // ==========================================
   // AUTH
   // ==========================================
 
@@ -613,6 +623,50 @@ export default function ChallengesPage() {
   };
 
   // ==========================================
+  // CREATE CHALLENGE
+  // ==========================================
+
+  const handleCreateChallenge = async () => {
+    if (!newChallengeTitle.trim() || !profileId || creatingChallenge) return;
+
+    setCreatingChallenge(true);
+    try {
+      const now = new Date();
+      const endsAt = new Date(now.getTime() + newChallengeDuration * 24 * 60 * 60 * 1000);
+
+      const { data, error } = await supabase
+        .from("challenges")
+        .insert({
+          title: newChallengeTitle.trim(),
+          description: newChallengeDesc.trim() || null,
+          theme: "custom",
+          status: "active",
+          starts_at: now.toISOString(),
+          ends_at: endsAt.toISOString(),
+          created_by: profileId,
+        })
+        .select("id")
+        .single();
+
+      if (error) throw error;
+
+      // Reset form
+      setNewChallengeTitle("");
+      setNewChallengeDesc("");
+      setNewChallengeDuration(7);
+      setShowCreateForm(false);
+
+      // Reload challenges
+      loadChallenges();
+    } catch (err) {
+      console.error("Failed to create challenge:", err);
+      alert("Could not create challenge. Please try again.");
+    } finally {
+      setCreatingChallenge(false);
+    }
+  };
+
+  // ==========================================
   // LOADING STATE
   // ==========================================
 
@@ -1010,6 +1064,75 @@ export default function ChallengesPage() {
             </div>
           )}
         </section>
+
+        {/* ==========================================
+            CREATE CHALLENGE
+            ========================================== */}
+
+        <div className="mb-6">
+          <button
+            type="button"
+            onClick={() => setShowCreateForm(!showCreateForm)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-purple-600 text-white hover:bg-purple-700 transition-colors w-full justify-center"
+          >
+            {showCreateForm ? <X size={16} /> : <Plus size={16} />}
+            <span>{showCreateForm ? "Cancel" : "Create a Challenge"}</span>
+          </button>
+
+          {showCreateForm && (
+            <div className="mt-3 rounded-2xl border border-purple-500/20 bg-bg-raised p-4">
+              <h3 className="text-sm font-semibold mb-3">New Challenge</h3>
+              <input
+                type="text"
+                value={newChallengeTitle}
+                onChange={(e) => setNewChallengeTitle(e.target.value.slice(0, 80))}
+                placeholder="Challenge title (e.g. Neon Nights)"
+                maxLength={80}
+                className="w-full px-3 py-2.5 rounded-xl bg-bg-sunken border border-border-s text-sm text-text-p placeholder:text-text-m outline-none focus:border-purple-500/50 transition-colors mb-2"
+              />
+              <textarea
+                value={newChallengeDesc}
+                onChange={(e) => setNewChallengeDesc(e.target.value.slice(0, 300))}
+                placeholder="Description — what should people wear?"
+                rows={2}
+                maxLength={300}
+                className="w-full px-3 py-2.5 rounded-xl bg-bg-sunken border border-border-s text-sm text-text-p placeholder:text-text-m outline-none focus:border-purple-500/50 transition-colors resize-none mb-3"
+              />
+              <div className="mb-3">
+                <p className="text-xs text-text-t mb-2">Duration</p>
+                <div className="flex gap-2">
+                  {([7, 14, 30] as const).map((days) => (
+                    <button
+                      key={days}
+                      type="button"
+                      onClick={() => setNewChallengeDuration(days)}
+                      className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${
+                        newChallengeDuration === days
+                          ? "bg-purple-600 text-white"
+                          : "bg-bg-sunken text-text-t hover:text-text-p"
+                      }`}
+                    >
+                      {days} days
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleCreateChallenge}
+                disabled={!newChallengeTitle.trim() || creatingChallenge}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 text-white text-sm font-bold transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {creatingChallenge ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Sparkles size={14} />
+                )}
+                <span>{creatingChallenge ? "Creating..." : "Create Challenge"}</span>
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* ==========================================
             CHALLENGES SECTION
