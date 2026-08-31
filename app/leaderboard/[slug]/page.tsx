@@ -15,6 +15,8 @@ import {
   ExternalLink,
   Users,
   Calendar,
+  Info,
+  X,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
@@ -48,6 +50,7 @@ export default function PublicLeaderboardPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<LeaderboardEntry[]>([]);
   const [error, setError] = useState("");
+  const [showEventInfo, setShowEventInfo] = useState(false);
 
   useEffect(() => {
     if (!slug) return;
@@ -329,42 +332,47 @@ export default function PublicLeaderboardPage() {
 
       <div className="max-w-2xl mx-auto px-4 py-6">
         {/* EVENT INFO CARD */}
-        <div className="rounded-2xl border border-amber-900/30 bg-gradient-to-br from-amber-950/30 to-yellow-950/20 p-5 mb-6">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-12 h-12 rounded-xl bg-amber-950/60 flex items-center justify-center">
-              <Trophy size={24} className="text-amber-400" />
+        <div className="rounded-2xl border border-amber-900/30 bg-gradient-to-br from-amber-950/30 to-yellow-950/20 p-4 mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-950/60 flex items-center justify-center shrink-0">
+              <Trophy size={20} className="text-amber-400" />
             </div>
-            <div>
-              <h2 className="text-lg font-bold font-display">
+            <div className="flex-1 min-w-0">
+              <h2 className="text-base font-bold font-display truncate">
                 #{eventInfo?.hashtag} Leaderboard
               </h2>
-              <p className="text-xs text-text-t">Event Rankings</p>
             </div>
+            <button
+              type="button"
+              onClick={() => setShowEventInfo(!showEventInfo)}
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-text-m hover:text-amber-400 hover:bg-amber-950/40 transition-colors shrink-0"
+            >
+              {showEventInfo ? <X size={18} /> : <Info size={18} />}
+            </button>
           </div>
-          <div className="flex items-center gap-4 text-xs text-text-t">
-            <div className="flex items-center gap-1.5">
-              <Users size={12} />
-              <span>
-                {eventInfo?.total_participants} participants
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Flame size={12} className="text-cyan-400" />
-              <span>
-                {eventInfo?.total_posts} posts
-              </span>
-            </div>
-            {eventInfo?.starts_at && (
-              <div className="flex items-center gap-1.5">
-                <Calendar size={12} />
-                <span>
-                  {formatDate(eventInfo.starts_at)}
-                  {eventInfo.ends_at &&
-                    ` – ${formatDate(eventInfo.ends_at)}`}
-                </span>
+          {showEventInfo && (
+            <div className="mt-3 pt-3 border-t border-amber-900/20 space-y-2">
+              <div className="flex items-center gap-4 text-xs text-text-t">
+                <div className="flex items-center gap-1.5">
+                  <Users size={12} />
+                  <span>{eventInfo?.total_participants} participants</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Flame size={12} className="text-cyan-400" />
+                  <span>{eventInfo?.total_posts} posts</span>
+                </div>
               </div>
-            )}
-          </div>
+              {eventInfo?.starts_at && (
+                <div className="flex items-center gap-1.5 text-xs text-text-t">
+                  <Calendar size={12} />
+                  <span>
+                    {formatDate(eventInfo.starts_at)}
+                    {eventInfo.ends_at && ` – ${formatDate(eventInfo.ends_at)}`}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* SEARCH BAR */}
