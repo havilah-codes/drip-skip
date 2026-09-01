@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, UserCheck, UserPlus, Share2, Bookmark } from "lucide-react";
+import { ArrowLeft, UserCheck, UserPlus, Share2, Bookmark, MessageCircle, Loader2 } from "lucide-react";
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { getOrCreateChat } from "@/lib/chat";
 
@@ -486,9 +486,14 @@ export default function PublicProfilePage() {
                       type="button"
                       onClick={handleMessage}
                       disabled={messageLoading || !currentUser}
-                      className="px-5 py-2.5 rounded-xl border border-border-d text-text-p text-sm font-bold hover:bg-bg-sunken active:scale-95 transition-all disabled:opacity-50"
+                      className="w-10 h-10 rounded-xl border border-border-d flex items-center justify-center text-text-p hover:bg-bg-sunken active:scale-95 transition-all disabled:opacity-50"
+                      title="Message"
                     >
-                      {messageLoading ? "Opening..." : "Message"}
+                      {messageLoading ? (
+                        <Loader2 size={18} className="animate-spin" />
+                      ) : (
+                        <MessageCircle size={18} />
+                      )}
                     </button>
 
                     {/* FOLLOW */}
@@ -496,22 +501,19 @@ export default function PublicProfilePage() {
                       type="button"
                       onClick={handleFollowToggle}
                       disabled={followLoading || !currentUser}
-                      className={`px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 active:scale-95 transition-all disabled:opacity-50 ${
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center active:scale-95 transition-all disabled:opacity-50 ${
                         isFollowing
                           ? "border border-border-d text-text-s hover:text-rose-400 hover:border-rose-950 hover:bg-rose-950/20"
                           : "bg-btn text-btn-text hover:bg-btn/80"
                       }`}
+                      title={isFollowing ? "Unfollow" : "Follow"}
                     >
-                      {isFollowing ? (
-                        <>
-                          <UserCheck size={16} />
-                          Following
-                        </>
+                      {followLoading ? (
+                        <Loader2 size={18} className="animate-spin" />
+                      ) : isFollowing ? (
+                        <UserCheck size={18} />
                       ) : (
-                        <>
-                          <UserPlus size={16} />
-                          Follow
-                        </>
+                        <UserPlus size={18} />
                       )}
                     </button>
                   </div>
