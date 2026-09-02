@@ -767,6 +767,34 @@ io.on("connection", (socket) => {
   );
 
   // ====================================================
+  // USER UNFOLLOWED — send push notification
+  // ====================================================
+
+  socket.on(
+    "user_unfollowed",
+    async (payload) => {
+      try {
+        const { followed_user_id } = payload || {};
+
+        if (!followed_user_id) return;
+        if (followed_user_id === profileId) return;
+
+        const unfollowerName = await getProfileDisplayName(profileId);
+
+        sendPushToProfile(followed_user_id, {
+          title: unfollowerName || "Someone",
+          body: "unfollowed you",
+          data: { type: "unfollow" },
+        }).catch((err) => {
+          console.error(`❌ UNFOLLOW PUSH FAILED for profile ${followed_user_id}:`, err.message || err);
+        });
+      } catch (err) {
+        console.error(`❌ USER_UNFOLLOWED ERROR:`, err.message || err);
+      }
+    }
+  );
+
+  // ====================================================
   // COMMENT — send push to post owner if offline
   // ====================================================
 

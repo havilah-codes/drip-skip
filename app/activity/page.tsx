@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Flame, SkipForward, UserPlus, Loader2, Bell, MessageCircle, ThumbsUp, AtSign } from 'lucide-react';
+import { Flame, SkipForward, UserPlus, UserMinus, Loader2, Bell, MessageCircle, ThumbsUp, AtSign } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { firebaseAuth as auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -12,7 +12,7 @@ import BottomNav from '@/components/BottomNav';
 
 interface ActivityItem {
   id: string;
-  type: 'follow' | 'drip' | 'skip' | 'comment' | 'theme_vote' | 'tag';
+  type: 'follow' | 'unfollow' | 'drip' | 'skip' | 'comment' | 'theme_vote' | 'tag';
   createdAt: string;
   actor: {
     username: string;
@@ -175,6 +175,9 @@ export default function ActivityPage() {
                     {item.type === 'follow' && (
                       <UserPlus className="w-3.5 h-3.5 text-blue-400" />
                     )}
+                    {item.type === 'unfollow' && (
+                      <UserMinus className="w-3.5 h-3.5 text-rose-400" />
+                    )}
                     {item.type === 'comment' && (
                       <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
                     )}
@@ -196,6 +199,7 @@ export default function ActivityPage() {
                     {item.type === 'drip' && 'dripped your post 🔥'}
                     {item.type === 'skip' && 'skipped your post ⏭️'}
                     {item.type === 'follow' && 'started following you'}
+                    {item.type === 'unfollow' && 'unfollowed you'}
                     {item.type === 'comment' && 'commented on your post'}
                     {item.type === 'theme_vote' && 'voted on your challenge theme'}
                     {item.type === 'tag' && 'mentioned you in a post'}

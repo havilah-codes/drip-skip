@@ -1,10 +1,11 @@
 import { supabase } from "./supabase";
 import { socket, connectSocket } from "./socket";
 
-type NotificationType = "drip" | "skip" | "follow" | "comment" | "theme_vote" | "tag";
+type NotificationType = "drip" | "skip" | "follow" | "unfollow" | "comment" | "theme_vote" | "tag";
 
 interface NotifyOptions {
   recipientId: string;
+  actorId?: string;
   type: NotificationType;
   postId?: string;
   themeId?: string;
@@ -18,6 +19,7 @@ interface NotifyOptions {
  */
 export async function sendNotification({
   recipientId,
+  actorId,
   type,
   postId,
   themeId,
@@ -29,6 +31,7 @@ export async function sendNotification({
   // 1. Insert into notifications table
   const { error } = await supabase.from("notifications").insert({
     user_id: recipientId,
+    actor_id: actorId || null,
     type,
     post_id: postId || null,
     theme_id: themeId || null,
@@ -48,6 +51,7 @@ export async function sendNotification({
       drip: "vote_cast",
       skip: "vote_cast",
       follow: "user_followed",
+      unfollow: "user_unfollowed",
       comment: "comment_added",
       theme_vote: "theme_vote_cast",
       tag: "user_tagged",
@@ -62,7 +66,7 @@ export async function sendNotification({
     if (type === "drip" || type === "skip") {
       payload.post_owner_id = recipientId;
       payload.vote_type = type;
-    } else if (type === "follow") {
+    } else if (type === "follow" || type === "unfollow") {
       payload.followed_user_id = recipientId;
     } else if (type === "comment") {
       payload.post_owner_id = recipientId;

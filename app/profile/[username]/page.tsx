@@ -283,6 +283,14 @@ export default function PublicProfilePage() {
           Math.max(0, prev - 1)
         );
 
+        // Notify unfollowed user (fire-and-forget)
+        const { sendNotification } = await import("@/lib/notifications");
+        sendNotification({
+          recipientId: profile.id,
+          actorId: currentProfileId,
+          type: "unfollow",
+        });
+
         console.log("✅ UNFOLLOW SUCCESS");
       } else {
         const { error } = await supabase
@@ -311,6 +319,7 @@ export default function PublicProfilePage() {
         const { sendNotification } = await import("@/lib/notifications");
         sendNotification({
           recipientId: profile.id,
+          actorId: currentProfileId,
           type: "follow",
         });
 
