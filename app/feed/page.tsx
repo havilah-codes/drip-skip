@@ -32,6 +32,7 @@ import { autoRegisterChallengeEntry } from "@/lib/challenges";
 import { extractVideoFrame } from "@/lib/videoThumbnail";
 import { compressImage } from "@/lib/imageCompression";
 import { compressVideo } from "@/lib/videoCompression";
+import { uploadToS3 } from "@/lib/upload";
 
 export default function FeedPage() {
   const router = useRouter();
@@ -505,22 +506,8 @@ export default function FeedPage() {
           }
         }
 
-        const fileExtension = imageToUpload.type === "image/webp" ? "webp" : imageToUpload.type === "image/png" ? "png" : "jpg";
-        const filePath = `${profile.id}/${crypto.randomUUID()}.${fileExtension}`;
-
-        const { error: imageUploadError } = await supabase.storage
-          .from("post-images")
-          .upload(filePath, imageToUpload, {
-            contentType: imageToUpload.type || "image/jpeg",
-          });
-
-        if (imageUploadError) throw imageUploadError;
-
-        const { data: imagePublicData } = supabase.storage
-          .from("post-images")
-          .getPublicUrl(filePath);
-
-        imageUrl = imagePublicData.publicUrl;
+        const { publicUrl } = await uploadToS3("post-images", new File([imageToUpload], `image.${imageToUpload.type === "image/webp" ? "webp" : imageToUpload.type === "image/png" ? "png" : "jpg"}`, { type: imageToUpload.type || "image/jpeg" }));
+        imageUrl = publicUrl;
       }
 
       if (selectedVideo) {
@@ -537,22 +524,9 @@ export default function FeedPage() {
           videoToUpload = selectedVideo;
         }
 
-        const fileExtension = videoToUpload.type === "video/webm" ? "webm" : selectedVideo.name.split(".").pop() || "mp4";
-        const filePath = `${profile.id}/${crypto.randomUUID()}.${fileExtension}`;
-
-        const { error: videoUploadError } = await supabase.storage
-          .from("post-videos")
-          .upload(filePath, videoToUpload, {
-            contentType: videoToUpload.type || "video/mp4",
-          });
-
-        if (videoUploadError) throw videoUploadError;
-
-        const { data: videoPublicData } = supabase.storage
-          .from("post-videos")
-          .getPublicUrl(filePath);
-
-        videoUrl = videoPublicData.publicUrl;
+        const videoExt = videoToUpload.type === "video/webm" ? "webm" : selectedVideo.name.split(".").pop() || "mp4";
+        const { publicUrl: vidUrl } = await uploadToS3("post-videos", new File([videoToUpload], `video.${videoExt}`, { type: videoToUpload.type || "video/mp4" }));
+        videoUrl = vidUrl;
       }
 
       const { data: newPost, error: postError } = await supabase

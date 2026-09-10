@@ -208,43 +208,13 @@ export default function EditProfilePage() {
       // ==========================================
 
       if (selectedAvatar) {
-        const extension =
-          selectedAvatar.name
-            .split(".")
-            .pop() || "jpg";
-
-        const filePath =
-          `${profileId}/${crypto.randomUUID()}.${extension}`;
-
         console.log(
-          "📸 UPLOADING AVATAR:",
-          filePath
+          "📸 UPLOADING AVATAR TO S3"
         );
 
-        const {
-          error: uploadError,
-        } = await supabase.storage
-          .from("avatars")
-          .upload(
-            filePath,
-            selectedAvatar,
-            {
-              upsert: false,
-            }
-          );
-
-        if (uploadError) {
-          throw uploadError;
-        }
-
-        const {
-          data: publicUrlData,
-        } = supabase.storage
-          .from("avatars")
-          .getPublicUrl(filePath);
-
-        newAvatarUrl =
-          publicUrlData.publicUrl;
+        const { uploadToS3 } = await import("@/lib/upload");
+        const { publicUrl } = await uploadToS3("avatars", selectedAvatar);
+        newAvatarUrl = publicUrl;
 
         console.log(
           "✅ NEW AVATAR:",

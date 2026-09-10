@@ -273,97 +273,39 @@ export default function CreatePage() {
       }
 
       // ----------------------------------------
-      // STORAGE PATH
+      // UPLOAD TO S3
       // ----------------------------------------
 
-      const timestamp = Date.now();
+      setStatusText("Uploading...");
 
-      const randomString = Math.random()
-        .toString(36)
-        .substring(2, 9);
+      console.log("CREATE FIT: UPLOADING TO S3");
 
-      const filePath =
-        `${user.id}/${timestamp}-${randomString}.${extension}`;
+      let publicImageUrl: string;
 
-      console.log("CREATE FIT: UPLOADING", {
-        bucket: "fit-images",
-        filePath,
-        fileSize: fileToUpload.size,
-        fileType: fileToUpload.type,
-      });
-
-      // ----------------------------------------
-      // UPLOAD IMAGE
-      // ----------------------------------------
-
-      const {
-        data: uploadData,
-        error: uploadError,
-      } = await supabase.storage
-        .from("fit-images")
-        .upload(
-          filePath,
-          fileToUpload,
-          {
-            cacheControl: "3600",
-            upsert: false,
-            contentType:
-              fileToUpload.type || "image/jpeg",
-          }
+      try {
+        const { uploadToS3 } = await import("@/lib/upload");
+        const { publicUrl } = await uploadToS3(
+          "fit-images",
+          fileToUpload instanceof File
+            ? fileToUpload
+            : new File([fileToUpload], `fit.${extension}`, { type: fileToUpload.type || "image/jpeg" })
         );
-
-      if (uploadError) {
-        console.error(
-          "CREATE FIT: STORAGE ERROR",
-          uploadError.message
-        );
-
-        setError(
-          "Couldn't upload your fit. Please try again."
-        );
-
+        publicImageUrl = publicUrl;
+      } catch (uploadErr: any) {
+        console.error("CREATE FIT: UPLOAD ERROR", uploadErr?.message);
+        setError("Couldn't upload your fit. Please try again.");
         setIsSubmitting(false);
         setStatusText("");
         return;
       }
 
-      console.log(
-        "CREATE FIT: UPLOAD SUCCESS",
-        uploadData
-      );
+      console.log("CREATE FIT: UPLOAD SUCCESS", publicImageUrl);
 
       // ----------------------------------------
-      // PUBLIC URL
+      // DATABASE INSERT
       // ----------------------------------------
 
       setStatusText("Publishing...");
-
-      console.log(
-        "CREATE FIT: GETTING PUBLIC URL"
-      );
-
-      const {
-        data: publicUrlData,
-      } = supabase.storage
-        .from("fit-images")
-        .getPublicUrl(filePath);
-
-      const publicImageUrl =
-        publicUrlData?.publicUrl;
-
-      if (!publicImageUrl) {
-        console.error(
-          "CREATE FIT: PUBLIC URL ERROR"
-        );
-
-        setError(
-          "Couldn't generate the photo URL. Please try again."
-        );
-
-        setIsSubmitting(false);
-        setStatusText("");
-        return;
-      }
 
       console.log(
         "CREATE FIT: PUBLIC URL SUCCESS"
