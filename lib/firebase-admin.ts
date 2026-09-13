@@ -1,9 +1,16 @@
-import { cert, getApps, initializeApp } from "firebase-admin/app";
+import { cert, getApps, initializeApp, type App } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 
-function getAdminApp() {
+let cachedApp: App | null = null;
+
+function getAdminApp(): App {
+  if (cachedApp) return cachedApp;
+
   const existing = getApps()[0];
-  if (existing) return existing;
+  if (existing) {
+    cachedApp = existing;
+    return existing;
+  }
 
   const projectId = process.env.FIREBASE_PROJECT_ID;
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
@@ -11,13 +18,14 @@ function getAdminApp() {
 
   if (!projectId || !clientEmail || !privateKey) {
     throw new Error(
-      "FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL and FIREBASE_PRIVATE_KEY are required for server-side auth."
+      "Server auth is not configured: FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL and FIREBASE_PRIVATE_KEY must be set in this environment."
     );
   }
 
-  return initializeApp({
+  cachedApp = initializeApp({
     credential: cert({ projectId, clientEmail, privateKey }),
   });
+  return cachedApp;
 }
 
 /**
@@ -37,7 +45,12 @@ export async function getVerifiedUser(request: Request) {
 
   try {
     return await verifyIdToken(token);
-  } catch {
+  } catch (error) {
+    // Surface configuration problems in the server log while still
+    // rejecting the request.
+    if (error instanceof Error && error.message.startsWith("Server auth is not configured")) {
+      console.error("UPLOAD AUTH CONFIG ERROR:", error.message);
+    }
     return null;
   }
 }
