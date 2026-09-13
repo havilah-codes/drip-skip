@@ -40,7 +40,12 @@ export async function verifyIdToken(idToken: string) {
   return getAuth(await getAdminApp()).verifyIdToken(idToken);
 }
 
-/** Extract and verify the Bearer token from a Request. Returns null if absent/invalid. */
+/** Extract and verify the Bearer token from a Request.
+ *
+ * Returns null for a missing/invalid/expired token.
+ * Throws a config error when the server's Firebase credentials are broken,
+ * so callers can distinguish "bad user token" from "bad deployment".
+ */
 export async function getVerifiedUser(request: Request) {
   const header = request.headers.get("Authorization") || "";
   const token = header.startsWith("Bearer ") ? header.slice(7).trim() : null;
@@ -50,11 +55,18 @@ export async function getVerifiedUser(request: Request) {
   try {
     return await verifyIdToken(token);
   } catch (error) {
-    // Surface configuration problems in the server log while still
-    // rejecting the request.
-    if (error instanceof Error && error.message.startsWith("Server auth is not configured")) {
-      console.error("UPLOAD AUTH CONFIG ERROR:", error.message);
+    const message = error instanceof Error ? error.message : String(error);
+
+    // Broken server configuration — propagate so the route returns a 500
+    // naming the problem instead of a misleading 401.
+    if (message.startsWith("Server auth is not configured")) {
+      console.error("UPLOAD AUTH CONFIG ERROR:", message);
+      throw error;
     }
+
+    // Real token problem — log the reason and reject.
+    const code = (error as { code?: string })?.code || "unknown";
+    console.error("TOKEN VERIFY FAILED:", code, message);
     return null;
   }
 }

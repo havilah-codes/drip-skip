@@ -79,9 +79,11 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("UPLOAD ROUTE ERROR:", error);
     const detail =
-      process.env.NODE_ENV !== "production" && error instanceof Error
+      error instanceof Error && error.message.startsWith("Server auth is not configured")
         ? error.message
-        : undefined;
+        : process.env.NODE_ENV !== "production" && error instanceof Error
+          ? error.message
+          : undefined;
     return NextResponse.json(
       { error: "Internal server error", ...(detail ? { detail } : {}) },
       { status: 500 }
