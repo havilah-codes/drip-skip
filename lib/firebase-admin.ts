@@ -1,16 +1,9 @@
-import { cert, getApps, initializeApp, type App } from "firebase-admin/app";
-import { getAuth } from "firebase-admin/auth";
+import type { App } from "firebase-admin/app";
 
 let cachedApp: App | null = null;
 
-function getAdminApp(): App {
+async function getAdminApp(): Promise<App> {
   if (cachedApp) return cachedApp;
-
-  const existing = getApps()[0];
-  if (existing) {
-    cachedApp = existing;
-    return existing;
-  }
 
   const projectId = process.env.FIREBASE_PROJECT_ID;
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
@@ -20,6 +13,16 @@ function getAdminApp(): App {
     throw new Error(
       "Server auth is not configured: FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL and FIREBASE_PRIVATE_KEY must be set in this environment."
     );
+  }
+
+  // Import lazily so bundling issues or missing env vars can't crash
+  // route modules at load time.
+  const { cert, getApps, initializeApp } = await import("firebase-admin/app");
+
+  const existing = getApps()[0];
+  if (existing) {
+    cachedApp = existing;
+    return existing;
   }
 
   cachedApp = initializeApp({
@@ -33,7 +36,8 @@ function getAdminApp(): App {
  * Throws if the token is invalid or expired.
  */
 export async function verifyIdToken(idToken: string) {
-  return getAuth(getAdminApp()).verifyIdToken(idToken);
+  const { getAuth } = await import("firebase-admin/auth");
+  return getAuth(await getAdminApp()).verifyIdToken(idToken);
 }
 
 /** Extract and verify the Bearer token from a Request. Returns null if absent/invalid. */
