@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // These packages use Node APIs that break when bundled for serverless.
   // Let Next load them from node_modules at runtime instead.
-  serverExternalPackages: ["firebase-admin", "@aws-sdk/client-s3", "@aws-sdk/s3-request-presigner"],
+  serverExternalPackages: ["@aws-sdk/client-s3", "@aws-sdk/s3-request-presigner"],
   images: {
     remotePatterns: [
       {

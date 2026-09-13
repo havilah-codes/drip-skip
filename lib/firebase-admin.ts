@@ -1,51 +1,88 @@
-import type { App } from "firebase-admin/app";
+import { jwtVerify, createLocalJWKSet, type JWTVerifyGetKey } from "jose";
+import { createPublicKey } from "node:crypto";
 
-let cachedApp: App | null = null;
+/**
+ * Firebase ID token verification WITHOUT firebase-admin.
+ *
+ * The admin SDK's jwks-rsa dependency crashes in Vercel's serverless runtime
+ * (ERR_REQUIRE_ESM), so we verify signatures directly against Google's
+ * x509 certificate set — the same checks the SDK performs
+ * (signature, issuer, audience, expiry).
+ */
 
-async function getAdminApp(): Promise<App> {
-  if (cachedApp) return cachedApp;
+const PROJECT_ID = process.env.FIREBASE_PROJECT_ID;
 
-  const projectId = process.env.FIREBASE_PROJECT_ID;
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+const CERTS_URL =
+  "https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com";
 
-  if (!projectId || !clientEmail || !privateKey) {
-    throw new Error(
-      "Server auth is not configured: FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL and FIREBASE_PRIVATE_KEY must be set in this environment."
-    );
+if (!PROJECT_ID) {
+  console.error(
+    "Server auth is not configured: FIREBASE_PROJECT_ID must be set in this environment."
+  );
+}
+
+interface VerifiedToken {
+  uid: string;
+  email?: string;
+}
+
+// Cache the JWK set; Google rotates keys, so refresh periodically.
+let cachedKey: JWTVerifyGetKey | null = null;
+let cachedAt = 0;
+const CACHE_MS = 60 * 60 * 1000; // 1 hour
+
+async function getKey(): Promise<JWTVerifyGetKey> {
+  if (cachedKey && Date.now() - cachedAt < CACHE_MS) return cachedKey;
+
+  const res = await fetch(CERTS_URL, { cache: "no-store" });
+  if (!res.ok) {
+    throw new Error(`Could not fetch Firebase signing certificates (${res.status})`);
   }
 
-  // Import lazily so bundling issues or missing env vars can't crash
-  // route modules at load time.
-  const { cert, getApps, initializeApp } = await import("firebase-admin/app");
+  const certs = (await res.json()) as Record<string, string>;
 
-  const existing = getApps()[0];
-  if (existing) {
-    cachedApp = existing;
-    return existing;
-  }
-
-  cachedApp = initializeApp({
-    credential: cert({ projectId, clientEmail, privateKey }),
+  const keys = Object.entries(certs).map(([kid, certPem]) => {
+    const { n, e } = createPublicKey(certPem).export({ format: "jwk" }) as {
+      n: string;
+      e: string;
+    };
+    return { kty: "RSA", n, e, kid, alg: "RS256", use: "sig" };
   });
-  return cachedApp;
+
+  cachedKey = createLocalJWKSet({ keys });
+  cachedAt = Date.now();
+  return cachedKey;
 }
 
 /**
- * Verify a Firebase ID token (e.g. from an Authorization: Bearer header).
- * Throws if the token is invalid or expired.
+ * Verify a Firebase ID token. Throws with a descriptive message if the
+ * token is invalid, expired, or from the wrong project.
  */
 export async function verifyIdToken(idToken: string) {
-  const { getAuth } = await import("firebase-admin/auth");
-  return getAuth(await getAdminApp()).verifyIdToken(idToken);
+  if (!PROJECT_ID) {
+    throw new Error(
+      "Server auth is not configured: FIREBASE_PROJECT_ID must be set in this environment."
+    );
+  }
+
+  const { payload } = await jwtVerify(idToken, await getKey(), {
+    issuer: `https://securetoken.google.com/${PROJECT_ID}`,
+    audience: PROJECT_ID,
+  });
+
+  const uid = payload.sub;
+  if (!uid) {
+    throw new Error("Invalid token: missing subject claim.");
+  }
+
+  return {
+    uid,
+    email: typeof payload.email === "string" ? payload.email : undefined,
+    claims: payload,
+  };
 }
 
-/** Extract and verify the Bearer token from a Request.
- *
- * Returns null for a missing/invalid/expired token.
- * Throws a config error when the server's Firebase credentials are broken,
- * so callers can distinguish "bad user token" from "bad deployment".
- */
+/** Extract and verify the Bearer token from a Request. Returns null if absent/invalid. */
 export async function getVerifiedUser(request: Request) {
   const header = request.headers.get("Authorization") || "";
   const token = header.startsWith("Bearer ") ? header.slice(7).trim() : null;
@@ -57,16 +94,12 @@ export async function getVerifiedUser(request: Request) {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
 
-    // Broken server configuration — propagate so the route returns a 500
-    // naming the problem instead of a misleading 401.
     if (message.startsWith("Server auth is not configured")) {
       console.error("UPLOAD AUTH CONFIG ERROR:", message);
       throw error;
     }
 
-    // Real token problem — log the reason and reject.
-    const code = (error as { code?: string })?.code || "unknown";
-    console.error("TOKEN VERIFY FAILED:", code, message);
+    console.error("TOKEN VERIFY FAILED:", message);
     return null;
   }
 }
