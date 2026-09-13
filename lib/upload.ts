@@ -51,8 +51,17 @@ export async function uploadToS3(
   });
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Upload request failed" }));
-    throw new Error(err.error || `Upload request failed (${res.status})`);
+    const body = await res.text().catch(() => "");
+    let message = `Upload request failed (${res.status})`;
+    try {
+      const err = JSON.parse(body);
+      if (err?.error) message = err.error;
+    } catch {
+      // Non-JSON body — usually a framework error page, meaning the route
+      // crashed at module level (e.g. missing env vars on the deployment).
+      message = `Upload request failed (${res.status}, non-JSON response — likely a deployment config issue)`;
+    }
+    throw new Error(message);
   }
 
   const { uploadUrl, publicUrl } = await res.json();
