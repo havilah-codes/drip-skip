@@ -6,6 +6,8 @@
  * 3. Returns the final public URL to store in the database.
  */
 
+import { firebaseAuth } from "@/lib/firebase";
+
 export type UploadBucket =
   | "post-images"
   | "post-videos"
@@ -27,10 +29,19 @@ export async function uploadToS3(
   bucket: UploadBucket,
   file: File
 ): Promise<UploadResult> {
-  // ── Step 1: Get presigned URL from our API ──
+  // ── Step 1: Get presigned URL from our API (auth via Firebase ID token) ──
+  const user = firebaseAuth.currentUser;
+  if (!user) {
+    throw new Error("You must be signed in to upload.");
+  }
+  const idToken = await user.getIdToken();
+
   const res = await fetch("/api/upload", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${idToken}`,
+    },
     body: JSON.stringify({
       bucket,
       fileName: file.name,

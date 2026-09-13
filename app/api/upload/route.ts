@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { getVerifiedUser } from "@/lib/firebase-admin";
 import { createPresignedUploadUrl } from "@/lib/s3";
 
 const ALLOWED_TYPES = new Set([
@@ -26,11 +26,8 @@ const BUCKET_FOLDER: Record<string, string> = {
 
 export async function POST(request: NextRequest) {
   try {
-    // ── Auth check ──
-    const supabase = await createServerSupabaseClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    // ── Auth check (Firebase ID token from Authorization header) ──
+    const user = await getVerifiedUser(request);
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -70,7 +67,7 @@ export async function POST(request: NextRequest) {
     // ── Build S3 key ──
     const folder = BUCKET_FOLDER[bucket];
     const ext = fileName.split(".").pop() || "bin";
-    const key = `${folder}/${user.id}/${crypto.randomUUID()}.${ext}`;
+    const key = `${folder}/${user.uid}/${crypto.randomUUID()}.${ext}`;
 
     // ── Generate presigned URL ──
     const { uploadUrl, publicUrl } = await createPresignedUploadUrl(
