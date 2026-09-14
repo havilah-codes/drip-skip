@@ -11,9 +11,15 @@ const httpServer = http.createServer();
 
 const io = new Server(httpServer, {
   cors: {
-    origin:
+    // Accept a comma-separated list so production
+    // can whitelist both the apex domain and www.
+    origin: (
       process.env.SOCKET_CORS_ORIGIN ||
-      "http://localhost:3000",
+      "http://localhost:3000"
+    )
+      .split(",")
+      .map((url) => url.trim())
+      .filter(Boolean),
     methods: ["GET", "POST"],
   },
 
