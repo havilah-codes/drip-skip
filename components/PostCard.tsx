@@ -6,7 +6,7 @@ import {
   MessageCircle,
   MoreHorizontal,
   Flame,
-  SkipForward,
+  X,
   Share2,
   Check,
   Repeat2,
@@ -322,11 +322,7 @@ export default function PostCard({
     } finally {
       setVoting(false);
     }
-  };
-
-
-
-  return (
+  };  return (
     <article className="rounded-2xl border border-border-s bg-bg-raised overflow-hidden">
       {isRepost && (
         <div className="flex items-center gap-2 px-4 py-2 border-b border-border-s/50">
@@ -334,7 +330,9 @@ export default function PostCard({
           <span className="text-xs font-medium text-green-500">Reposted</span>
         </div>
       )}
-      <div className="flex items-center gap-3 p-4">
+
+      {/* HEADER — avatar, name + @username, timestamp + menu */}
+      <div className="flex items-center gap-3 px-4 pt-3.5 pb-3">
         <Link href={`/profile/${username}`}>
           <img
             src={avatar}
@@ -349,11 +347,11 @@ export default function PostCard({
             <p className="font-semibold text-sm truncate group-hover:underline font-display">
               {displayName}
             </p>
-            <p className="text-xs text-text-t truncate">
-              @{username} · {timeAgo}
-            </p>
+            <p className="text-xs text-text-t truncate">@{username}</p>
           </Link>
         </div>
+
+        <span className="text-xs text-text-t shrink-0">{timeAgo}</span>
 
         <button
           type="button"
@@ -364,70 +362,67 @@ export default function PostCard({
         </button>
       </div>
 
-      {post.text && (
-        <div className="px-4 pb-4">
-          <p className="text-sm sm:text-[15px] leading-6 text-text-p whitespace-pre-wrap break-words">
-            <RichText text={post.text} />
-          </p>
-        </div>
-      )}
-
+      {/* MEDIA — framed photo/video with rounded corners */}
       {post.image_url && !imageError && (
-        <div className="bg-bg">
-          <img
-            src={post.image_url}
-            alt="Post content"
-            onError={() => setImageError(true)}
-            className="w-full max-h-[600px] object-cover"
-          />
+        <div className="px-3">
+          <div className="rounded-xl overflow-hidden bg-bg">
+            <img
+              src={post.image_url}
+              alt="Post content"
+              onError={() => setImageError(true)}
+              className="w-full max-h-[600px] object-cover"
+            />
+          </div>
         </div>
       )}
 
       {post.video_url && (
-        <div className="bg-bg">
-          <VideoPlayer
-            src={post.video_url}
-            className="w-full max-h-[600px]"
-          />
+        <div className="px-3">
+          <div className="rounded-xl overflow-hidden bg-bg">
+            <VideoPlayer
+              src={post.video_url}
+              className="w-full max-h-[600px]"
+            />
+          </div>
         </div>
       )}
 
+      {/* VOTE PILL — segmented green Drip / dark Skip bar */}
       <div className="px-3 pt-3">
-        <div className="grid grid-cols-2 gap-2">
+        <div className="flex items-stretch rounded-full bg-bg-sunken p-1">
           <button
             type="button"
             onClick={() => handleVote("drip")}
             disabled={voting || !!userVote}
             className={`
-              relative flex items-center justify-center gap-2 min-h-14 rounded-2xl border transition-all active:scale-[0.97]
+              flex-1 flex items-center justify-between gap-2 pl-3.5 pr-4 min-h-11 rounded-full transition-all active:scale-[0.98] disabled:cursor-not-allowed
               ${
                 userVote === "drip"
-                  ? "border-cyan-500 bg-transparent text-cyan-600 dark:text-cyan-300"
+                  ? "bg-emerald-600 text-white shadow-sm"
                   : userVote === "skip"
-                  ? "border-border-s bg-transparent text-text-m"
-                  : "border-cyan-400/50 bg-transparent text-cyan-600 hover:border-cyan-400 dark:border-cyan-400/40 dark:text-cyan-300 dark:hover:border-cyan-400/70"
+                  ? "bg-emerald-600/25 text-emerald-100/50"
+                  : "bg-emerald-600 text-white hover:bg-emerald-500"
               }
-              disabled:cursor-not-allowed
             `}
           >
-            <Flame
-              size={23}
-              strokeWidth={2.5}
-              className={userVote === "drip" ? "fill-cyan-400" : ""}
-            />
-
-            <div className="flex flex-col items-start">
-              <span className="text-sm font-black uppercase tracking-wide">
-                Drip
+            <span className="flex items-center gap-1.5 min-w-0">
+              <Flame
+                size={17}
+                strokeWidth={2.5}
+                className={userVote === "skip" ? "" : "fill-white"}
+              />
+              <span className="text-sm font-bold">Drip</span>
+            </span>
+            <span className="flex items-center gap-1">
+              {userVote === "drip" && <Check size={15} strokeWidth={3} />}
+              <span
+                className={`text-sm font-bold tabular-nums ${
+                  userVote === "skip" ? "text-emerald-100/50" : "text-white"
+                }`}
+              >
+                {dripCount}
               </span>
-              <span className="text-[11px] text-text-m dark:opacity-70">
-                {dripCount} {dripCount === 1 ? "vote" : "votes"}
-              </span>
-            </div>
-
-            {userVote === "drip" && (
-              <Check size={18} className="absolute right-3" />
-            )}
+            </span>
           </button>
 
           <button
@@ -435,97 +430,95 @@ export default function PostCard({
             onClick={() => handleVote("skip")}
             disabled={voting || !!userVote}
             className={`
-              relative flex items-center justify-center gap-2 min-h-14 rounded-2xl border transition-all active:scale-[0.97]
+              flex-1 flex items-center justify-between gap-2 pl-4 pr-3.5 min-h-11 rounded-full transition-all active:scale-[0.98] disabled:cursor-not-allowed
               ${
                 userVote === "skip"
-                  ? "border-rose-500 bg-transparent text-rose-600 dark:text-rose-300"
+                  ? "bg-rose-500/15 text-rose-300 shadow-sm"
                   : userVote === "drip"
-                  ? "border-border-s bg-transparent text-text-m"
-                  : "border-rose-400/50 bg-transparent text-rose-600 hover:border-rose-400 dark:border-rose-400/40 dark:text-rose-300 dark:hover:border-rose-400/70"
+                  ? "text-text-m"
+                  : "text-text-s hover:text-text-p hover:bg-white/5"
               }
-              disabled:cursor-not-allowed
             `}
           >
-            <SkipForward
-              size={23}
-              strokeWidth={2.5}
-              className={userVote === "skip" ? "fill-rose-400" : ""}
-            />
-
-            <div className="flex flex-col items-start">
-              <span className="text-sm font-black uppercase tracking-wide">
-                Skip
+            <span className="flex items-center gap-1.5 min-w-0">
+              <X size={17} strokeWidth={2.5} />
+              <span className="text-sm font-semibold">Skip</span>
+            </span>
+            <span className="flex items-center gap-1">
+              {userVote === "skip" && <Check size={15} strokeWidth={3} />}
+              <span className="text-sm font-semibold tabular-nums">
+                {skipCount}
               </span>
-              <span className="text-[11px] text-text-m dark:opacity-70">
-                {skipCount} {skipCount === 1 ? "vote" : "votes"}
-              </span>
-            </div>
-
-            {userVote === "skip" && (
-              <Check size={18} className="absolute right-3" />
-            )}
+            </span>
           </button>
         </div>
       </div>
 
-      <div className="flex items-center justify-between px-3 py-2 border-t border-border-s/50 mt-3">
-        <button
-          type="button"
-          onClick={() => setCommentsOpen(true)}
-          className="flex items-center gap-2 px-3 py-2 rounded-xl text-text-s hover:text-text-p hover:bg-bg-sunken active:scale-95 transition-all"
-        >
-          <MessageCircle size={17} />
-          <span className="text-xs font-medium">
-            {commentCount > 0
-              ? `${commentCount} ${commentCount === 1 ? "Comment" : "Comments"}`
-              : "Comment"}
-          </span>
-        </button>
+      {/* ACTION ROW — icons only */}
+      <div className="flex items-center justify-between px-4 pb-2.5 pt-2.5">
+        <div className="flex items-center gap-6">
+          <button
+            type="button"
+            onClick={() => setCommentsOpen(true)}
+            className="flex items-center gap-1.5 py-1.5 text-text-t hover:text-text-p active:scale-90 transition-all"
+            aria-label="Comments"
+          >
+            <MessageCircle size={19} />
+            {commentCount > 0 && (
+              <span className="text-xs font-medium">{commentCount}</span>
+            )}
+          </button>
 
-        <button
-          type="button"
-          onClick={handleRepost}
-          className={`flex items-center gap-2 px-3 py-2 rounded-xl active:scale-95 transition-all ${
-            userReposted
-              ? "text-green-400 hover:text-green-300 hover:bg-green-400/10"
-              : "text-text-t hover:text-text-p hover:bg-bg-sunken"
-          }`}
-          aria-label="Repost"
-        >
-          <Repeat2 size={17} className={userReposted ? "fill-green-400" : ""} />
-          <span className="text-xs font-medium">
-            {repostCount > 0 ? repostCount : "Repost"}
-          </span>
-        </button>
+          <button
+            type="button"
+            onClick={handleRepost}
+            className={`flex items-center gap-1.5 py-1.5 active:scale-90 transition-all ${
+              userReposted
+                ? "text-green-400"
+                : "text-text-t hover:text-text-p"
+            }`}
+            aria-label="Repost"
+          >
+            <Repeat2 size={19} className={userReposted ? "fill-green-400" : ""} />
+            {repostCount > 0 && (
+              <span className="text-xs font-medium">{repostCount}</span>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShareOpen(true)}
+            className="flex items-center py-1.5 text-text-t hover:text-text-p active:scale-90 transition-all"
+            aria-label="Share"
+          >
+            <Share2 size={18} />
+          </button>
+        </div>
 
         <button
           type="button"
           onClick={handleSave}
-          className={`flex items-center gap-2 px-3 py-2 rounded-xl active:scale-95 transition-all ${
-            isSaved
-              ? "text-amber-400 hover:text-amber-300 hover:bg-amber-400/10"
-              : "text-text-t hover:text-text-p hover:bg-bg-sunken"
+          className={`flex items-center gap-1.5 py-1.5 active:scale-90 transition-all ${
+            isSaved ? "text-amber-400" : "text-text-t hover:text-text-p"
           }`}
           aria-label={isSaved ? "Unsave" : "Save"}
         >
           {isSaved ? (
-            <BookmarkCheck size={17} className="fill-amber-400" />
+            <BookmarkCheck size={19} className="fill-amber-400" />
           ) : (
-            <Bookmark size={17} />
+            <Bookmark size={19} />
           )}
-          <span className="text-xs font-medium">{isSaved ? "Saved" : "Save"}</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setShareOpen(true)}
-          className="flex items-center gap-2 px-3 py-2 rounded-xl text-text-t hover:text-text-p hover:bg-bg-sunken active:scale-95 transition-all"
-          aria-label="Share"
-        >
-          <Share2 size={17} />
-          <span className="text-xs font-medium">Share</span>
         </button>
       </div>
+
+      {/* CAPTION — sits under the actions, like the mock */}
+      {post.text && (
+        <div className="px-4 pb-4 pt-1.5">
+          <p className="text-sm leading-6 text-text-p whitespace-pre-wrap break-words">
+            <RichText text={post.text} />
+          </p>
+        </div>
+      )}
 
       <CommentDrawer
         postId={post.id}
